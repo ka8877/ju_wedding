@@ -1,0 +1,198 @@
+.invitation {
+  --invite-bg: #f8f6ef;
+  --invite-paper: #f0eee4;
+  --invite-ink: #333b2d;
+  --invite-accent: #667359;
+  --invite-muted: #929281;
+  --invite-line: #dcded1;
+  --invite-light: #e7eadf;
+  container-type: inline-size; width: 100%; max-width: 520px; margin: 0 auto; overflow: hidden;
+  background: var(--invite-bg); color: var(--invite-ink);
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-weight: 400; line-height: 1.7; letter-spacing: -.025em;
+  box-shadow: 0 0 100px #333b2d09;
+}
+.invitation[data-theme='rose'] { --invite-bg: #fcf6f3; --invite-paper: #f5ebe7; --invite-ink: #59443f; --invite-accent: #a47776; --invite-muted: #b09c94; --invite-line: #e7d8d1; --invite-light: #f0dfdb; }
+.invitation[data-theme='sand'] { --invite-bg: #faf6ed; --invite-paper: #f1e9dc; --invite-ink: #554b3b; --invite-accent: #a08963; --invite-muted: #aa9e89; --invite-line: #e4d9c5; --invite-light: #ede4d2; }
+.invitation *, .invitation *::before, .invitation *::after { box-sizing: border-box; }
+.invitation button, .invitation a { -webkit-tap-highlight-color: transparent; }
+.invitation button { font: inherit; color: inherit; cursor: pointer; }
+.invitation a { color: inherit; text-decoration: none; }
+.invitation button:focus-visible, .invitation a:focus-visible, .invitation summary:focus-visible { outline: 2px solid var(--invite-accent); outline-offset: 5px; }
+.invitation button:disabled { cursor: not-allowed; opacity: .5; }
+.invitation h1, .invitation h2, .invitation h3, .invitation h4, .invitation p { margin: 0; }
+.invitation h2 { font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', Georgia, serif; font-size: 23px; font-weight: 400; letter-spacing: -.07em; line-height: 1.6; }
+.invite-hero { padding: 0 34px; position: relative; }
+.invite-masthead { display: flex; justify-content: space-between; align-items: center; padding: 24px 0 15px; border-bottom: 1px solid var(--invite-line); font: 500 8px/1.2 'Arial', sans-serif; letter-spacing: .16em; color: var(--invite-accent); }
+.invite-small-heart { display: flex; align-items: center; gap: 7px; }
+.invite-hero-heading { padding: 38px 10px 21px; position: relative; }
+.invite-kicker { font-size: 10px; letter-spacing: .1em; color: var(--invite-accent); }
+.invite-hero-heading h1 { font-family: 'Cormorant Garamond', 'Baskerville', 'Times New Roman', serif; font-size: clamp(52px, 17cqw, 89px); font-weight: 400; line-height: .94; letter-spacing: -.065em; padding: 19px 0 18px; position: relative; }
+.invite-hero-heading h1 em { padding-left: 53px; font-weight: 400; letter-spacing: -.06em; }
+.invite-title-star { position: absolute; color: var(--invite-accent); font: 38px/1 Georgia, serif; right: 12px; top: 11px; animation: invite-turn 45s linear infinite; }
+.invite-english-names { text-align: right; padding-right: 8px; font: 12px/1.5 'Baskerville', 'Times New Roman', serif; letter-spacing: .015em; }
+.invite-english-names span { color: var(--invite-muted); padding: 0 5px; font-style: italic; }
+.invite-cover { position: relative; width: calc(100% - 20px); margin: 5px auto 0; }
+.invite-cover-image { width: 100%; height: auto; max-height: 550px; object-fit: cover; display: block; aspect-ratio: 5 / 5.8; border-radius: 150px 150px 2px 2px; }
+.invite-cover--photo .invite-cover-image { object-position: center; }
+.invite-cover-note { position: absolute; left: 16px; bottom: 16px; color: #657257; font: italic 11px/1 Georgia, serif; letter-spacing: .025em; writing-mode: vertical-rl; transform: rotate(180deg); opacity: .7; }
+.invite-cover-stamp { position: absolute; right: -18px; bottom: 19px; width: 100px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--invite-bg); color: var(--invite-accent); border: 1px solid var(--invite-accent); border-radius: 50%; transform: rotate(12deg); outline: 4px solid var(--invite-bg); }
+.invite-cover-stamp span { font: 7px/1 Arial, sans-serif; letter-spacing: .08em; }
+.invite-cover-stamp span:last-child { font-size: 5.5px; letter-spacing: .1em; }
+.invite-hero-details { padding: 32px 0 0; text-align: center; }
+.invite-korean-names { display: flex; gap: 18px; justify-content: center; align-items: center; font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif; font-size: 24px; letter-spacing: .12em; }
+.invite-name-divider { font-family: 'Baskerville', Georgia, serif; font-style: italic; font-size: 18px; color: var(--invite-accent); letter-spacing: 0; }
+.invite-hero-date { margin-top: 15px !important; font-size: 11px; letter-spacing: .015em; }
+.invite-hero-venue { margin-top: 4px !important; font-size: 11px; color: var(--invite-accent); }
+.invite-muted { color: var(--invite-muted); }
+.invite-scroll { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 0 36px; color: var(--invite-muted) !important; }
+.invite-scroll span { font: 7px/1 Arial, sans-serif; letter-spacing: .2em; }
+.invite-scroll svg { animation: invite-nudge 3s ease-in-out infinite; }
+.invite-section { padding: 62px 38px 65px; text-align: center; }
+.invite-section-index { display: flex; align-items: center; justify-content: center; gap: 9px; font: 8px/1.3 Arial, sans-serif; letter-spacing: .2em; color: var(--invite-accent); margin-bottom: 24px; }
+.invite-section-index i { display: block; width: 23px; height: 1px; background: var(--invite-line); }
+.invite-sprig { width: 95px; height: 47px; margin: 1px auto 22px; display: block; opacity: .85; }
+.invite-letter { background: var(--invite-paper); padding-top: 57px; }
+.invite-letter .invite-section-index { margin-bottom: 23px; }
+.invite-preserve { white-space: pre-line; overflow-wrap: anywhere; }
+.invite-letter-copy { padding-top: 25px; font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', Georgia, serif; font-size: 12px; line-height: 2.4; color: var(--invite-accent); word-break: keep-all; }
+.invite-family { margin: 33px auto 27px; width: fit-content; display: flex; flex-direction: column; gap: 10px; }
+.invite-family-row { display: flex; align-items: center; justify-content: flex-end; gap: 11px; font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif; font-size: 12px; }
+.invite-family-row strong { font-size: 15px; font-weight: 400; letter-spacing: .08em; }
+.invite-parents { font-size: 12px; }
+.invite-relation { color: var(--invite-muted); font-family: 'Pretendard', sans-serif; font-size: 10px; }
+.invite-parents .invite-relation { padding-left: 8px; }
+.invite-outline-button { background: transparent; border: 1px solid #a6ad995e; border-radius: 3px; min-height: 42px; padding: 9px 24px; font-size: 10px !important; display: inline-flex; align-items: center; gap: 8px; color: var(--invite-accent) !important; transition: background .2s; }
+.invite-outline-button:hover { background: var(--invite-light); }
+.invite-verse { padding: 49px 36px 44px; text-align: center; border-bottom: 1px solid var(--invite-line); }
+.invite-verse-cross { font-size: 21px; color: var(--invite-accent); }
+.invite-verse p { font-family: 'Noto Serif KR', 'Batang', serif; font-size: 11px; line-height: 2.3; padding: 18px 0 12px; color: var(--invite-accent); }
+.invite-verse small { color: var(--invite-muted); font-size: 9px; }
+.invite-calendar-section { padding-top: 65px; }
+.invitation .invite-calendar-title { font-family: 'Baskerville', Georgia, serif; font-size: 33px; letter-spacing: .015em; }
+.invite-calendar-title span { color: var(--invite-muted); padding: 0 3px; }
+.invite-subtitle { color: var(--invite-muted); font-size: 10px; line-height: 1.9; margin-top: 10px !important; word-break: keep-all; }
+.invite-calendar { max-width: 300px; margin: 29px auto 0; padding: 17px 0; border-top: 1px solid var(--invite-line); border-bottom: 1px solid var(--invite-line); }
+.invite-calendar-row, .invite-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.invite-calendar-weekdays { color: var(--invite-muted); font-size: 9px; margin-bottom: 7px; }
+.invite-calendar-grid > span { display: flex; align-items: center; justify-content: center; height: 36px; position: relative; font: 12px/1 Georgia, serif; }
+.invite-calendar .is-sunday { color: #b6847b; }
+.invite-calendar-heart { position: absolute; color: var(--invite-accent); top: 0; left: 50%; transform: translateX(-50%); }
+.invite-calendar .is-wedding-day > span { position: relative; z-index: 1; color: #fffef8; padding-bottom: 3px; }
+.invite-countdown { display: flex; justify-content: center; align-items: flex-start; gap: 18px; margin-top: 28px; }
+.invite-countdown > div { display: flex; flex-direction: column; gap: 6px; min-width: 41px; }
+.invite-countdown strong { font: 27px/1.2 'Baskerville', Georgia, serif; font-weight: 400; }
+.invite-countdown span { font: 6px/1.3 Arial, sans-serif; color: var(--invite-muted); letter-spacing: .18em; }
+.invite-countdown > i { font: normal 21px/1.2 Georgia, serif; color: var(--invite-muted); }
+.invite-countdown-note { font-size: 10px; margin-top: 22px !important; color: var(--invite-muted); }
+.invite-countdown-note strong { font-weight: 400; color: var(--invite-accent); }
+.invite-gallery-section { background: var(--invite-paper); padding: 58px 25px 57px; }
+.invite-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 29px; }
+.invite-gallery-item { border: 0; padding: 0; background: var(--invite-light); aspect-ratio: 4 / 5; overflow: hidden; position: relative; border-radius: 2px; }
+.invite-gallery-item--wide { grid-column: span 2; aspect-ratio: 3 / 2; }
+.invite-gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
+.invite-gallery-item:hover img { transform: scale(1.04); }
+.invite-gallery-item > span { position: absolute; right: 8px; bottom: 8px; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #ffffffa8; border-radius: 50%; color: white; background: #3333331c; }
+.invite-gallery-empty { padding: 34px 0 0; display: flex; align-items: center; justify-content: center; gap: 24px; }
+.invite-empty-frame { width: 105px; height: 130px; border: 1px solid var(--invite-line); background: var(--invite-bg); border-radius: 65px 65px 2px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; color: var(--invite-accent); transform: rotate(-5deg); box-shadow: 3px 5px 0 #333b2d05; }
+.invite-empty-frame span { font: italic 10px/1 Georgia, serif; }
+.invite-gallery-empty > p { font-family: 'Noto Serif KR', 'Batang', serif; color: var(--invite-muted); font-size: 11px; line-height: 2.2; text-align: left; }
+.invite-location-section { padding: 61px 34px; }
+.invite-venue-name { margin: 27px 0 2px !important; font-size: 17px; font-weight: 500; word-break: keep-all; }
+.invite-venue-hall { font-size: 12px; color: var(--invite-accent); }
+.invite-address { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 10px 0 23px; color: var(--invite-muted); font-size: 10px; }
+.invite-address span { overflow-wrap: anywhere; }
+.invite-address button { background: none; border: 0; padding: 7px; display: grid; place-items: center; flex-shrink: 0; }
+.invite-map { width: 100%; height: 235px; display: block; border: 1px solid var(--invite-line); border-radius: 3px; filter: saturate(.55); margin-top: 18px; }
+.invite-location-placeholder { background: var(--invite-paper); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; color: var(--invite-accent); margin-top: 22px; }
+.invite-location-placeholder span { font-size: 10px; color: var(--invite-muted); }
+.invite-map-links { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
+.invite-map-links a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid var(--invite-line); border-radius: 3px; font-size: 10px; }
+.invite-map-links a > svg { color: var(--invite-muted); }
+.invite-map-icon { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; font: bold 10px/1 Arial, sans-serif; }
+.invite-map-icon--naver { background: #e0eedb; color: #56804c; }
+.invite-map-icon--kakao { background: #f2e8b6; color: #6d633c; }
+.invite-directions { text-align: left; margin-top: 27px; border-top: 1px solid var(--invite-line); padding-top: 24px; display: flex; flex-direction: column; gap: 22px; }
+.invite-directions h4 { color: var(--invite-accent); font-size: 12px; font-weight: 500; margin-bottom: 6px; }
+.invite-directions p { color: var(--invite-muted); font-size: 11px; line-height: 2; }
+.invite-venue-pending { padding-top: 30px; color: var(--invite-accent); }
+.invite-venue-pending > p { font-family: 'Noto Serif KR', 'Batang', serif; font-size: 12px; line-height: 2.3; margin: 15px 0 14px; }
+.invite-venue-pending > span { font-size: 10px; color: var(--invite-muted); }
+.invite-accounts { padding-top: 48px; background: var(--invite-paper); }
+.invite-accounts .invite-subtitle { margin-bottom: 28px !important; }
+.invite-account-group { background: var(--invite-bg); border: 1px solid var(--invite-line); border-radius: 3px; margin-top: 9px; }
+.invite-account-group summary { list-style: none; cursor: pointer; text-align: left; padding: 15px 17px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; }
+.invite-account-group summary::-webkit-details-marker { display: none; }
+.invite-account-group summary > span { font-size: 18px; font-weight: 300; line-height: 1; color: var(--invite-accent); transition: transform .2s; }
+.invite-account-group[open] summary > span { transform: rotate(45deg); }
+.invite-account-group[open] summary { border-bottom: 1px solid var(--invite-line); }
+.invite-account { padding: 17px; display: flex; justify-content: space-between; gap: 9px; align-items: center; }
+.invite-account + .invite-account { border-top: 1px solid var(--invite-line); }
+.invite-account > div { min-width: 0; text-align: left; display: flex; flex-direction: column; gap: 5px; }
+.invite-account strong { font-size: 10px; font-weight: 400; overflow-wrap: anywhere; }
+.invite-account strong span { padding-left: 3px; }
+.invite-account > div > span { font-size: 10px; color: var(--invite-muted); }
+.invite-account > button { flex-shrink: 0; background: var(--invite-paper); border: 1px solid var(--invite-line); padding: 8px 10px; display: flex; gap: 5px; align-items: center; font-size: 9px; border-radius: 3px; }
+.invite-closing { padding: 55px 30px 0; text-align: center; }
+.invite-closing > .invite-preserve { font-family: 'Noto Serif KR', 'Batang', serif; font-size: 12px; line-height: 2.4; color: var(--invite-accent); }
+.invite-closing-script { display: block; margin-top: 26px; font: italic 25px/1.5 'Baskerville', Georgia, serif; letter-spacing: -.03em; }
+.invite-closing-names { margin-top: 11px; font-size: 10px; display: flex; align-items: center; justify-content: center; gap: 13px; color: var(--invite-accent); }
+.invite-share { width: 100%; min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 9px; margin: 34px auto 29px; border: 1px solid var(--invite-line); background: transparent; border-radius: 3px; font-size: 11px !important; }
+.invite-share:hover { background: var(--invite-paper); }
+.invite-footer-mark { padding: 21px 0 25px; margin: 0 -30px; border-top: 1px solid var(--invite-line); display: flex; flex-direction: column; gap: 7px; }
+.invite-footer-mark > span { font: 6px/1.2 Arial, sans-serif; letter-spacing: .18em; color: var(--invite-muted); }
+.invite-footer-mark strong { font: italic 13px/1.3 Georgia, serif; color: var(--invite-accent); font-weight: 400; }
+.invite-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; z-index: 100; padding: 12px 19px; background: #333b2dee; color: #fffef8; border: 1px solid #ffffff22; border-radius: 30px; box-shadow: 0 4px 25px #0002; font-size: 11px; width: max-content; max-width: calc(100vw - 32px); animation: invite-toast-in .2s ease; }
+.invite-lightbox { border: 0; background: transparent; color: white; width: min(95vw, 950px); max-width: 95vw; max-height: 95dvh; padding: 50px 0 0; overflow: visible; }
+.invite-lightbox::backdrop { background: #20251ff0; backdrop-filter: blur(8px); }
+.invite-lightbox > img { max-width: 100%; max-height: 73dvh; margin: auto; display: block; object-fit: contain; }
+.invite-dialog-close { position: absolute; top: 0; right: 0; width: 42px; height: 42px; border: 0; border-radius: 50%; background: #ffffff15; color: white !important; display: grid; place-items: center; }
+.invite-lightbox-controls { display: flex; align-items: center; justify-content: center; gap: 35px; margin-top: 17px; font-size: 12px; }
+.invite-lightbox-controls button { background: transparent; border: 1px solid #ffffff55; border-radius: 50%; width: 42px; height: 42px; display: grid; place-items: center; }
+.invite-contact-dialog { background: var(--invite-bg); color: var(--invite-ink); border: 1px solid var(--invite-line); border-radius: 8px; width: min(360px, calc(100vw - 36px)); padding: 38px 25px 27px; }
+.invite-contact-dialog::backdrop { background: #2b332a88; backdrop-filter: blur(3px); }
+.invite-contact-dialog > h2 { margin: 10px 0 22px; font-size: 21px; }
+.invite-contact-dialog > .invite-kicker { font-size: 8px; }
+.invite-contact-close { position: absolute; right: 12px; top: 12px; background: transparent; border: 0; display: grid; place-items: center; width: 32px; height: 32px; }
+.invite-contact-row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--invite-line); padding: 15px 0; font-size: 11px; }
+.invite-contact-row strong { font-weight: 500; margin-left: 10px; font-size: 14px; }
+.invite-contact-row > div { display: flex; gap: 8px; }
+.invite-contact-row a { display: grid; place-items: center; border: 1px solid var(--invite-line); color: var(--invite-accent); width: 38px; height: 38px; border-radius: 50%; }
+.invite-reveal { transition: opacity .9s ease, transform .9s ease; }
+@media (prefers-reduced-motion: no-preference) { .invitation:not(.invitation--preview) .invite-reveal.is-visible { animation: invite-appear .9s ease both; } .invitation:not(.invitation--preview) .invite-hero-heading { animation: invite-appear .9s ease both; } .invitation:not(.invitation--preview) .invite-cover { animation: invite-appear 1s .12s ease both; } }
+@keyframes invite-appear { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes invite-turn { to { transform: rotate(360deg); } }
+@keyframes invite-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+@keyframes invite-toast-in { from { opacity: 0; bottom: 20px; } to { opacity: 1; bottom: 30px; } }
+@container (min-width: 520px) {
+  .invite-hero { padding: 0 48px; }
+  .invite-masthead { padding-top: 28px; font-size: 8px; }
+  .invite-hero-heading { padding: 43px 12px 25px; }
+  .invite-hero-heading h1 { font-size: 94px; }
+  .invite-title-star { right: 7px; top: 16px; }
+  .invite-cover { width: calc(100% - 24px); }
+  .invite-cover-image { max-height: 550px; }
+  .invite-hero-details { padding-top: 35px; }
+  .invite-scroll { padding-bottom: 45px; }
+  .invite-section { padding-left: 53px; padding-right: 53px; }
+  .invite-gallery-section { padding-left: 32px; padding-right: 32px; }
+  .invite-letter-copy { font-size: 13px; }
+  .invite-gallery-empty { gap: 32px; }
+  .invite-map { height: 260px; }
+}
+@container (max-width: 359px) {
+  .invite-hero { padding-left: 23px; padding-right: 23px; }
+  .invite-hero-heading h1 { font-size: clamp(46px, 17cqw, 64px); }
+  .invite-title-star { right: 0; font-size: 29px; }
+  .invite-small-heart { letter-spacing: .08em; font-size: 6px; }
+  .invite-cover-stamp { width: 79px; height: 79px; gap: 5px; }
+  .invite-cover-stamp span { font-size: 6px; }
+  .invite-cover-stamp span:last-child { font-size: 4.5px; }
+  .invite-section { padding-left: 25px; padding-right: 25px; }
+  .invite-korean-names { gap: 12px; font-size: 22px; }
+  .invite-gallery-empty { gap: 18px; }
+  .invite-gallery-empty > p { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invitation *, .invitation *::before, .invitation *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

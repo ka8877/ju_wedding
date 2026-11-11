@@ -1,0 +1,70 @@
+name: Test and deploy invitation
+
+'on':
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:db
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Build invitation
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [ -n "$CUSTOM_DOMAIN" ]; then
+            export BASE_PATH=/
+          elif [ "$REPOSITORY_NAME" = "${{ github.repository_owner }}.github.io" ]; then
+            export BASE_PATH=/
+          else
+            export BASE_PATH="/$REPOSITORY_NAME/"
+          fi
+          npm run build
+          if [ -n "$CUSTOM_DOMAIN" ]; then
+            node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+          const domain = process.env.CUSTOM_DOMAIN;
+          if (!domain || domain.length > 253 || !/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(domain)) {
+            throw new Error('CUSTOM_DOMAIN must be a hostname without scheme, path or port.');
+          }
+          writeFileSync('dist/CNAME', domain.toLowerCase() + '\n');
+          NODE
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

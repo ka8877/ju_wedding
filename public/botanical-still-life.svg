@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1080" viewBox="0 0 900 1080" fill="none">
+ <defs>
+  <linearGradient id="paper" x1="80" y1="80" x2="800" y2="1000" gradientUnits="userSpaceOnUse"><stop stop-color="#e9e6da"/><stop offset=".5" stop-color="#f1eee5"/><stop offset="1" stop-color="#dedfd1"/></linearGradient>
+  <linearGradient id="arch" x1="450" y1="100" x2="450" y2="960" gradientUnits="userSpaceOnUse"><stop stop-color="#cbd0bd"/><stop offset="1" stop-color="#e8e8dd"/></linearGradient>
+  <radialGradient id="bloom"><stop stop-color="#c8ad97"/><stop offset=".35" stop-color="#e5d0bd"/><stop offset="1" stop-color="#f1e5d7"/></radialGradient>
+  <linearGradient id="ribbon" x1="400" y1="650" x2="650" y2="900" gradientUnits="userSpaceOnUse"><stop stop-color="#bba17d"/><stop offset=".5" stop-color="#e7d7bd"/><stop offset="1" stop-color="#b29a76"/></linearGradient>
+  <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".06"/></feComponentTransfer><feBlend in="SourceGraphic" mode="multiply"/></filter>
+  <filter id="shadow"><feGaussianBlur stdDeviation="15"/></filter>
+  <g id="leaf"><path d="M0 0C-25-21-40-66-15-104C11-83 20-35 0 0Z" fill="#788268"/><path d="M-1-4C-6-39-9-64-15-98" stroke="#a7ad91" stroke-width="1.5"/></g>
+  <g id="leafLight"><path d="M0 0C-25-21-40-66-15-104C11-83 20-35 0 0Z" fill="#91997c"/><path d="M-1-4C-6-39-9-64-15-98" stroke="#b3baa0" stroke-width="1.5"/></g>
+  <g id="flower"><path d="M0-58C-44-87-75-37-53-6C-91 17-64 69-28 59C-5 95 45 78 47 42C89 31 80-22 47-30C51-70 17-82 0-58Z" fill="url(#bloom)"/><path d="M-4-39C-34-59-49-21-30-2C-59 18-33 48-12 35C5 63 37 40 26 18C53 1 27-34 9-23C14-42 2-50-4-39Z" fill="#e4d0ba"/><path d="M2-19C-19-28-28-1-9 8C-13 28 19 28 20 6C32-5 18-26 2-19Z" fill="#d7bca2"/><path d="M0-8C-8-11-12 0-3 5C8 10 16-1 6-7" stroke="#b99578" stroke-width="3" stroke-linecap="round"/></g>
+ </defs>
+ <g filter="url(#grain)">
+  <rect width="900" height="1080" fill="url(#paper)"/>
+  <ellipse cx="450" cy="944" rx="230" ry="29" fill="#989e87" opacity=".16" filter="url(#shadow)"/>
+  <path d="M157 930V365C157 200 288 95 450 95C612 95 743 200 743 365V930H157Z" fill="url(#arch)"/>
+  <path d="M181 929V365C181 218 298 120 450 120C602 120 719 218 719 365V929" stroke="#f4f0e5" stroke-width="1.5" opacity=".65"/>
+  <path d="M207 929V369C207 236 312 146 450 146C588 146 693 236 693 369V929" stroke="#adb69b" stroke-width="1" opacity=".35"/>
+  <path d="M250 943C335 813 368 712 427 601C497 469 541 352 568 238M403 920C363 740 316 610 242 514M432 899C504 708 592 594 673 545M400 834C381 645 391 442 423 334" stroke="#6c785d" stroke-width="4" stroke-linecap="round"/>
+  <path d="M488 464L555 414M465 510L403 431M535 354L610 317M440 579L490 565M372 731L292 684M337 659L375 588M320 618L252 589M545 672L629 647M579 626L568 556M607 590L674 571M392 555L348 480M400 464L450 420" stroke="#7b866b" stroke-width="2.5"/>
+  <use href="#leaf" transform="translate(555 414) rotate(46) scale(.84)"/><use href="#leafLight" transform="translate(555 414) rotate(-86) scale(.76)"/>
+  <use href="#leaf" transform="translate(403 431) rotate(-56) scale(.82)"/><use href="#leafLight" transform="translate(403 431) rotate(102) scale(.67)"/>
+  <use href="#leafLight" transform="translate(610 317) rotate(60) scale(.78)"/><use href="#leaf" transform="translate(610 317) rotate(-73) scale(.64)"/>
+  <use href="#leafLight" transform="translate(568 239) rotate(16) scale(.8)"/>
+  <use href="#leafLight" transform="translate(490 565) rotate(67) scale(.87)"/>
+  <use href="#leaf" transform="translate(292 684) rotate(-61) scale(.95)"/><use href="#leafLight" transform="translate(292 684) rotate(75) scale(.71)"/>
+  <use href="#leafLight" transform="translate(375 588) rotate(21) scale(.83)"/>
+  <use href="#leaf" transform="translate(252 589) rotate(-65) scale(.77)"/><use href="#leafLight" transform="translate(242 514) rotate(-39) scale(.8)"/>
+  <use href="#leafLight" transform="translate(629 647) rotate(66) scale(.8)"/><use href="#leaf" transform="translate(629 647) rotate(-65) scale(.73)"/>
+  <use href="#leaf" transform="translate(568 556) rotate(-12) scale(.8)"/><use href="#leafLight" transform="translate(674 571) rotate(76) scale(.63)"/>
+  <use href="#leaf" transform="translate(348 480) rotate(-48) scale(.88)"/><use href="#leafLight" transform="translate(423 334) rotate(-4) scale(.71)"/>
+  <use href="#leafLight" transform="translate(450 420) rotate(65) scale(.85)"/>
+  <path d="M410 754C372 668 335 618 288 563M414 783C469 692 490 639 507 578M393 785C340 770 303 755 262 734" stroke="#7b866b" stroke-width="2.5"/>
+  <use href="#flower" transform="translate(288 563) rotate(-12) scale(1.05)"/>
+  <use href="#flower" transform="translate(506 572) rotate(26) scale(.75)"/>
+  <use href="#flower" transform="translate(260 731) rotate(-34) scale(.59)"/>
+  <path d="M386 792C337 754 286 765 277 797C267 833 331 842 390 799C430 751 482 741 495 771C510 806 456 828 390 799" stroke="url(#ribbon)" stroke-width="14"/>
+  <path d="M390 797C376 843 405 869 383 907C370 932 356 936 348 953M393 799C444 847 426 889 464 923C473 931 485 941 489 950" stroke="url(#ribbon)" stroke-width="19"/>
+  <path d="M390 797C376 843 405 869 383 907C370 932 356 936 348 953M393 799C444 847 426 889 464 923C473 931 485 941 489 950" stroke="#f4e9d7" stroke-width="1" opacity=".8"/>
+  <ellipse cx="573" cy="908" rx="39" ry="13" stroke="#bca375" stroke-width="6" transform="rotate(-23 573 908)"/>
+  <ellipse cx="606" cy="911" rx="36" ry="12" stroke="#c9b185" stroke-width="6" transform="rotate(20 606 911)"/>
+ </g>
+</svg>
