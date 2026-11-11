@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { ArrowDown, ArrowUpRight, Check, ChevronLeft, ChevronRight, Copy, Heart, MapPin, MessageCircle, Phone, Share2, X } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Heart, MapPin, MessageCircle, Phone, Share2, X } from 'lucide-react';
 import type { SectionId, WeddingData } from '../lib/types';
 import { getDesign, sectionIds } from '../lib/design';
 import { copyText } from '../lib/utils';
+import { downloadWeddingCalendar } from '../lib/calendar';
 import '../styles/invitation.css';
 
 interface InvitationProps { data: WeddingData; preview?: boolean }
@@ -12,7 +13,8 @@ const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 function weddingDate(data: WeddingData) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) return null;
   const parsed = new Date(`${data.date}T${data.time || '00:00'}:00+09:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  if (Number.isNaN(parsed.getTime()) || parsed.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) !== data.date) return null;
+  return parsed;
 }
 
 function dateLabel(date: Date, time: string) {
@@ -154,6 +156,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           <div className="invite-calendar-grid">{Array.from({ length: firstDay }, (_, i) => <span key={`blank-${i}`} />)}{Array.from({ length: daysInMonth }, (_, i) => <span key={i + 1} className={`${i + 1 === day ? 'is-wedding-day' : ''} ${(firstDay + i) % 7 === 0 ? 'is-sunday' : ''}`} aria-label={i + 1 === day ? `${i + 1}일, 결혼식` : undefined}>{i + 1 === day && <Heart size={38} fill="currentColor" strokeWidth={0} className="invite-calendar-heart" />}<span>{i + 1}</span></span>)}</div>
         </div>
         {!hasTime ? <p className="invite-countdown-note">예식 시간은 추후 안내드릴게요.</p> : remaining > 0 ? <><div className="invite-countdown"><div><strong>{String(days).padStart(2, '0')}</strong><span>DAYS</span></div><i>:</i><div><strong>{String(hours).padStart(2, '0')}</strong><span>HOURS</span></div><i>:</i><div><strong>{String(minutes).padStart(2, '0')}</strong><span>MINUTES</span></div></div><p className="invite-countdown-note">두 사람이 하나 되는 날까지 <strong>{Math.ceil(remaining / 86_400_000)}일</strong></p></> : <p className="invite-countdown-note">우리의 시작을 함께 축복해 주셔서 감사합니다.</p>}
+        {hasTime && <button className="invite-outline-button invite-calendar-save" onClick={() => { downloadWeddingCalendar(data); }}><CalendarPlus size={15} strokeWidth={1.4} />캘린더에 저장</button>}
       </section>),
     gallery: (<section data-section="gallery" id="our-moments" className="invite-section invite-gallery-section invite-reveal invite-content-section">
         <div className="invite-section-index"><span>{sectionNumber('gallery')}</span><i /><span>OUR MOMENTS</span></div>
@@ -182,7 +185,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
     blessing: (<section data-section="blessing" className="invite-section invite-blessing invite-reveal invite-content-section"><div className="invite-section-index"><span>{sectionNumber('blessing')}</span><i /><span>A PRAYER FOR US</span></div>{cross}<h2>{design.blessingTitle}</h2><p className="invite-preserve invite-blessing-copy">{design.blessing}</p><span className="invite-blessing-amen">Amen.</span></section>),
   };
   return (
-    <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} style={style} ref={root}>
+    <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-background={design.background} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} style={style} ref={root}>
       <section className="invite-hero" aria-labelledby="wedding-title">{heroLayouts[design.template]}</section>
       {visibleSections.map(id => <div key={id} className="invite-section-wrapper">{sections[id]}</div>)}
       <footer className="invite-closing invite-reveal">{decoration}<p className="invite-preserve">{data.closing}</p><span className="invite-closing-script invite-preserve">{design.closingTitle}</span><div className="invite-closing-names">{data.groom.name}<Heart size={10} strokeWidth={1.2} />{data.bride.name}</div><button className="invite-share" onClick={share}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button><div className="invite-footer-mark"><span>WITH LOVE,</span><strong>{data.groom.englishName || data.groom.name} & {data.bride.englishName || data.bride.name}</strong></div></footer>

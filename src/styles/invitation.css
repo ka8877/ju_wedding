@@ -88,6 +88,7 @@
 .invite-countdown > i { font: normal 21px/1.2 Georgia, serif; color: var(--invite-muted); }
 .invite-countdown-note { font-size: 10px; margin-top: 22px !important; color: var(--invite-muted); }
 .invite-countdown-note strong { font-weight: 400; color: var(--invite-accent); }
+.invite-calendar-save { margin-top: 22px; }
 .invite-gallery-section { background: var(--invite-paper); padding: 58px 25px 57px; }
 .invite-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 29px; }
 .invite-gallery-item { border: 0; padding: 0; background: var(--invite-light); aspect-ratio: 4 / 5; overflow: hidden; position: relative; border-radius: 2px; }
@@ -349,3 +350,78 @@
   .invite-template--chapel .invite-hero { padding-left: 25px; padding-right: 25px; }
   .invite-cinematic-content { padding-left: 25px; padding-right: 25px; }
 }
+
+/* Textured surfaces are background images on each paper section, never overlays:
+   uploaded photographs, maps, dialogs and controls keep their original clarity. */
+.invitation {
+  --invite-texture-image: none;
+  --invite-texture-size: auto;
+  --invite-texture-position: 0 0;
+}
+.invitation[data-background]:not([data-background='plain']) {
+  background-image: var(--invite-texture-image);
+  background-size: var(--invite-texture-size);
+  background-position: var(--invite-texture-position);
+}
+.invitation[data-background]:not([data-background='plain']) :is(.invite-hero, .invite-section, .invite-verse, .invite-closing) {
+  background-image: var(--invite-texture-image);
+  background-size: var(--invite-texture-size);
+  background-position: var(--invite-texture-position);
+}
+.invitation[data-background='paper'] {
+  --invite-texture-image:
+    radial-gradient(ellipse 1px .6px at 2px 3px, color-mix(in srgb, var(--invite-ink) 7%, transparent) 30%, transparent 80%),
+    radial-gradient(ellipse .5px 1px at 3px 1px, color-mix(in srgb, var(--invite-accent) 9%, transparent) 20%, transparent 85%),
+    radial-gradient(ellipse .7px .5px at 5px 5px, color-mix(in srgb, var(--invite-ink) 5%, transparent) 20%, transparent 80%);
+  --invite-texture-size: 7px 9px, 5px 7px, 11px 13px;
+}
+.invitation[data-background='linen'] {
+  --invite-texture-image:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--invite-ink) 3%, transparent) 0 .7px, transparent .7px 3px),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--invite-accent) 5%, transparent) 0 .7px, transparent .7px 4px),
+    repeating-linear-gradient(90deg, transparent 0 28px, color-mix(in srgb, var(--invite-bg) 45%, transparent) 28px 30px);
+  --invite-texture-size: 4px 3px, 4px 3px, 30px 100%;
+}
+.invitation[data-background='watercolor'] {
+  --invite-texture-image:
+    radial-gradient(ellipse at -8% 4%, color-mix(in srgb, var(--invite-accent) 11%, transparent), transparent 48%),
+    radial-gradient(ellipse at 110% 78%, color-mix(in srgb, var(--invite-muted) 10%, transparent), transparent 45%),
+    radial-gradient(ellipse at 11% 106%, color-mix(in srgb, var(--invite-accent) 7%, transparent), transparent 43%);
+  --invite-texture-size: 100% 100%;
+}
+.invitation[data-background='petals'] {
+  --invite-texture-image:
+    radial-gradient(ellipse 3px 7px at 8% 13%, color-mix(in srgb, var(--invite-accent) 15%, transparent) 35%, transparent 80%),
+    radial-gradient(ellipse 6px 2px at 92% 32%, color-mix(in srgb, var(--invite-muted) 18%, transparent) 35%, transparent 80%),
+    radial-gradient(ellipse 4px 8px at 94% 79%, color-mix(in srgb, var(--invite-accent) 12%, transparent) 30%, transparent 80%),
+    radial-gradient(ellipse 6px 3px at 6% 71%, color-mix(in srgb, var(--invite-muted) 16%, transparent) 35%, transparent 80%),
+    radial-gradient(ellipse 2px 5px at 86% 4%, color-mix(in srgb, var(--invite-accent) 12%, transparent) 30%, transparent 85%);
+  --invite-texture-size: 100% 370px;
+}
+.invitation[data-background='starlight'] {
+  --invite-texture-image:
+    radial-gradient(circle 1px at 21px 29px, color-mix(in srgb, var(--invite-accent) 30%, transparent) 40%, transparent 95%),
+    radial-gradient(circle .6px at 81px 103px, color-mix(in srgb, var(--invite-ink) 18%, transparent) 40%, transparent 95%),
+    radial-gradient(ellipse 1px 4px at 130px 72px, color-mix(in srgb, var(--invite-accent) 25%, transparent) 0, transparent 95%),
+    radial-gradient(ellipse 4px 1px at 130px 72px, color-mix(in srgb, var(--invite-accent) 25%, transparent) 0, transparent 95%),
+    radial-gradient(ellipse at 80% 15%, color-mix(in srgb, var(--invite-accent) 4%, transparent), transparent 65%);
+  --invite-texture-size: 173px 157px, 137px 191px, 211px 223px, 211px 223px, 100% 100%;
+}
+.invitation[data-font='myeongjo'] {
+  --invite-heading-font: 'Nanum Myeongjo', 'Noto Serif KR', 'Batang', Georgia, serif;
+  --invite-hero-font: 'Nanum Myeongjo', 'Cormorant Garamond', Georgia, serif;
+}
+.invitation[data-font='myeongjo'] .invite-hero-heading h1 { letter-spacing: -.07em; line-height: 1.13; }
+.invitation[data-font='myeongjo'] .invite-hero-heading h1 em { font-style: normal; }
+.invitation[data-font='handwriting'] {
+  --invite-heading-font: 'Nanum Pen Script', 'Gowun Batang', cursive;
+  --invite-hero-font: 'Nanum Pen Script', 'Gowun Batang', cursive;
+}
+.invitation[data-font='handwriting'] .invite-hero-heading h1 { letter-spacing: -.035em; line-height: 1.05; }
+.invitation[data-font='handwriting'] .invite-hero-heading h1 em { font-style: normal; }
+.invitation[data-font='handwriting'] h2 { font-size: calc(30px * var(--invite-copy-scale)); line-height: 1.5; letter-spacing: -.025em; }
+.invitation[data-font='handwriting'] :is(.invite-letter-copy, .invite-verse p, .invite-blessing-copy, .invite-venue-pending > p, .invite-closing > .invite-preserve) { font-size: calc(17px * var(--invite-copy-scale)); line-height: 2; letter-spacing: 0; }
+.invitation[data-font='handwriting'] .invite-gallery-empty > p { font-size: calc(16px * var(--invite-copy-scale)); line-height: 1.8; }
+.invitation[data-font='handwriting'] .invite-korean-names { font-size: calc(30px * var(--invite-copy-scale)); letter-spacing: .04em; }
+.invitation[data-font='handwriting'] .invite-family-row strong { font-size: 20px; letter-spacing: 0; }
+.invitation[data-font='handwriting'] .invite-closing-script { font-size: calc(33px * var(--invite-copy-scale)); font-style: normal; }

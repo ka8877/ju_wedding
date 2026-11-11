@@ -8,6 +8,8 @@ import '@fontsource/noto-serif-kr/400.css';
 import '@fontsource/noto-sans-kr/400.css';
 import '@fontsource/noto-sans-kr/500.css';
 import '@fontsource/gowun-batang/400.css';
+import '@fontsource/nanum-myeongjo/400.css';
+import '@fontsource/nanum-pen-script/400.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);

@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 test('mobile invitation is honest about unknown event information and has no horizontal overflow', async ({ page }) => {
@@ -53,6 +54,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.getByLabel('계좌 1 예금주').fill('권주영');
   await page.getByLabel('계좌 1 계좌번호').fill('123-456');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   await page.getByRole('button', { name: /로지 모먼트/ }).click();
   await page.getByLabel('축복의 말씀 표시').check();
   await page.getByRole('button', { name: '미리보기에 적용' }).click();
@@ -61,6 +63,13 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await expect(page.locator('.invitation')).toHaveAttribute('data-theme', 'rose');
   await expect(page.getByText('2027년 5월 22일 토요일 오후 2:30').first()).toBeVisible();
   await expect(page.getByText('고린도전서 13:13')).toBeVisible();
+  const calendarDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: '캘린더에 저장', exact: true }).click();
+  const calendarFile = await calendarDownload;
+  const calendarPath = await calendarFile.path();
+  const calendar = await readFile(calendarPath!, 'utf8');
+  expect(calendar).toContain('DTSTART:20270522T053000Z');
+  expect(calendar).toContain('테스트 예식장');
   await page.getByRole('button', { name: /함께한 순간 1 1 크게 보기/ }).click();
   await expect(page.getByRole('dialog', { name: '웨딩 사진 크게 보기' })).toBeVisible();
   await page.keyboard.press('Escape');
@@ -83,6 +92,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
 test('publishing from the bottom of the design editor gives visible feedback and allows unknown event details', async ({ page }) => {
   await page.goto('/#/admin');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   await page.getByRole('button', { name: '블루 세레니티', exact: true }).click();
   await page.getByRole('button', { name: '백업 내려받기' }).scrollIntoViewIfNeeded();
   const scrollBefore = await page.evaluate(() => scrollY);
@@ -104,6 +114,7 @@ test('invalid input errors stay visible beside the publish button instead of hid
   await page.goto('/#/admin');
   await page.getByLabel('신부 이름', { exact: true }).fill('');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   await page.getByRole('button', { name: '백업 내려받기' }).scrollIntoViewIfNeeded();
   await page.getByRole('button', { name: '미리보기에 적용', exact: true }).click();
   const notice = page.getByRole('alert');

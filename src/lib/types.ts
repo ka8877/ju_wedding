@@ -18,10 +18,13 @@ export interface Venue {
 }
 export type ThemeId = 'olive' | 'rose' | 'sand' | 'ivory' | 'sage' | 'lavender' | 'midnight' | 'peach' | 'sky';
 export type TemplateId = 'garden' | 'editorial' | 'photo' | 'classic' | 'chapel' | 'letter';
+export type FontId = 'serif' | 'sans' | 'romantic' | 'myeongjo' | 'handwriting';
+export type BackgroundId = 'plain' | 'paper' | 'linen' | 'watercolor' | 'petals' | 'starlight';
 export type SectionId = 'invitation' | 'verse' | 'calendar' | 'gallery' | 'location' | 'accounts' | 'blessing';
 export interface WeddingDesign {
   template: TemplateId;
-  font: 'serif' | 'sans' | 'romantic';
+  font: FontId;
+  background: BackgroundId;
   fontSize: 'small' | 'normal' | 'large';
   accentColor: string;
   heroTitle: string;

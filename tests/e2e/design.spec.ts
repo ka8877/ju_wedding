@@ -5,6 +5,7 @@ test('couple can customize, undo, back up and restore their invitation without c
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/#/admin');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   await expect(page.getByRole('button', { name: /템플릿$/ })).toHaveCount(6);
   await page.getByRole('button', { name: '그레이스 채플 템플릿' }).click();
   const preview = page.locator('.editor-preview .invitation');
@@ -58,6 +59,7 @@ test('couple can customize, undo, back up and restore their invitation without c
   await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
   await page.reload();
   await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   await expect(page.getByLabel('첫 화면 큰 제목')).toHaveValue('주영과 현범,\n우리의 약속');
   await expect(preview).toHaveAttribute('data-template', 'editorial');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -68,6 +70,7 @@ test('all six styles render within a narrow phone preview', async ({ page }) => 
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto('/#/admin');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   const names = ['보태니컬 가든','에디토리얼','시네마틱 러브','타임리스 클래식','그레이스 채플','디어 마이 러브'];
   const ids = ['garden','editorial','photo','classic','chapel','letter'];
   for (const [index, name] of names.entries()) {

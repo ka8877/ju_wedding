@@ -1,5 +1,5 @@
 import type { WeddingData } from './types';
-import { defaultDesign, getDesign, palettes, sectionIds, templates } from './design.ts';
+import { backgrounds, defaultDesign, fonts, getDesign, palettes, sectionIds, templates } from './design.ts';
 
 export function publicImageUrl(value: string): boolean {
   if (!value) return true;
@@ -31,7 +31,7 @@ function isValidDesign(value: unknown): boolean {
   const d = value as WeddingData['design'];
   const text = (v: unknown, max = 1000) => typeof v === 'string' && v.length <= max;
   const sections = (v: unknown, full = false) => Array.isArray(v) && v.every(id => sectionIds.includes(id)) && new Set(v).size === v.length && (!full || v.length === sectionIds.length);
-  return templates.some(t => t.id === d.template) && ['serif','sans','romantic'].includes(d.font) && ['small','normal','large'].includes(d.fontSize)
+  return templates.some(t => t.id === d.template) && fonts.some(f => f.id === d.font) && backgrounds.some(b => b.id === d.background) && ['small','normal','large'].includes(d.fontSize)
     && typeof d.accentColor === 'string' && (d.accentColor === '' || /^#[0-9a-fA-F]{6}$/.test(d.accentColor))
     && text(d.heroTitle, 100) && text(d.heroSubtitle, 150) && text(d.closingTitle, 150)
     && ['arch','rectangle','oval'].includes(d.photoShape) && Number.isFinite(d.photoPosition) && d.photoPosition >= 0 && d.photoPosition <= 100
