@@ -9,10 +9,12 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:db": "node tests/db/check.mjs"
+    "test:db": "node tests/db/check.mjs",
+    "check:connection": "node scripts/check-supabase.mjs"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/gowun-batang": "^5.3.0",
     "@fontsource/noto-sans-kr": "^5.3.1",
     "@fontsource/noto-serif-kr": "^5.3.1",
     "@supabase/supabase-js": "^2.89.0",

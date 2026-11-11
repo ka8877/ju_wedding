@@ -1,4 +1,5 @@
 import type { WeddingData } from './types';
+import { defaultDesign } from './design';
 
 export const defaultWedding: WeddingData = {
   version: 1,
@@ -12,5 +13,5 @@ export const defaultWedding: WeddingData = {
   verseReference: '고린도전서 13:13',
   coverPhoto: '', photos: [],
   venue: { name: '', hall: '', address: '', lat: null, lng: null, transport: '', parking: '' },
-  accounts: [], theme: 'olive',
+  accounts: [], theme: 'olive', design: structuredClone(defaultDesign),
 };

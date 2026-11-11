@@ -1,4 +1,5 @@
 import type { WeddingData } from './types';
+import { defaultDesign, getDesign, palettes, sectionIds, templates } from './design.ts';
 
 export function publicImageUrl(value: string): boolean {
   if (!value) return true;
@@ -16,12 +17,42 @@ export function isWeddingData(value: unknown): value is WeddingData {
     && text(d.date, 10) && (!d.date || /^\d{4}-\d{2}-\d{2}$/.test(d.date))
     && text(d.time, 5) && (!d.time || /^([01]\d|2[0-3]):[0-5]\d$/.test(d.time))
     && ['invitation','closing','verse','verseReference'].every(k => text(d[k as keyof WeddingData]))
-    && typeof d.showVerse === 'boolean' && ['olive','rose','sand'].includes(d.theme)
+    && typeof d.showVerse === 'boolean' && palettes.some(p => p.id === d.theme)
     && text(d.coverPhoto, 16_000_000) && publicImageUrl(d.coverPhoto)
     && Array.isArray(d.photos) && d.photos.length <= 24 && d.photos.every(p => p && text(p.id, 100) && text(p.alt, 200) && text(p.url, 16_000_000) && publicImageUrl(p.url))
     && !!d.venue && ['name','hall','address','transport','parking'].every(k => text(d.venue[k as keyof typeof d.venue]))
     && coordinate(d.venue.lat, 90) && coordinate(d.venue.lng, 180)
-    && Array.isArray(d.accounts) && d.accounts.length <= 12 && d.accounts.every(a => a && ['groom','bride'].includes(a.side) && ['id','bank','number','holder'].every(k => text(a[k as keyof typeof a], 100)));
+    && Array.isArray(d.accounts) && d.accounts.length <= 12 && d.accounts.every(a => a && ['groom','bride'].includes(a.side) && ['id','bank','number','holder'].every(k => text(a[k as keyof typeof a], 100)))
+    && isValidDesign(d.design);
+}
+
+function isValidDesign(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const d = value as WeddingData['design'];
+  const text = (v: unknown, max = 1000) => typeof v === 'string' && v.length <= max;
+  const sections = (v: unknown, full = false) => Array.isArray(v) && v.every(id => sectionIds.includes(id)) && new Set(v).size === v.length && (!full || v.length === sectionIds.length);
+  return templates.some(t => t.id === d.template) && ['serif','sans','romantic'].includes(d.font) && ['small','normal','large'].includes(d.fontSize)
+    && typeof d.accentColor === 'string' && (d.accentColor === '' || /^#[0-9a-fA-F]{6}$/.test(d.accentColor))
+    && text(d.heroTitle, 100) && text(d.heroSubtitle, 150) && text(d.closingTitle, 150)
+    && ['arch','rectangle','oval'].includes(d.photoShape) && Number.isFinite(d.photoPosition) && d.photoPosition >= 0 && d.photoPosition <= 100
+    && ['mosaic','grid','film'].includes(d.galleryLayout) && typeof d.showDecoration === 'boolean'
+    && sections(d.sectionOrder, true) && sections(d.hiddenSections) && !!d.sectionTitles && typeof d.sectionTitles === 'object'
+    && ['invitation','gallery','location','accounts'].every(k => text(d.sectionTitles[k as keyof typeof d.sectionTitles], 100))
+    && typeof d.showBlessing === 'boolean' && text(d.blessingTitle, 150) && text(d.blessing, 3000);
+}
+
+/** Fill additive design defaults without losing any previously saved wedding information. */
+export function normalizeWedding(value: unknown): WeddingData {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('청첩장 파일 형식이 올바르지 않습니다.');
+  const raw = value as WeddingData;
+  if (raw.design !== undefined && (!raw.design || typeof raw.design !== 'object' || Array.isArray(raw.design))) throw new Error('디자인 설정 형식이 올바르지 않습니다.');
+  // Validate stored lists before normalization: never silently repair duplicate/unknown section IDs.
+  for (const list of [raw.design?.sectionOrder, raw.design?.hiddenSections]) {
+    if (list !== undefined && (!Array.isArray(list) || list.some(id => !sectionIds.includes(id)) || new Set(list).size !== list.length)) throw new Error('청첩장 섹션 설정이 올바르지 않습니다.');
+  }
+  const data = { ...raw, design: getDesign({ design: raw.design ?? structuredClone(defaultDesign) }) };
+  if (!isWeddingData(data)) throw new Error('청첩장 데이터 형식을 확인할 수 없습니다.');
+  return data;
 }
 
 export function publicationErrors(d: WeddingData): string[] {

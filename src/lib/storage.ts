@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { defaultWedding } from './defaults';
 import type { StoredWedding, WeddingData } from './types';
-import { isWeddingData, publicationErrors } from './validation';
+import { normalizeWedding, publicationErrors } from './validation';
+import { publicSupabaseConfig } from './public-config';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-export const cloudConfigured = Boolean(url && key);
+const url = (import.meta.env.VITE_SUPABASE_URL || publicSupabaseConfig.url) as string;
+const key = (import.meta.env.VITE_SUPABASE_ANON_KEY || publicSupabaseConfig.key) as string;
+export const cloudConfigured = import.meta.env.VITE_LOCAL_PREVIEW !== 'true' && Boolean(url && key);
 export const supabase = cloudConfigured ? createClient(url!, key!) : null;
 
 function openLocal(): Promise<IDBDatabase> {
@@ -40,8 +41,7 @@ async function localWrite(key: string, value: StoredWedding) {
 }
 const initial = (): StoredWedding => ({ data: structuredClone(defaultWedding), updatedAt: null });
 function checked(data: unknown): WeddingData {
-  if (!isWeddingData(data)) throw new Error('청첩장 데이터 형식을 확인할 수 없습니다. 관리자에게 문의해 주세요.');
-  return data;
+  return normalizeWedding(data);
 }
 export async function loadPublic(): Promise<StoredWedding> {
   if (!supabase) {
@@ -49,6 +49,9 @@ export async function loadPublic(): Promise<StoredWedding> {
     return value ? { ...value, data: checked(value.data) } : initial();
   }
   const { data, error } = await supabase.rpc('get_published_wedding');
+  // A newly created project has no wedding schema yet. Keep an explicitly
+  // unpublished invitation available; this never enables browser-local editing.
+  if (error?.code === 'PGRST202') return initial();
   if (error) throw new Error('청첩장을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
   if (!data?.length) return initial();
   return { data: checked(data[0].data), updatedAt: data[0].updated_at };
@@ -56,6 +59,7 @@ export async function loadPublic(): Promise<StoredWedding> {
 export async function requireAdmin(): Promise<void> {
   if (!supabase) return;
   const { data, error } = await supabase.rpc('is_wedding_admin');
+  if (error?.code === 'PGRST202') throw new Error('청첩장 초기 연결이 아직 준비되지 않았습니다. 처음 연결 안내에서 설정을 완료해 주세요.');
   if (error || data !== true) throw new Error('이 계정에는 관리 권한이 없습니다. 초대받은 관리자 계정으로 로그인해 주세요.');
 }
 export async function loadDraft(): Promise<StoredWedding> {

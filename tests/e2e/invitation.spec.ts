@@ -5,7 +5,7 @@ test('mobile invitation is honest about unknown event information and has no hor
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'With you, always.' })).toBeVisible();
   await expect(page.getByText('우리의 소중한 날을 준비하고 있어요')).toBeVisible();
-  await expect(page.getByRole('img', { name: /올리브 가지/ })).toBeVisible();
+  await expect(page.getByRole('img', { name: /웨딩 일러스트/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('link', { name: '우리 청첩장 관리' }).click();
   await expect(page.getByRole('heading', { name: /우리의 초대장을/ })).toBeVisible();
@@ -25,7 +25,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.getByLabel('예식 날짜', { exact: true }).fill('2027-05-22');
   await page.getByLabel(/^예식 시간/).fill('14:30');
   await page.getByRole('button', { name: '초안 저장', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('이 기기에 초안을 저장했어요');
+  await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
   await page.reload();
   await expect(page.getByLabel('예식 날짜', { exact: true })).toHaveValue('2027-05-22');
   await page.getByRole('button', { name: '사진', exact: true }).click();
@@ -56,7 +56,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.getByRole('button', { name: /로지 모먼트/ }).click();
   await page.getByLabel('축복의 말씀 표시').check();
   await page.getByRole('button', { name: '미리보기에 적용' }).click();
-  await expect(page.getByRole('status')).toContainText('이 기기의 미리보기에 반영했어요');
+  await expect(page.locator('.editor-notice')).toContainText('이 기기의 미리보기에 반영했어요');
   await page.goto('/');
   await expect(page.locator('.invitation')).toHaveAttribute('data-theme', 'rose');
   await expect(page.getByText('2027년 5월 22일 토요일 오후 2:30').first()).toBeVisible();
@@ -73,7 +73,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.goto('/#/admin');
   await page.getByLabel('신부 이름', { exact: true }).fill('다른이름');
   await page.getByRole('button', { name: '초안 저장', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('초안을 저장했어요');
+  await expect(page.locator('.editor-notice')).toContainText('초안을 저장했어요');
   await page.goto('/');
   await expect(page.locator('.invite-korean-names')).toContainText('권주영');
   await expect(page.locator('.invite-korean-names')).not.toContainText('다른이름');

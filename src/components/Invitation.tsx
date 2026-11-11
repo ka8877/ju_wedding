@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { ArrowDown, ArrowUpRight, Check, ChevronLeft, ChevronRight, Copy, Heart, MapPin, MessageCircle, Phone, Share2, X } from 'lucide-react';
-import type { WeddingData } from '../lib/types';
+import type { SectionId, WeddingData } from '../lib/types';
+import { getDesign, sectionIds } from '../lib/design';
 import { copyText } from '../lib/utils';
 import '../styles/invitation.css';
 
@@ -28,6 +30,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
   const contactDialog = useRef<HTMLDialogElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const root = useRef<HTMLElement>(null);
+  const design = getDesign(data);
   const date = weddingDate(data);
   const eventMillis = date?.getTime();
   const hasContacts = Boolean(data.groom.phone || data.bride.phone);
@@ -101,35 +104,34 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
   const daysInMonth = date ? new Date(Date.UTC(year, month, 0)).getUTCDate() : 0;
   const personRows = [data.groom, data.bride];
 
-  return (
-    <main className={`invitation${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} ref={root}>
-      <section className="invite-hero" aria-labelledby="wedding-title">
-        <div className="invite-masthead"><span>THE WEDDING OF</span><span className="invite-small-heart"><Heart size={12} strokeWidth={1.3} /> TWO HEARTS, ONE STORY</span></div>
-        <div className="invite-hero-heading">
-          <p className="invite-kicker">함께여서, 더 아름다운 날</p>
-          <h1 id="wedding-title">With you,<br /><em>always.</em><span className="invite-title-star" aria-hidden="true"><svg width="38" height="38" viewBox="0 0 40 40" fill="none"><path d="M20 2V38M2 20H38M7 7L33 33M7 33L33 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg></span></h1>
-          <p className="invite-english-names">{data.groom.englishName || data.groom.name} <span>&</span> {data.bride.englishName || data.bride.name}</p>
-        </div>
-        <div className={`invite-cover${data.coverPhoto ? ' invite-cover--photo' : ''}`}>
-          <img src={data.coverPhoto || `${import.meta.env.BASE_URL}botanical-still-life.svg`} alt={data.coverPhoto ? `${data.groom.name}와 ${data.bride.name}의 웨딩 사진` : '올리브 가지와 크림빛 꽃을 리본으로 묶은 웨딩 일러스트'} className="invite-cover-image" fetchPriority="high" />
-          {!data.coverPhoto && <span className="invite-cover-note">a little love, a lifetime together</span>}
-          <div className="invite-cover-stamp" aria-hidden="true"><span>TOGETHER</span><Heart size={19} strokeWidth={1} /><span>IS A BEAUTIFUL PLACE</span></div>
-        </div>
-        <div className="invite-hero-details">
-          <div className="invite-korean-names"><span>{data.groom.name}</span><span className="invite-name-divider">&</span><span>{data.bride.name}</span></div>
-          {date ? <p className="invite-hero-date">{dateLabel(date, data.time)}</p> : <p className="invite-hero-date invite-muted">우리의 소중한 날을 준비하고 있어요</p>}
-          {hasVenue && <p className="invite-hero-venue">{data.venue.name} {data.venue.hall}</p>}
-        </div>
-        <a href="#our-invitation" className="invite-scroll" onClick={event => {
-          event.preventDefault();
-          root.current?.querySelector('#our-invitation')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
-        }}><span>OUR STORY BEGINS</span><ArrowDown size={14} strokeWidth={1.2} /></a>
-      </section>
-
-      <section id="our-invitation" className="invite-section invite-letter invite-reveal">
-        <div className="invite-section-index"><span>01</span><i /><span>INVITATION</span></div>
-        <img src={`${import.meta.env.BASE_URL}olive-sprig.svg`} className="invite-sprig" alt="" />
-        <h2>우리, 결혼합니다.</h2>
+  const available: Record<SectionId, boolean> = { invitation: true, verse: Boolean(data.showVerse && data.verse), calendar: Boolean(date), gallery: true, location: true, accounts: data.accounts.length > 0, blessing: Boolean(design.showBlessing && design.blessing) };
+  const visibleSections = [...new Set([...design.sectionOrder, ...sectionIds])].filter(id => !design.hiddenSections.includes(id) && available[id]);
+  const sectionNumber = (id: SectionId) => String(visibleSections.indexOf(id) + 1).padStart(2, '0');
+  const decoration = design.showDecoration ? <img src={`${import.meta.env.BASE_URL}olive-sprig.svg`} className="invite-sprig" alt="" /> : null;
+  const initials = `${(data.groom.englishName || data.groom.name).slice(0, 1)} & ${(data.bride.englishName || data.bride.name).slice(0, 1)}`;
+  const title = <h1 id="wedding-title">{design.heroTitle.split('\n').map((line, i) => i === 0 ? <span className="invite-title-line" key={i}>{line || '\u00a0'}</span> : <em className="invite-title-line" key={i}>{line || '\u00a0'}</em>)}{design.showDecoration && design.template === 'garden' && <span className="invite-title-star" aria-hidden="true"><svg width="38" height="38" viewBox="0 0 40 40" fill="none"><path d="M20 2V38M2 20H38M7 7L33 33M7 33L33 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg></span>}</h1>;
+  const englishNames = <p className="invite-english-names">{data.groom.englishName || data.groom.name} <span>&</span> {data.bride.englishName || data.bride.name}</p>;
+  const heading = <div className="invite-hero-heading"><p className="invite-kicker invite-preserve">{design.heroSubtitle}</p>{title}{englishNames}</div>;
+  const details = <div className="invite-hero-details"><div className="invite-korean-names"><span>{data.groom.name}</span><span className="invite-name-divider">&</span><span>{data.bride.name}</span></div>{date ? <p className="invite-hero-date">{dateLabel(date, data.time)}</p> : <p className="invite-hero-date invite-muted">우리의 소중한 날을 준비하고 있어요</p>}{hasVenue && <p className="invite-hero-venue">{data.venue.name} {data.venue.hall}</p>}</div>;
+  const art = { garden: 'botanical-still-life.svg', editorial: 'editorial-flower.svg', photo: 'cinematic-garden.svg', classic: 'editorial-flower.svg', chapel: 'chapel-window.svg', letter: 'love-letter.svg' }[design.template];
+  const cover = <div className={`invite-cover${data.coverPhoto ? ' invite-cover--photo' : ' invite-cover--illustration'}`}><img src={data.coverPhoto || `${import.meta.env.BASE_URL}${art}`} alt={data.coverPhoto ? `${data.groom.name}와 ${data.bride.name}의 웨딩 사진` : '사진을 등록하기 전, 사랑의 시작을 담은 웨딩 일러스트'} className="invite-cover-image" fetchPriority="high" style={{ objectPosition: `center ${design.photoPosition}%` }} />{!data.coverPhoto && design.showDecoration && design.template === 'garden' && <span className="invite-cover-note">a little love, a lifetime together</span>}{design.showDecoration && design.template === 'garden' && <div className="invite-cover-stamp" aria-hidden="true"><span>TOGETHER</span><Heart size={19} strokeWidth={1} /><span>IS A BEAUTIFUL PLACE</span></div>}</div>;
+  const masthead = <div className="invite-masthead"><span>THE WEDDING OF</span><span className="invite-small-heart">{design.showDecoration && <Heart size={12} strokeWidth={1.3} />} TWO HEARTS, ONE STORY</span></div>;
+  const scroll = visibleSections.length > 0 ? <a href="#our-invitation" className="invite-scroll" onClick={event => { event.preventDefault(); root.current?.querySelector('.invite-content-section')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }}><span>OUR STORY BEGINS</span><ArrowDown size={14} strokeWidth={1.2} /></a> : null;
+  const cross = <svg className="invite-chapel-cross" width="25" height="34" viewBox="0 0 25 34" fill="none" aria-hidden="true"><path d="M12.5 1V33M1 11H24" stroke="currentColor" strokeWidth="1.3" /></svg>;
+  const heroLayouts = {
+    garden: <>{masthead}{heading}{cover}{details}{scroll}</>,
+    editorial: <>{masthead}<div className="invite-editorial-meta"><span>A CELEBRATION OF LOVE</span><span>{date ? `${year} / ${String(month).padStart(2, '0')}` : 'OUR FIRST ISSUE'}</span></div>{heading}<div className="invite-editorial-photo">{cover}<span className="invite-editorial-caption">FIG. 01 — THE BEGINNING OF FOREVER</span></div>{details}{scroll}</>,
+    photo: <><div className="invite-cinematic-frame">{cover}<div className="invite-cinematic-shade" /><div className="invite-cinematic-content">{masthead}{heading}{details}<span className="invite-cinematic-caption">A LOVE STORY, OURS TO TELL</span></div></div>{scroll}</>,
+    classic: <>{masthead}<div className="invite-classic-border">{design.showDecoration && <div className="invite-monogram" aria-hidden="true">{initials}</div>}{heading}{cover}{details}<span className="invite-classic-caption">REQUEST THE HONOUR OF YOUR PRESENCE</span></div>{scroll}</>,
+    chapel: <>{masthead}<div className="invite-chapel-heading">{cross}<span>BY GRACE, THROUGH LOVE</span></div>{heading}<div className="invite-chapel-window">{cover}</div>{details}{scroll}</>,
+    letter: <>{masthead}<div className="invite-letter-heading"><span className="invite-letter-to">To. 소중한 당신에게</span>{heading}</div><div className="invite-envelope">{cover}{design.showDecoration && <span className="invite-wax-seal" aria-hidden="true"><Heart size={19} strokeWidth={1} /></span>}</div>{details}<div className="invite-letter-signoff"><span>with all our love,</span>{englishNames}</div>{scroll}</>,
+  };
+  const style = { ...(design.accentColor && /^#[0-9a-f]{6}$/i.test(design.accentColor) ? { '--invite-accent': design.accentColor } : {}) } as CSSProperties;
+  const sections: Record<SectionId, ReactNode> = {
+    invitation: (<section data-section="invitation" id="our-invitation" className="invite-section invite-letter invite-reveal invite-content-section">
+        <div className="invite-section-index"><span>{sectionNumber('invitation')}</span><i /><span>INVITATION</span></div>
+        {decoration}
+        <h2>{design.sectionTitles.invitation}</h2>
         <p className="invite-preserve invite-letter-copy">{data.invitation}</p>
         <div className="invite-family">
           {personRows.map((person, index) => <div className="invite-family-row" key={index}>
@@ -139,12 +141,10 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           </div>)}
         </div>
         {hasContacts && <button className="invite-outline-button" onClick={() => setContactOpen(true)}><Phone size={14} strokeWidth={1.4} />축하의 연락 전하기</button>}
-      </section>
-
-      {data.showVerse && data.verse && <section className="invite-verse invite-reveal"><span className="invite-verse-cross" aria-hidden="true">✝</span><p className="invite-preserve">{data.verse}</p><small>{data.verseReference}</small></section>}
-
-      {date && <section className="invite-section invite-calendar-section invite-reveal">
-        <div className="invite-section-index"><span>02</span><i /><span>OUR DAY</span></div>
+      </section>),
+    verse: (data.showVerse && data.verse && <section data-section="verse" className="invite-verse invite-reveal invite-content-section"><span className="invite-verse-cross" aria-hidden="true"><svg width="18" height="24" viewBox="0 0 18 24" fill="none"><path d="M9 1V23M1 8H17" stroke="currentColor" strokeWidth="1.5" /></svg></span><p className="invite-preserve">{data.verse}</p><small>{data.verseReference}</small></section>),
+    calendar: (date && <section data-section="calendar" className="invite-section invite-calendar-section invite-reveal invite-content-section">
+        <div className="invite-section-index"><span>{sectionNumber('calendar')}</span><i /><span>OUR DAY</span></div>
         <h2 className="invite-calendar-title">{String(year)}<span>.</span>{String(month).padStart(2, '0')}<span>.</span>{String(day).padStart(2, '0')}</h2>
         <p className="invite-subtitle">{dateLabel(date, data.time)}</p>
         <div className="invite-calendar" aria-label={`${year}년 ${month}월 달력`}>
@@ -152,18 +152,16 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           <div className="invite-calendar-grid">{Array.from({ length: firstDay }, (_, i) => <span key={`blank-${i}`} />)}{Array.from({ length: daysInMonth }, (_, i) => <span key={i + 1} className={`${i + 1 === day ? 'is-wedding-day' : ''} ${(firstDay + i) % 7 === 0 ? 'is-sunday' : ''}`} aria-label={i + 1 === day ? `${i + 1}일, 결혼식` : undefined}>{i + 1 === day && <Heart size={38} fill="currentColor" strokeWidth={0} className="invite-calendar-heart" />}<span>{i + 1}</span></span>)}</div>
         </div>
         {remaining > 0 ? <><div className="invite-countdown"><div><strong>{String(days).padStart(2, '0')}</strong><span>DAYS</span></div><i>:</i><div><strong>{String(hours).padStart(2, '0')}</strong><span>HOURS</span></div><i>:</i><div><strong>{String(minutes).padStart(2, '0')}</strong><span>MINUTES</span></div></div><p className="invite-countdown-note">두 사람이 하나 되는 날까지 <strong>{Math.ceil(remaining / 86_400_000)}일</strong></p></> : <p className="invite-countdown-note">우리의 시작을 함께 축복해 주셔서 감사합니다.</p>}
-      </section>}
-
-      <section id="our-moments" className="invite-section invite-gallery-section invite-reveal">
-        <div className="invite-section-index"><span>{date ? '03' : '02'}</span><i /><span>OUR MOMENTS</span></div>
-        <h2>사랑이 머문 순간들</h2>
+      </section>),
+    gallery: (<section data-section="gallery" id="our-moments" className="invite-section invite-gallery-section invite-reveal invite-content-section">
+        <div className="invite-section-index"><span>{sectionNumber('gallery')}</span><i /><span>OUR MOMENTS</span></div>
+        <h2>{design.sectionTitles.gallery}</h2>
         <p className="invite-subtitle">평범한 날들이, 당신과 함께 특별해졌습니다.</p>
-        {data.photos.length > 0 ? <div className="invite-gallery">{data.photos.map((photo, index) => <button className={`invite-gallery-item${index % 5 === 0 ? ' invite-gallery-item--wide' : ''}`} key={photo.id} onClick={() => setLightbox(index)} aria-label={`${photo.alt || '웨딩 사진'} ${index + 1} 크게 보기`}><img src={photo.url} alt={photo.alt || `함께한 순간 ${index + 1}`} loading="lazy" /><span><ArrowUpRight size={20} /></span></button>)}</div> : <div className="invite-gallery-empty"><div className="invite-empty-frame"><Heart size={21} strokeWidth={1} /><span>our moments</span></div><p>소중한 순간들을<br />곧 이곳에 담아둘게요.</p></div>}
-      </section>
-
-      <section id="location" className="invite-section invite-location-section invite-reveal">
-        <div className="invite-section-index"><span>{date ? '04' : '03'}</span><i /><span>LOCATION</span></div>
-        <h2>마음이 만나는 곳</h2>
+        {data.photos.length > 0 ? <div className={`invite-gallery invite-gallery--${design.galleryLayout}`}>{data.photos.map((photo, index) => <button className={`invite-gallery-item${design.galleryLayout === 'mosaic' && index % 5 === 0 ? ' invite-gallery-item--wide' : ''}`} key={photo.id} onClick={() => setLightbox(index)} aria-label={`${photo.alt || '웨딩 사진'} ${index + 1} 크게 보기`}><img src={photo.url} alt={photo.alt || `함께한 순간 ${index + 1}`} loading="lazy" /><span><ArrowUpRight size={20} /></span></button>)}</div> : <div className="invite-gallery-empty"><div className="invite-empty-frame"><Heart size={21} strokeWidth={1} /><span>our moments</span></div><p>소중한 순간들을<br />곧 이곳에 담아둘게요.</p></div>}
+      </section>),
+    location: (<section data-section="location" id="location" className="invite-section invite-location-section invite-reveal invite-content-section">
+        <div className="invite-section-index"><span>{sectionNumber('location')}</span><i /><span>LOCATION</span></div>
+        <h2>{design.sectionTitles.location}</h2>
         {hasVenue ? <>
           <h3 className="invite-venue-name">{data.venue.name}</h3>
           {data.venue.hall && <p className="invite-venue-hall">{data.venue.hall}</p>}
@@ -172,15 +170,19 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           <div className="invite-map-links"><a href={`https://map.naver.com/p/search/${venueQuery}`} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--naver">N</span>네이버 지도<ArrowUpRight size={13} /></a><a href={`https://map.kakao.com/?q=${venueQuery}`} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--kakao">K</span>카카오맵<ArrowUpRight size={13} /></a></div>
           {(data.venue.transport || data.venue.parking) && <div className="invite-directions">{data.venue.transport && <div><h4>대중교통 안내</h4><p className="invite-preserve">{data.venue.transport}</p></div>}{data.venue.parking && <div><h4>주차 안내</h4><p className="invite-preserve">{data.venue.parking}</p></div>}</div>}
         </> : <div className="invite-venue-pending"><MapPin size={25} strokeWidth={1} /><p>소중한 분들을 모실 공간을<br />정성껏 준비하고 있어요.</p><span>장소가 정해지면 이곳에서 안내드릴게요.</span></div>}
-      </section>
-
-      {data.accounts.length > 0 && <section className="invite-section invite-accounts invite-reveal"><div className="invite-section-index"><span>WITH LOVE</span><i /><Heart size={12} strokeWidth={1.2} /></div><h2>마음 전하실 곳</h2><p className="invite-subtitle">보내주시는 따뜻한 마음, 소중히 간직하겠습니다.</p>{(['groom', 'bride'] as const).map(side => {
+      </section>),
+    accounts: (data.accounts.length > 0 && <section data-section="accounts" className="invite-section invite-accounts invite-reveal invite-content-section"><div className="invite-section-index"><span>WITH LOVE</span><i /><Heart size={12} strokeWidth={1.2} /></div><h2>{design.sectionTitles.accounts}</h2><p className="invite-subtitle">보내주시는 따뜻한 마음, 소중히 간직하겠습니다.</p>{(['groom', 'bride'] as const).map(side => {
         const accounts = data.accounts.filter(account => account.side === side);
         if (!accounts.length) return null;
         return <details className="invite-account-group" key={side}><summary>{side === 'groom' ? '신랑' : '신부'}측 계좌번호<span>+</span></summary><div>{accounts.map(account => <div className="invite-account" key={account.id}><div><strong>{account.bank} <span>{account.number}</span></strong><span>{account.holder}</span></div><button onClick={() => copy(account.number, '계좌번호를 복사했어요')} aria-label={`${account.holder} 계좌번호 복사`}><Copy size={13} />복사</button></div>)}</div></details>;
-      })}</section>}
-
-      <footer className="invite-closing invite-reveal"><img src={`${import.meta.env.BASE_URL}olive-sprig.svg`} className="invite-sprig" alt="" /><p className="invite-preserve">{data.closing}</p><span className="invite-closing-script">Forever begins with us.</span><div className="invite-closing-names">{data.groom.name}<Heart size={10} strokeWidth={1.2} />{data.bride.name}</div><button className="invite-share" onClick={share}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button><div className="invite-footer-mark"><span>WITH LOVE,</span><strong>{data.groom.englishName || data.groom.name} & {data.bride.englishName || data.bride.name}</strong></div></footer>
+      })}</section>),
+    blessing: (<section data-section="blessing" className="invite-section invite-blessing invite-reveal invite-content-section"><div className="invite-section-index"><span>{sectionNumber('blessing')}</span><i /><span>A PRAYER FOR US</span></div>{cross}<h2>{design.blessingTitle}</h2><p className="invite-preserve invite-blessing-copy">{design.blessing}</p><span className="invite-blessing-amen">Amen.</span></section>),
+  };
+  return (
+    <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} style={style} ref={root}>
+      <section className="invite-hero" aria-labelledby="wedding-title">{heroLayouts[design.template]}</section>
+      {visibleSections.map(id => <div key={id} className="invite-section-wrapper">{sections[id]}</div>)}
+      <footer className="invite-closing invite-reveal">{decoration}<p className="invite-preserve">{data.closing}</p><span className="invite-closing-script invite-preserve">{design.closingTitle}</span><div className="invite-closing-names">{data.groom.name}<Heart size={10} strokeWidth={1.2} />{data.bride.name}</div><button className="invite-share" onClick={share}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button><div className="invite-footer-mark"><span>WITH LOVE,</span><strong>{data.groom.englishName || data.groom.name} & {data.bride.englishName || data.bride.name}</strong></div></footer>
 
       {copied && <div className="invite-toast" role="status"><Check size={15} />{copied}</div>}
       <dialog className="invite-lightbox" ref={galleryDialog} onCancel={() => setLightbox(null)} onClick={event => { if (event.target === event.currentTarget) setLightbox(null); }} onKeyDown={event => { if (lightbox === null) return; if (event.key === 'ArrowRight') setLightbox((lightbox + 1) % data.photos.length); if (event.key === 'ArrowLeft') setLightbox((lightbox - 1 + data.photos.length) % data.photos.length); }} aria-label="웨딩 사진 크게 보기"><button className="invite-dialog-close" aria-label="사진 닫기" onClick={() => setLightbox(null)}><X size={24} /></button>{lightbox !== null && data.photos[lightbox] && <><img src={data.photos[lightbox].url} alt={data.photos[lightbox].alt || '웨딩 사진'} /><div className="invite-lightbox-controls"><button aria-label="이전 사진" onClick={() => setLightbox((lightbox - 1 + data.photos.length) % data.photos.length)}><ChevronLeft size={23} /></button><span>{lightbox + 1} / {data.photos.length}</span><button aria-label="다음 사진" onClick={() => setLightbox((lightbox + 1) % data.photos.length)}><ChevronRight size={23} /></button></div></>}</dialog>

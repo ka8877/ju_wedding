@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { ArrowLeft, ArrowUpRight, Flower2, LockKeyhole, LoaderCircle } from 'lucide-react';
 import Invitation from './components/Invitation';
 const Admin = lazy(() => import('./components/Admin'));
+const SetupGuide = lazy(() => import('./components/SetupGuide'));
 import { defaultWedding } from './lib/defaults';
 import type { WeddingData } from './lib/types';
 import { cloudConfigured, loadDraft, loadPublic, publishWedding, saveDraft, supabase, uploadPhoto } from './lib/storage';
@@ -35,7 +36,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         {error && <p className="app-error" role="alert">{error}</p>}
         <button className="app-button" disabled={busy}>{busy ? <LoaderCircle size={17} className="app-spin" /> : <LockKeyhole size={16} />}{busy ? '로그인 중…' : '우리 청첩장 꾸미기'}</button>
       </form>
-      <small>계정 정보가 기억나지 않으면 청첩장을 준비한 가족에게 문의해 주세요.</small>
+      <small>계정 정보가 기억나지 않으면 청첩장을 준비한 가족에게 문의해 주세요.<br /><a href="#/setup">처음 연결하는 가족을 위한 안내</a></small>
     </section>
     <div className="login-signature">Hyunbeom & Juyoung</div>
   </main>;
@@ -43,6 +44,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(() => window.location.hash.startsWith('#/admin'));
+  const [setupOpen, setSetupOpen] = useState(() => window.location.hash.startsWith('#/setup'));
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(!supabase);
   const [publicData, setPublicData] = useState<WeddingData>(structuredClone(defaultWedding));
@@ -54,9 +56,13 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [past, setPast] = useState<WeddingData[]>([]);
+  const [future, setFuture] = useState<WeddingData[]>([]);
+  const savedRef = useRef<WeddingData | null>(null);
   const dataRef = useRef(data); dataRef.current = data;
   const dirtyRef = useRef(dirty); dirtyRef.current = dirty;
   const loadedRoute = useRef(isAdmin);
+  const loadRequest = useRef(0);
 
   useEffect(() => {
     const onHash = () => {
@@ -64,7 +70,8 @@ export default function App() {
       if (loadedRoute.current && !next && dirtyRef.current && !window.confirm('저장하지 않은 수정 내용이 있어요. 청첩장으로 나갈까요?')) {
         history.replaceState(null, '', '#/admin'); return;
       }
-      loadedRoute.current = next; setIsAdmin(next);
+      if (next !== loadedRoute.current) loadRequest.current += 1;
+      loadedRoute.current = next; setIsAdmin(next); setSetupOpen(window.location.hash.startsWith('#/setup'));
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
@@ -91,17 +98,22 @@ export default function App() {
     setPublicData(result.data); setPublicPublished(Boolean(result.updatedAt));
   }, []);
   const load = useCallback(async () => {
+    const request = ++loadRequest.current;
     if (!authReady) return;
     if (isAdmin && cloudConfigured && !session) { setLoading(false); setLoadError(''); return; }
     setLoading(true); setLoadError('');
     try {
       if (isAdmin) {
-        const result = await loadDraft(); setData(result.data); setLastSaved(result.updatedAt); setDirty(false);
-      } else { await refreshPublic(); }
-    } catch (e) { setLoadError(e instanceof Error ? e.message : '불러오지 못했습니다.'); }
-    finally { setLoading(false); }
+        const result = await loadDraft(); if (request !== loadRequest.current) return;
+        setData(result.data); dataRef.current = result.data; savedRef.current = result.data; setLastSaved(result.updatedAt); setDirty(false); setPast([]); setFuture([]);
+      } else {
+        const result = await loadPublic(); if (request !== loadRequest.current) return;
+        setPublicData(result.data); setPublicPublished(Boolean(result.updatedAt));
+      }
+    } catch (e) { if (request === loadRequest.current) setLoadError(e instanceof Error ? e.message : '불러오지 못했습니다.'); }
+    finally { if (request === loadRequest.current) setLoading(false); }
   }, [authReady, isAdmin, session?.user.id, refreshPublic]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(); return () => { loadRequest.current += 1; }; }, [load]);
   useEffect(() => {
     if (isAdmin) return;
     const refresh = () => { if (document.visibilityState === 'visible') void refreshPublic().catch(() => { /* Keep the current invitation during transient refresh failures. */ }); };
@@ -118,19 +130,26 @@ export default function App() {
     if (result?.error) { setLoadError('로그아웃하지 못했습니다. 다시 시도해 주세요.'); return; }
     setDirty(false); window.location.hash = '#/';
   };
+  if (setupOpen) return <Suspense fallback={<main className="app-loading">연결 안내를 불러오고 있어요.</main>}><SetupGuide /></Suspense>;
   if (isAdmin && cloudConfigured && authReady && !session) return <Login onLogin={() => { void load(); }} />;
   if (loading || !authReady) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><p>소중한 이야기를 불러오고 있어요.</p></main>;
-  if (loadError) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><h1>잠시만 기다려 주세요.</h1><p role="alert">{loadError}</p><button className="app-button" onClick={() => { void load(); }}>다시 불러오기</button>{isAdmin && <button className="app-text-button" onClick={() => { void logout(); }}>청첩장으로 돌아가기 / 로그아웃</button>}</main>;
+  if (loadError) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><h1>잠시만 기다려 주세요.</h1><p role="alert">{loadError}</p><button className="app-button" onClick={() => { void load(); }}>다시 불러오기</button>{isAdmin && <><a className="app-text-button" href="#/setup">처음 연결하는 가족을 위한 안내</a><button className="app-text-button" onClick={() => { void logout(); }}>청첩장으로 돌아가기 / 로그아웃</button></>}</main>;
 
-  if (isAdmin) return <Suspense fallback={<main className="app-loading">관리 화면을 불러오고 있어요.</main>}><Admin data={data} onChange={next => { setData(next); setDirty(true); }}
+  if (isAdmin) return <Suspense fallback={<main className="app-loading">관리 화면을 불러오고 있어요.</main>}><Admin data={data} onChange={next => {
+    const previous = dataRef.current; if (next === previous) return;
+    setPast(items => [...items.slice(-29), previous]); setFuture([]); dataRef.current = next; setData(next); setDirty(next !== savedRef.current);
+  }}
+    onUndo={() => { const previous = past.at(-1); if (!previous) return; const current = dataRef.current; setFuture(items => [current, ...items]); setPast(items => items.slice(0, -1)); dataRef.current = previous; setData(previous); setDirty(previous !== savedRef.current); }}
+    onRedo={() => { const next = future[0]; if (!next) return; const current = dataRef.current; setPast(items => [...items.slice(-29), current]); setFuture(items => items.slice(1)); dataRef.current = next; setData(next); setDirty(next !== savedRef.current); }}
+    canUndo={past.length > 0} canRedo={future.length > 0} isDirty={dirty}
     onSave={async () => {
       const snapshot = dataRef.current; setSaving(true);
-      try { setLastSaved(await saveDraft(snapshot)); if (dataRef.current === snapshot) setDirty(false); }
+      try { setLastSaved(await saveDraft(snapshot)); savedRef.current = snapshot; if (dataRef.current === snapshot) setDirty(false); }
       finally { setSaving(false); }
     }}
     onPublish={async () => {
       const snapshot = dataRef.current; setPublishing(true);
-      try { setLastSaved(await publishWedding(snapshot)); if (dataRef.current === snapshot) setDirty(false); await refreshPublic(); }
+      try { setLastSaved(await publishWedding(snapshot)); savedRef.current = snapshot; if (dataRef.current === snapshot) setDirty(false); await refreshPublic(); }
       finally { setPublishing(false); }
     }}
     onUpload={uploadPhoto} saving={saving} publishing={publishing} mode={cloudConfigured ? 'cloud' : 'local'} onLogout={() => { void logout(); }} lastSaved={lastSaved}

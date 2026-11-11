@@ -1,0 +1,94 @@
+import { readFile } from 'node:fs/promises';
+import { expect, test } from '@playwright/test';
+
+test('couple can customize, undo, back up and restore their invitation without code changes', async ({ page }, testInfo) => {
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await expect(page.getByRole('button', { name: /템플릿$/ })).toHaveCount(6);
+  await page.getByRole('button', { name: '그레이스 채플 템플릿' }).click();
+  const preview = page.locator('.editor-preview .invitation');
+  await expect(preview).toHaveAttribute('data-template', 'chapel');
+  await expect(page.getByRole('checkbox', { name: '축복의 말씀 표시', exact: true })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: '축복의 기도 표시', exact: true })).toBeChecked();
+  await page.getByLabel('첫 화면 큰 제목').fill('주영과 현범,\n우리의 약속');
+  await page.getByRole('button', { name: '에디토리얼 템플릿' }).click();
+  await expect(page.getByLabel('첫 화면 큰 제목')).toHaveValue('주영과 현범,\n우리의 약속');
+  await page.getByRole('button', { name: '실행 취소', exact: true }).click();
+  await expect(preview).toHaveAttribute('data-template', 'chapel');
+  await page.getByRole('button', { name: '다시 실행', exact: true }).click();
+  await expect(preview).toHaveAttribute('data-template', 'editorial');
+  await page.getByRole('button', { name: '미드나잇 블루', exact: true }).click();
+  await page.getByRole('button', { name: '로맨틱 레터', exact: true }).click();
+  await page.getByRole('button', { name: '글자 크기 크게', exact: true }).click();
+  await page.getByRole('button', { name: '첫 화면 사진 타원형', exact: true }).click();
+  await page.getByRole('button', { name: '갤러리 필름', exact: true }).click();
+  await page.getByLabel('축복 기도 내용').fill('서로를 아끼며 사랑을 나누게 하소서.');
+  await page.locator('summary').filter({ hasText: '청첩장의 순서와 제목' }).click();
+  await page.getByRole('checkbox', { name: '오시는 길 섹션 표시', exact: true }).uncheck();
+  await page.getByRole('button', { name: '사진 갤러리 위로 이동' }).click();
+  await page.getByLabel('사진 갤러리 제목').fill('우리가 함께한 날들');
+  await expect(preview).toHaveAttribute('data-theme', 'midnight');
+  await expect(preview).toHaveAttribute('data-font', 'romantic');
+  await expect(preview).toHaveAttribute('data-font-size', 'large');
+  await expect(preview).toHaveAttribute('data-photo-shape', 'oval');
+  expect(await preview.locator('[data-section]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-section')))).toEqual(['invitation','verse','gallery','blessing']);
+  await expect(preview.locator('[data-section="gallery"] h2')).toHaveText('우리가 함께한 날들');
+  await page.getByRole('button', { name: '미리보기', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '청첩장 실시간 미리보기' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: '청첩장 실시간 미리보기' })).not.toBeVisible();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: '백업 내려받기' }).click();
+  const file = await downloaded; const path = testInfo.outputPath('invitation-backup.json'); await file.saveAs(path);
+  const exported = JSON.parse(await readFile(path, 'utf8'));
+  expect(exported.wedding.bride.name).toBe('권주영');
+  expect(exported.wedding.design.template).toBe('editorial');
+  expect(exported).not.toHaveProperty('key');
+  await page.getByLabel('첫 화면 큰 제목').fill('바꾸기 전으로 돌아가기');
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByLabel('청첩장 백업 파일 선택').setInputFiles(path);
+  await expect(page.getByLabel('첫 화면 큰 제목')).toHaveValue('주영과 현범,\n우리의 약속');
+  await page.getByRole('button', { name: '실행 취소', exact: true }).click();
+  await expect(page.getByLabel('첫 화면 큰 제목')).toHaveValue('바꾸기 전으로 돌아가기');
+  await page.getByRole('button', { name: '다시 실행', exact: true }).click();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
+  await page.reload();
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await expect(page.getByLabel('첫 화면 큰 제목')).toHaveValue('주영과 현범,\n우리의 약속');
+  await expect(preview).toHaveAttribute('data-template', 'editorial');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('all six styles render within a narrow phone preview', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  const names = ['보태니컬 가든','에디토리얼','시네마틱 러브','타임리스 클래식','그레이스 채플','디어 마이 러브'];
+  const ids = ['garden','editorial','photo','classic','chapel','letter'];
+  for (const [index, name] of names.entries()) {
+    await page.getByRole('button', { name: `${name} 템플릿` }).click();
+    await expect(page.locator('.editor-preview .invitation')).toHaveAttribute('data-template', ids[index]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
+test('owner setup guide supplies initialization SQL without requesting passwords or private keys', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/#/setup');
+  await expect(page.getByRole('heading', { name: /처음 한 번만 연결하면/ })).toBeVisible();
+  await page.getByRole('button', { name: '초기 설정 SQL 복사' }).click();
+  const schema = await page.evaluate(() => navigator.clipboard.readText());
+  expect(schema).toContain('enable row level security');
+  expect(schema).toContain('get_published_wedding');
+  await page.getByLabel('관리자 이메일').fill("a'b@example.com");
+  await page.getByRole('button', { name: '관리자 권한 SQL 복사' }).click();
+  const membership = await page.evaluate(() => navigator.clipboard.readText());
+  expect(membership).toContain("lower('a''b@example.com')");
+  expect(membership).toContain('administrator_registered');
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
+});

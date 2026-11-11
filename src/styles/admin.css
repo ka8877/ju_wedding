@@ -8,3 +8,8 @@
 @media(prefers-reduced-motion:reduce){.admin-app *{animation:none!important;transition:none!important}}
 
 .editor-map-attribution a{text-decoration:underline;text-underline-offset:2px}.editor-map-attribution a:hover{color:#63774f}
+
+.editor-history-actions{display:flex;gap:17px;padding-right:23px;border-right:1px solid #e5e9dc}.editor-history-actions .editor-text-button{font-size:10px;gap:5px}.editor-history-actions .editor-text-button:disabled{opacity:.3}
+@media(max-width:1000px){.editor-history-actions .editor-text-button>span{display:none}.editor-history-actions{gap:16px;padding-right:20px}}
+@media(max-width:650px){.editor-topbar-actions{gap:14px}.editor-history-actions{gap:13px;padding-right:13px}.editor-history-actions .editor-text-button>svg{width:15px;height:15px}.editor-topbar-actions>.editor-text-button>span{display:none}.editor-topbar-actions>.editor-text-button>svg{width:15px;height:15px}}
+.editor-toggle>span{pointer-events:none}.admin-app :is(input,textarea,button,select,summary){scroll-margin-top:100px;scroll-margin-bottom:120px}

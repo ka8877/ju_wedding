@@ -16,6 +16,28 @@ export interface Venue {
   transport: string;
   parking: string;
 }
+export type ThemeId = 'olive' | 'rose' | 'sand' | 'ivory' | 'sage' | 'lavender' | 'midnight' | 'peach' | 'sky';
+export type TemplateId = 'garden' | 'editorial' | 'photo' | 'classic' | 'chapel' | 'letter';
+export type SectionId = 'invitation' | 'verse' | 'calendar' | 'gallery' | 'location' | 'accounts' | 'blessing';
+export interface WeddingDesign {
+  template: TemplateId;
+  font: 'serif' | 'sans' | 'romantic';
+  fontSize: 'small' | 'normal' | 'large';
+  accentColor: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  closingTitle: string;
+  photoShape: 'arch' | 'rectangle' | 'oval';
+  photoPosition: number;
+  galleryLayout: 'mosaic' | 'grid' | 'film';
+  showDecoration: boolean;
+  sectionOrder: SectionId[];
+  hiddenSections: SectionId[];
+  sectionTitles: { invitation: string; gallery: string; location: string; accounts: string; };
+  showBlessing: boolean;
+  blessingTitle: string;
+  blessing: string;
+}
 export interface WeddingData {
   version: 1;
   groom: Person;
@@ -31,6 +53,7 @@ export interface WeddingData {
   photos: Photo[];
   venue: Venue;
   accounts: Account[];
-  theme: 'olive' | 'rose' | 'sand';
+  theme: ThemeId;
+  design: WeddingDesign;
 }
 export interface StoredWedding { data: WeddingData; updatedAt: string | null; }
