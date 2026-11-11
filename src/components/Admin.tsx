@@ -65,7 +65,7 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
   const [uploading, setUploading] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [actionPending, setActionPending] = useState(false);
-  const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string; title?: string; action?: 'save' | 'publish' } | null>(null);
   const [placeQuery, setPlaceQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -76,6 +76,10 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
   const searchRequest = useRef<AbortController | null>(null);
   const lastSearchAt = useRef(0);
   const previewRef = useRef<HTMLElement>(null);
+  const noticeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (message) noticeRef.current?.focus({ preventScroll: true });
+  }, [message]);
   useEffect(() => {
     if (!showPreview) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -104,11 +108,13 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
     setActionPending(true); setMessage(null);
     try {
       await (action === 'save' ? onSave() : onPublish());
-      setMessage({ kind: 'success', text: mode === 'local'
-        ? (action === 'save' ? '이 기기에 초안을 저장했어요. 공개 URL에는 반영되지 않습니다.' : '이 기기의 미리보기에 반영했어요. 공개 URL에는 반영되지 않습니다.')
-        : (action === 'save' ? '초안을 안전하게 저장했어요. 준비되면 공개 청첩장에 반영해 주세요.' : '공개 청첩장에 반영했어요. 이제 같은 주소에서 새 내용을 볼 수 있어요.') });
+      const pending = [!data.date && '날짜', !data.time && '시간', (!data.venue.name.trim() || !data.venue.address.trim()) && '장소'].filter(Boolean);
+      const pendingNote = pending.length ? `\n미정인 ${pending.join('·')} 정보는 준비 중으로 표시됩니다.` : '';
+      setMessage({ kind: 'success', action, title: action === 'save' ? '초안을 저장했어요' : mode === 'local' ? '이 기기의 미리보기에 적용했어요' : '공개 반영을 확인했어요', text: mode === 'local'
+        ? (action === 'save' ? '이 기기에 초안을 저장했어요. 공개 URL에는 반영되지 않습니다.' : `이 기기의 미리보기에 반영했어요. 공개 URL에는 반영되지 않습니다.${pendingNote}`)
+        : (action === 'save' ? '초안을 안전하게 저장했어요. 준비되면 공개 청첩장에 반영해 주세요.' : `공개 청첩장에 반영했어요. 공개 화면에서 새 내용까지 확인했어요.${pendingNote}`) });
     } catch (error) {
-      setMessage({ kind: 'error', text: error instanceof Error ? error.message : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+      setMessage({ kind: 'error', action, title: action === 'save' ? '초안을 저장하지 못했어요' : mode === 'local' ? '미리보기에 적용하지 못했어요' : '공개 반영하지 못했어요', text: error instanceof Error ? error.message : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.' });
     } finally { setActionPending(false); }
   }
 
@@ -188,7 +194,6 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
       <div className="editor-workspace">
         <aside className="editor-sidebar"><nav aria-label="청첩장 편집 메뉴">{tabs.map(({ id, name, subtitle, icon: Icon }, index) => <button key={id} aria-label={name} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)} className={`editor-tab ${tab === id ? 'active' : ''}`}><Icon size={19} strokeWidth={1.5} /><span><strong>{name}</strong><small>{subtitle}</small></span><span className="editor-tab-index">0{index + 1}</span></button>)}</nav><div className="editor-progress"><Flower2 size={26} strokeWidth={1.1} /><p>천천히, 우리답게.</p><span>사진 · 날짜 · 장소 중 {completion}개 준비됐어요</span><div role="progressbar" aria-label="주요 정보 준비" aria-valuenow={completion} aria-valuemin={0} aria-valuemax={3}><i style={{ width: `${completion / 3 * 100}%` }} /></div><small>비워 둔 정보는 준비 중으로 보여요.</small></div></aside>
         <main className="editor-main" id="editor-main">
-          {message && <div role={message.kind === 'error' ? 'alert' : 'status'} className={`editor-notice ${message.kind}`}>{message.kind === 'success' ? <CheckCircle2 size={18} /> : <span>!</span>}<p>{message.text}</p><button aria-label="알림 닫기" onClick={() => setMessage(null)}><X size={16} /></button></div>}
           <fieldset className="editor-content-fieldset" disabled={busy}>
           {tab === 'basic' && <div className="editor-panel"><SectionHeading eyebrow="01 / OUR STORY" title="우리의 이야기가 시작되는 곳" description="아직 정해지지 않은 내용은 비워 두어도 괜찮아요." /><PersonFields label="신랑" person={data.groom} onChange={person => update('groom', person)} /><PersonFields label="신부" person={data.bride} onChange={person => update('bride', person)} /><div className="editor-section"><h3>소중한 날</h3><div className="editor-field-grid"><Field label="예식 날짜"><input type="date" value={data.date} onChange={e => update('date', e.target.value)} /></Field><Field label="예식 시간" hint="한국 시간 기준으로 표시해요."><input type="time" value={data.time} onChange={e => update('time', e.target.value)} /></Field></div></div><div className="editor-section"><h3>초대의 말</h3><Field label="초대 문구" hint="줄바꿈도 청첩장에 그대로 담겨요."><textarea rows={7} value={data.invitation} onChange={e => update('invitation', e.target.value)} maxLength={2000} /></Field><Field label="마무리 인사"><textarea rows={3} value={data.closing} onChange={e => update('closing', e.target.value)} maxLength={1000} /></Field></div></div>}
           {tab === 'photos' && <div className="editor-panel"><SectionHeading eyebrow="02 / OUR MOMENTS" title="우리, 가장 빛나는 순간" description="사진 한 장으로 두 분의 분위기가 완성돼요." /><div className="editor-section editor-section-first"><div className="editor-inline-heading"><h3>첫 화면 사진</h3><span>JPG · PNG · WEBP · AVIF / 최대 8MB</span></div><input ref={coverInput} className="editor-file-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" aria-label="첫 화면 사진 파일 선택" onChange={event => void uploadPhotos(event, true)} />{data.coverPhoto ? <div className="editor-cover-photo"><img src={data.coverPhoto} alt="첫 화면 사진 미리보기" /><div><button className="editor-button editor-button-white" onClick={() => coverInput.current?.click()}><ImagePlus size={16} />사진 바꾸기</button><button className="editor-photo-remove" onClick={() => update('coverPhoto', '')} aria-label="첫 화면 사진 삭제"><Trash2 size={17} /></button></div></div> : <button className="editor-upload-zone" onClick={() => coverInput.current?.click()}><span><ImagePlus size={30} strokeWidth={1.2} /></span><strong>첫 장에 담을 사진을 선택해 주세요</strong><small>세로 사진이 가장 예쁘게 어울려요</small><em>사진 선택하기 <Plus size={14} /></em></button>}<p className="editor-help">사진이 없어도 준비된 일러스트와 함께 청첩장이 예쁘게 보여요.</p></div><div className="editor-section"><div className="editor-inline-heading"><h3>함께한 순간 <span className="editor-count">{data.photos.length}/24</span></h3><button className="editor-text-button" onClick={() => galleryInput.current?.click()} disabled={data.photos.length >= 24}><Plus size={16} />사진 추가</button></div><input ref={galleryInput} className="editor-file-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple aria-label="갤러리 사진 파일 선택" onChange={event => void uploadPhotos(event, false)} />{data.photos.length === 0 ? <button className="editor-gallery-empty" onClick={() => galleryInput.current?.click()}><Images size={26} strokeWidth={1.1} /><span>기억하고 싶은 순간들을 담아 주세요.</span><small>여러 장을 한 번에 선택할 수 있어요</small></button> : <div className="editor-photo-grid">{data.photos.map((photo, index) => <div className="editor-photo-card" key={photo.id}><img src={photo.url} alt={photo.alt} /><div className="editor-photo-controls"><span>{String(index + 1).padStart(2, '0')}</span><button aria-label={`${index + 1}번 사진 앞으로 이동`} disabled={index === 0} onClick={() => movePhoto(index, -1)}><ArrowUp size={15} /></button><button aria-label={`${index + 1}번 사진 뒤로 이동`} disabled={index === data.photos.length - 1} onClick={() => movePhoto(index, 1)}><ArrowDown size={15} /></button><button aria-label={`${index + 1}번 사진 삭제`} onClick={() => update('photos', data.photos.filter(item => item.id !== photo.id))}><Trash2 size={15} /></button></div><input aria-label={`${index + 1}번 사진 설명`} value={photo.alt} onChange={e => update('photos', data.photos.map(item => item.id === photo.id ? { ...item, alt: e.target.value } : item))} maxLength={120} /></div>)}</div>}</div></div>}
@@ -201,6 +206,16 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
         <aside ref={previewRef} role={showPreview ? 'dialog' : undefined} aria-modal={showPreview ? true : undefined} className={`editor-preview${showPreview ? ' editor-preview-open' : ''}`} aria-label="청첩장 실시간 미리보기"><div className="editor-preview-heading"><span><Smartphone size={16} />실시간 미리보기</span><button className="editor-preview-close" onClick={() => setShowPreview(false)} aria-label="미리보기 닫기"><X size={20} /></button></div><div className="editor-phone-frame"><div className="editor-phone-notch" /><div className="editor-phone-content">{preview}</div></div><p>수정한 내용이 바로 보여요.<br />하객에게 공개하려면 아래 버튼을 눌러 주세요.</p></aside>
       </div>
     </div>
-    <footer className="editor-savebar"><div className="editor-savebar-inner"><div className="editor-save-status">{uploading ? <><LoaderCircle size={15} className="editor-spin" />사진을 담는 중이에요…</> : <><span className="editor-status-dot" /><span>{isDirty ? '저장하지 않은 변경이 있어요' : lastSaved ? `${new Date(lastSaved).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 ${mode === 'local' ? '이 기기에 ' : ''}저장됨` : '수정한 내용을 저장해 주세요'}</span></>}</div><div className="editor-save-actions"><button className="editor-button editor-preview-button" aria-label="미리보기" onClick={() => setShowPreview(true)}><Eye size={17} /><span>미리보기</span></button><button className="editor-button editor-button-outline" disabled={busy} onClick={() => void performAction('save')}>{saving ? <LoaderCircle size={16} className="editor-spin" /> : <Save size={16} />}<span>초안 저장</span></button><button className="editor-button editor-button-primary" disabled={busy} onClick={() => void performAction('publish')}>{publishing ? <LoaderCircle size={16} className="editor-spin" /> : <Send size={16} />}<span>{mode === 'cloud' ? '공개 청첩장에 반영' : '미리보기에 적용'}</span></button></div></div></footer>
+    <footer className="editor-savebar">
+      {message && <div ref={noticeRef} tabIndex={-1} role={message.kind === 'error' ? 'alert' : 'status'} className={`editor-notice ${message.kind}`} onKeyDown={event => { if (event.key === 'Escape') setMessage(null); }}>
+        {message.kind === 'success' ? <CheckCircle2 size={19} /> : <span>!</span>}
+        <div className="editor-notice-content">{message.title && <strong>{message.title}</strong>}<p>{message.text}</p>{message.kind === 'success' && message.action === 'publish' && mode === 'cloud' && <a className="editor-notice-link" href="#/" target="_blank" rel="noreferrer">공개 청첩장 확인<ExternalLink size={13} /></a>}</div>
+        <button aria-label="알림 닫기" onClick={() => setMessage(null)}><X size={17} /></button>
+      </div>}
+      <div className="editor-savebar-inner"><div className="editor-savebar-meta">
+        {mode === 'local' && <p className="editor-local-fixednote">이 기기에만 저장 · 공개 URL에는 반영되지 않아요</p>}
+        <div className="editor-save-status">{publishing ? <><LoaderCircle size={15} className="editor-spin" />{mode === 'cloud' ? '공개 청첩장의 새 내용을 확인하고 있어요…' : '이 기기의 미리보기에 적용하고 있어요…'}</> : saving ? <><LoaderCircle size={15} className="editor-spin" />초안을 안전하게 저장하고 있어요…</> : uploading ? <><LoaderCircle size={15} className="editor-spin" />사진을 담는 중이에요…</> : <><span className="editor-status-dot" /><span>{isDirty ? '저장하지 않은 변경이 있어요' : lastSaved ? `${new Date(lastSaved).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 ${mode === 'local' ? '이 기기에 ' : ''}저장됨` : '수정한 내용을 저장해 주세요'}</span></>}</div>
+      </div><div className="editor-save-actions"><button className="editor-button editor-preview-button" aria-label="미리보기" onClick={() => setShowPreview(true)}><Eye size={17} /><span>미리보기</span></button><button className="editor-button editor-button-outline" disabled={busy} onClick={() => void performAction('save')}>{saving ? <LoaderCircle size={16} className="editor-spin" /> : <Save size={16} />}<span>{saving ? '초안 저장 중…' : '초안 저장'}</span></button><button className="editor-button editor-button-primary" disabled={busy} onClick={() => void performAction('publish')}>{publishing ? <LoaderCircle size={16} className="editor-spin" /> : <Send size={16} />}<span>{publishing ? mode === 'cloud' ? '공개 확인 중…' : '미리보기 적용 중…' : mode === 'cloud' ? '공개 청첩장에 반영' : '미리보기에 적용'}</span></button></div></div>
+    </footer>
   </div>;
 }

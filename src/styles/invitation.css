@@ -44,6 +44,8 @@
 .invite-name-divider { font-family: 'Baskerville', Georgia, serif; font-style: italic; font-size: 18px; color: var(--invite-accent); letter-spacing: 0; }
 .invite-hero-date { margin-top: 15px !important; font-size: 11px; letter-spacing: .015em; }
 .invite-hero-venue { margin-top: 4px !important; font-size: 11px; color: var(--invite-accent); }
+.invite-pending-info { margin-top: 7px !important; color: var(--invite-muted); font-size: calc(10px * var(--invite-copy-scale, 1)); line-height: 1.9; }
+.invite-template--photo .invite-hero-details .invite-pending-info { color: #fff8e7c4; }
 .invite-muted { color: var(--invite-muted); }
 .invite-scroll { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 0 36px; color: var(--invite-muted) !important; }
 .invite-scroll span { font: 7px/1 Arial, sans-serif; letter-spacing: .2em; }

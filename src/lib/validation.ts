@@ -59,9 +59,14 @@ export function publicationErrors(d: WeddingData): string[] {
   const errors: string[] = [];
   if (!d.groom.name.trim() || !d.bride.name.trim()) errors.push('신랑과 신부의 이름을 입력해 주세요.');
   const date = new Date(`${d.date}T${d.time || '00:00'}:00+09:00`);
-  if (!d.date || !Number.isFinite(date.getTime()) || date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) !== d.date) errors.push('올바른 예식 날짜를 선택해 주세요.');
-  if (!d.time || !/^([01]\d|2[0-3]):[0-5]\d$/.test(d.time)) errors.push('예식 시간을 선택해 주세요.');
-  if (!d.venue.name.trim() || !d.venue.address.trim()) errors.push('예식장 이름과 주소를 입력해 주세요.');
+  if (d.date && (!Number.isFinite(date.getTime()) || date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) !== d.date)) errors.push('올바른 예식 날짜를 선택해 주세요.');
+  if (d.time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(d.time)) errors.push('올바른 예식 시간을 선택해 주세요.');
   if (d.accounts.some(a => !a.bank.trim() || !a.number.trim() || !a.holder.trim())) errors.push('추가한 계좌의 은행, 계좌번호, 예금주를 모두 입력하거나 빈 계좌를 삭제해 주세요.');
   return errors;
+}
+
+/** Compare JSONB content independently of PostgreSQL's object-key ordering. */
+export function sameWeddingContent(a: WeddingData, b: WeddingData): boolean {
+  const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).sort(([x], [y]) => x.localeCompare(y)).map(([key, item]) => [key, canonical(item)])) : value;
+  return JSON.stringify(canonical(normalizeWedding(a))) === JSON.stringify(canonical(normalizeWedding(b)));
 }

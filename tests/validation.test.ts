@@ -3,9 +3,9 @@ import { defaultWedding } from '../src/lib/defaults';
 import { isWeddingData, publicationErrors, publicImageUrl } from '../src/lib/validation';
 
 describe('publishing a real invitation', () => {
-  it('allows incomplete drafts but prevents sharing invented or missing event details', () => {
+  it('allows intentionally unknown event details to publish with preparation placeholders', () => {
     expect(isWeddingData(defaultWedding)).toBe(true);
-    expect(publicationErrors(defaultWedding)).toHaveLength(3);
+    expect(publicationErrors(defaultWedding)).toEqual([]);
   });
   it('accepts a complete event and rejects an impossible calendar date', () => {
     const d = structuredClone(defaultWedding);

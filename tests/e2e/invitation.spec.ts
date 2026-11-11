@@ -11,7 +11,7 @@ test('mobile invitation is honest about unknown event information and has no hor
   await expect(page.getByRole('heading', { name: /우리의 초대장을/ })).toBeVisible();
   await expect(page.getByText('이 기기에만 저장되는 미리보기입니다.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: '미리보기에 적용' }).click();
-  await expect(page.getByRole('alert')).toContainText('예식 날짜');
+  await expect(page.locator('.editor-notice')).toContainText('이 기기의 미리보기에 반영했어요');
   expect(errors).toEqual([]);
 });
 
@@ -78,4 +78,39 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await expect(page.locator('.invite-korean-names')).toContainText('권주영');
   await expect(page.locator('.invite-korean-names')).not.toContainText('다른이름');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('publishing from the bottom of the design editor gives visible feedback and allows unknown event details', async ({ page }) => {
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.getByRole('button', { name: '블루 세레니티', exact: true }).click();
+  await page.getByRole('button', { name: '백업 내려받기' }).scrollIntoViewIfNeeded();
+  const scrollBefore = await page.evaluate(() => scrollY);
+  await page.getByRole('button', { name: '미리보기에 적용', exact: true }).click();
+  const notice = page.locator('.editor-notice');
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText('준비 중으로 표시됩니다');
+  const rect = await notice.boundingBox();
+  expect(rect).not.toBeNull();
+  expect(rect!.y).toBeGreaterThanOrEqual(0);
+  expect(rect!.y + rect!.height).toBeLessThanOrEqual(844);
+  expect(Math.abs(await page.evaluate(() => scrollY) - scrollBefore)).toBeLessThan(3);
+  await page.goto('/');
+  await expect(page.locator('.invitation')).toHaveAttribute('data-theme', 'sky');
+  await expect(page.getByText('우리의 소중한 날을 준비하고 있어요')).toBeVisible();
+});
+
+test('invalid input errors stay visible beside the publish button instead of hiding above the viewport', async ({ page }) => {
+  await page.goto('/#/admin');
+  await page.getByLabel('신부 이름', { exact: true }).fill('');
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.getByRole('button', { name: '백업 내려받기' }).scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: '미리보기에 적용', exact: true }).click();
+  const notice = page.getByRole('alert');
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText('신랑과 신부의 이름');
+  await expect(notice).toBeFocused();
+  const rect = await notice.boundingBox();
+  expect(rect!.y).toBeGreaterThanOrEqual(0);
+  expect(rect!.y + rect!.height).toBeLessThanOrEqual(844);
 });
