@@ -102,7 +102,9 @@ async function main() {
     await checkConnection(config);
   } catch (error) {
     // Only our curated messages are printed. Provider errors may include values.
-    console.error(error instanceof ConnectionError ? error.message : '연결 점검 중 오류가 발생했습니다. 설정과 Node.js 버전을 확인해 주세요.');
+    const message = error instanceof ConnectionError ? error.message : '연결 점검 중 오류가 발생했습니다. 설정과 Node.js 버전을 확인해 주세요.';
+    console.error(message);
+    if (process.env.GITHUB_ACTIONS === 'true') console.log(`::warning title=Supabase 연결 확인::${message.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')}`);
     process.exitCode = 1;
   }
 }

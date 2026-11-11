@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, FileUp, LoaderCircle } from 'lucide-react';
 import type { WeddingData } from '../lib/types';
 import { normalizeWedding } from '../lib/validation';
+import { loadBrowserDraft } from '../lib/storage';
 import '../styles/backup.css';
 
 interface Props {
@@ -13,6 +14,12 @@ export default function BackupTools({ data, onChange, onUpload, mode, disabled =
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(false);
+  const [browserDraft, setBrowserDraft] = useState<WeddingData | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (mode === 'cloud') void loadBrowserDraft().then(value => { if (active) setBrowserDraft(value?.data ?? null); }).catch(() => { /* Cloud editing does not require local browser storage. */ });
+    return () => { active = false; };
+  }, [mode]);
   function download() {
     const contents = { format: 'jo-and-joo-backup', formatVersion: 1, exportedAt: new Date().toISOString(), wedding: data };
     const file = new Blob([JSON.stringify(contents, null, 2)], { type: 'application/json' });
@@ -32,7 +39,11 @@ export default function BackupTools({ data, onChange, onUpload, mode, disabled =
       if (parsed?.format && (parsed.format !== 'jo-and-joo-backup' || parsed.formatVersion !== 1)) throw new Error('지원하지 않는 백업 형식입니다.');
       next = normalizeWedding(parsed?.format === 'jo-and-joo-backup' ? parsed.wedding : parsed);
     } catch (e) { setError(true); setMessage(e instanceof SyntaxError ? '청첩장 백업 JSON 파일을 선택해 주세요.' : e instanceof Error ? e.message : '파일을 읽지 못했습니다.'); return; }
-    if (!window.confirm('백업 내용을 편집 중인 초안으로 가져올까요? 아직 공개 청첩장은 바뀌지 않아요. 실행 취소로 되돌릴 수 있습니다.')) return;
+    await restore(next);
+  }
+  async function restore(next: WeddingData) {
+    if (busy || disabled) return;
+    if (!window.confirm('저장된 내용을 편집 중인 초안으로 가져올까요? 아직 공개 청첩장은 바뀌지 않아요. 실행 취소로 되돌릴 수 있습니다.')) return;
     setBusy(true); onBusyChange?.(true);
     try {
       if (mode === 'cloud') {
@@ -54,7 +65,7 @@ export default function BackupTools({ data, onChange, onUpload, mode, disabled =
   return <section className="backup-tools" aria-labelledby="backup-title">
     <h3 id="backup-title">우리의 초대장, 안전하게 간직하기</h3>
     <p>새 기기로 옮기거나 연결을 바꾸기 전에 백업해 두세요.<br />가져온 내용은 초안에만 적용되며, 공개 반영 전까지 하객에게 보이지 않아요.</p>
-    <div><button type="button" disabled={disabled || busy} onClick={download}><Download size={15} />백업 내려받기</button><button type="button" disabled={disabled || busy} onClick={() => input.current?.click()}>{busy ? <LoaderCircle size={15} className="app-spin" /> : <FileUp size={15} />}백업 가져오기</button></div>
+    <div><button type="button" disabled={disabled || busy} onClick={download}><Download size={15} />백업 내려받기</button><button type="button" disabled={disabled || busy} onClick={() => input.current?.click()}>{busy ? <LoaderCircle size={15} className="app-spin" /> : <FileUp size={15} />}백업 가져오기</button>{browserDraft && <button type="button" disabled={disabled || busy} onClick={() => void restore(browserDraft)}><FileUp size={15} />이 기기에 미리 꾸민 초안 가져오기</button>}</div>
     <input ref={input} type="file" accept=".json,application/json" aria-label="청첩장 백업 파일 선택" hidden onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) void importFile(file); }} />
     {message && <p role={error ? 'alert' : 'status'} className={error ? 'backup-error' : 'backup-message'}>{message}</p>}
     <small>온라인 사진은 주소로 백업됩니다. 사진 원본도 따로 보관해 주세요.</small>

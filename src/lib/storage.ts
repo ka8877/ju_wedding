@@ -62,10 +62,13 @@ export async function requireAdmin(): Promise<void> {
   if (error?.code === 'PGRST202') throw new Error('청첩장 초기 연결이 아직 준비되지 않았습니다. 처음 연결 안내에서 설정을 완료해 주세요.');
   if (error || data !== true) throw new Error('이 계정에는 관리 권한이 없습니다. 초대받은 관리자 계정으로 로그인해 주세요.');
 }
+export async function loadBrowserDraft(): Promise<StoredWedding | null> {
+  const value = await localRead('draft');
+  return value ? { ...value, data: checked(value.data) } : null;
+}
 export async function loadDraft(): Promise<StoredWedding> {
   if (!supabase) {
-    const value = await localRead('draft');
-    return value ? { ...value, data: checked(value.data) } : initial();
+    return (await loadBrowserDraft()) ?? initial();
   }
   await requireAdmin();
   const { data, error } = await supabase.from('wedding_content').select('draft,updated_at').eq('id', 'main').maybeSingle();
