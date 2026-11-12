@@ -7,14 +7,14 @@ import { isWeddingData, normalizeWedding, sameWeddingContent } from '../src/lib/
 const visualFields = new Set(['template', 'font', 'background', 'photoShape', 'galleryLayout', 'showDecoration', 'accentColor']);
 function personalInvitation(): WeddingData {
   const data = structuredClone(defaultWedding);
-  data.groom = { name: '테스트 신랑', englishName: 'Test Groom', phone: '010-0000-0000', father: '신랑 아버지', mother: '신랑 어머니' };
-  data.bride = { name: '테스트 신부', englishName: 'Test Bride', phone: '010-0000-0001', father: '신부 아버지', mother: '신부 어머니' };
+  data.groom = { ...data.groom, name: '테스트 신랑', englishName: 'Test Groom', phone: '010-0000-0000', father: '신랑 아버지', mother: '신랑 어머니' };
+  data.bride = { ...data.bride, name: '테스트 신부', englishName: 'Test Bride', phone: '010-0000-0001', father: '신부 아버지', mother: '신부 어머니' };
   data.date = '2027-05-22'; data.time = '14:30';
   data.invitation = '두 사람이 직접 쓴 초대의 말'; data.closing = '직접 쓴 감사의 인사';
   data.showVerse = false; data.verse = '직접 고른 말씀'; data.verseReference = '직접 정한 말씀 출처';
   data.coverPhoto = 'https://example.test/our-cover.webp';
   data.photos = [{ id: 'our-moment-1', url: 'https://example.test/moment-1.webp', alt: '직접 쓴 사진 설명' }];
-  data.venue = { name: '테스트 예식장', hall: '우리의 홀', address: '테스트 주소', lat: 37.5665, lng: 126.978, transport: '직접 쓴 교통 안내', parking: '직접 쓴 주차 안내' };
+  data.venue = { ...data.venue, name: '테스트 예식장', hall: '우리의 홀', address: '테스트 주소', lat: 37.5665, lng: 126.978, transport: '직접 쓴 교통 안내', parking: '직접 쓴 주차 안내' };
   data.accounts = [{ id: 'our-account', side: 'bride', bank: '테스트은행', holder: '테스트 신부', number: '000-000' }];
   data.design = {
     ...data.design, fontSize: 'large', accentColor: '#123456', photoPosition: 73,

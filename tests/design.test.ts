@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultWedding } from '../src/lib/defaults';
-import { applyTemplate, defaultDesign, getDesign, palettes, sectionIds, templates } from '../src/lib/design';
+import { applyTemplate, defaultDesign, getDesign, palettes, templates } from '../src/lib/design';
 import { isWeddingData, normalizeWedding } from '../src/lib/validation';
 
 describe('saved invitation compatibility', () => {
@@ -17,7 +17,8 @@ describe('saved invitation compatibility', () => {
   it('adds new design options to partial saved designs without dropping custom titles', () => {
     const upgraded = normalizeWedding({ ...defaultWedding, design: { template: 'letter', heroTitle: '우리만의 제목', sectionOrder: ['gallery', 'invitation'] } });
     expect(upgraded.design.heroTitle).toBe('우리만의 제목');
-    expect(upgraded.design.sectionOrder).toEqual(['gallery','invitation',...sectionIds.filter(id => !['gallery','invitation'].includes(id))]);
+    expect(upgraded.design.sectionOrder).toEqual(['gallery','rsvp','snap','invitation','verse','calendar','location','shuttle','accounts','blessing']);
+    expect(upgraded.design.sectionOrder.filter(id => ['gallery', 'invitation'].includes(id))).toEqual(['gallery', 'invitation']);
   });
   it.each([
     { accentColor: 'url(javascript:alert(1))' }, { sectionOrder: ['gallery','gallery'] },

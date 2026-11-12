@@ -1,0 +1,82 @@
+import { expect, test } from '@playwright/test';
+
+test('family, transport and guest feature choices survive saving and reloading', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/#/admin');
+  await expect(page.getByLabel('예식 날짜', { exact: true })).toHaveValue('2027-02-20');
+  await expect(page.getByLabel('예식 시간', { exact: true })).toHaveValue('12:30');
+  await expect(page.getByLabel('신랑 아버님 성함', { exact: true })).toHaveValue('조성진');
+  await expect(page.getByLabel('신부 어머님 성함', { exact: true })).toHaveValue('이선애');
+  await expect(page.getByLabel('신랑 가족 관계', { exact: true })).toHaveValue('장남');
+  await page.getByLabel('신랑 가족 소개 이름', { exact: true }).fill('현범이');
+  await page.getByLabel('신랑 가족 관계', { exact: true }).fill('맏아들');
+
+  await page.getByRole('button', { name: '예식 장소', exact: true }).click();
+  await expect(page.getByLabel('홀 · 층', { exact: true })).toHaveValue('아산홀');
+  await page.getByLabel('지하철 안내', { exact: true }).fill('지하철 안내를 따로 적었어요.');
+  await page.getByLabel('버스 안내', { exact: true }).fill('버스 안내를 따로 적었어요.');
+  await page.getByLabel('자가용 안내', { exact: true }).fill('자가용 안내를 따로 적었어요.');
+  await page.getByLabel('추가 교통 안내', { exact: true }).fill('기존 교통 안내도 유지해요.');
+
+  await page.getByRole('button', { name: '추가 기능', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: '배경음악 사용', exact: true })).toBeChecked();
+  await page.getByLabel('배경음악 선택', { exact: true }).selectOption('url');
+  await page.getByLabel('배경음악 파일 주소', { exact: true }).fill('https://example.com/our-wedding.mp3');
+  const volume = page.getByLabel('배경음악 음량', { exact: true });
+  await volume.press('Home'); await volume.press('ArrowRight');
+  await expect(volume).toHaveValue('1');
+  await page.getByLabel('갤러리 처음 보이는 줄 수', { exact: true }).selectOption('2');
+  await page.getByLabel('신랑측 참석 안내', { exact: true }).fill('신랑측 하객분들께 드리는 안내입니다.');
+  await page.getByLabel('신부측 참석 안내', { exact: true }).fill('신부측 하객분들께 드리는 안내입니다.');
+  await page.getByLabel('참석 확인 안내 문구', { exact: true }).fill('예식 전에 연락드릴게요.');
+  await page.getByLabel('현장 스냅 여는 날짜', { exact: true }).fill('2027-02-21');
+  await page.getByLabel('현장 스냅 안내 문구', { exact: true }).fill('그날의 소중한 순간을 보내 주세요.');
+  await page.getByLabel('대전 대절버스 안내', { exact: true }).fill('대전 하객 안내를 준비했어요.');
+  await page.getByLabel('경주 대절버스 안내', { exact: true }).fill('경주 하객 안내를 준비했어요.');
+  await page.getByLabel('카카오 JavaScript 키', { exact: true }).fill('a'.repeat(32));
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
+
+  await page.reload();
+  await page.getByRole('button', { name: '추가 기능', exact: true }).click();
+  await expect(page.getByLabel('배경음악 선택', { exact: true })).toHaveValue('url');
+  await expect(page.getByLabel('배경음악 파일 주소', { exact: true })).toHaveValue('https://example.com/our-wedding.mp3');
+  await expect(page.getByLabel('배경음악 음량', { exact: true })).toHaveValue('1');
+  await expect(page.getByLabel('갤러리 처음 보이는 줄 수', { exact: true })).toHaveValue('2');
+  await expect(page.getByLabel('신랑측 참석 안내', { exact: true })).toHaveValue('신랑측 하객분들께 드리는 안내입니다.');
+  await expect(page.getByLabel('신부측 참석 안내', { exact: true })).toHaveValue('신부측 하객분들께 드리는 안내입니다.');
+  await expect(page.getByLabel('현장 스냅 여는 날짜', { exact: true })).toHaveValue('2027-02-21');
+  await expect(page.getByLabel('대전 대절버스 안내', { exact: true })).toHaveValue('대전 하객 안내를 준비했어요.');
+  await expect(page.getByLabel('카카오 JavaScript 키', { exact: true })).toHaveValue('a'.repeat(32));
+  await page.getByRole('button', { name: '기본 정보', exact: true }).click();
+  await expect(page.getByLabel('신랑 가족 소개 이름', { exact: true })).toHaveValue('현범이');
+  await expect(page.getByLabel('신랑 가족 관계', { exact: true })).toHaveValue('맏아들');
+  await page.getByRole('button', { name: '예식 장소', exact: true }).click();
+  await expect(page.getByLabel('지하철 안내', { exact: true })).toHaveValue('지하철 안내를 따로 적었어요.');
+  await expect(page.getByLabel('버스 안내', { exact: true })).toHaveValue('버스 안내를 따로 적었어요.');
+  await expect(page.getByLabel('자가용 안내', { exact: true })).toHaveValue('자가용 안내를 따로 적었어요.');
+  await expect(page.getByLabel('추가 교통 안내', { exact: true })).toHaveValue('기존 교통 안내도 유지해요.');
+  expect(errors).toEqual([]);
+});
+
+test('new section controls stay consistent and the last admin tab has safe mobile navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '추가 기능', exact: true }).click();
+  await page.getByRole('checkbox', { name: '참석 여부 접수 표시', exact: true }).uncheck();
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
+  await page.locator('summary').filter({ hasText: '청첩장의 순서와 제목' }).click();
+  const rsvp = page.locator('.design-section-list li').filter({ hasText: '참석' }).getByRole('checkbox');
+  await expect(rsvp).not.toBeChecked();
+  await rsvp.check();
+  await page.getByRole('button', { name: '추가 기능', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: '참석 여부 접수 표시', exact: true })).toBeChecked();
+  await page.getByRole('button', { name: '다음 단계', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '함께해 주시는 마음', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '다음 단계', exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: '이전', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '작은 디테일까지, 두 분답게.', exact: true })).toBeVisible();
+});

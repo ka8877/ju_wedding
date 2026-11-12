@@ -37,7 +37,7 @@ jobs:
           VITE_LOCAL_PREVIEW: 'true'
           VITE_SUPABASE_URL: ''
           VITE_SUPABASE_ANON_KEY: ''
-        run: npm run test:e2e
+        run: npm run test:e2e && npm run test:e2e:guest
       - name: Diagnose public Supabase connection
         id: connection
         continue-on-error: true

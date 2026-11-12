@@ -37,12 +37,13 @@ export default function DesignEditor({ data, onChange, onPreview }: DesignEditor
   const currentPalette = palettes.find(item => item.id === data.theme) || palettes[0];
   const selectedPack = stylePacks.find(pack => pack.template === design.template && pack.theme === data.theme && pack.font === design.font && pack.background === design.background && pack.photoShape === design.photoShape && pack.galleryLayout === design.galleryLayout && pack.showDecoration === design.showDecoration && !design.accentColor);
   const updateDesign = (patch: Partial<WeddingDesign>) => onChange({ ...data, design: { ...design, ...patch } });
-  const sectionVisible = (id: SectionId) => !design.hiddenSections.includes(id) && (id === 'verse' ? data.showVerse : id === 'blessing' ? design.showBlessing : true);
+  const sectionVisible = (id: SectionId) => !design.hiddenSections.includes(id) && (id === 'verse' ? data.showVerse : id === 'blessing' ? design.showBlessing : id === 'rsvp' || id === 'snap' || id === 'shuttle' ? data.guestFeatures[id].enabled : true);
 
   function setSectionVisible(id: SectionId, visible: boolean) {
     const hidden = design.hiddenSections.filter(item => item !== id);
     if (id === 'verse') onChange({ ...data, showVerse: visible, design: { ...design, hiddenSections: hidden } });
     else if (id === 'blessing') updateDesign({ showBlessing: visible, hiddenSections: hidden });
+    else if (id === 'rsvp' || id === 'snap' || id === 'shuttle') onChange({ ...data, guestFeatures: { ...data.guestFeatures, [id]: { ...data.guestFeatures[id], enabled: visible } }, design: { ...design, hiddenSections: hidden } });
     else updateDesign({ hiddenSections: visible ? hidden : [...hidden, id] });
   }
 

@@ -1,0 +1,41 @@
+.event-options-editor { min-width: 0; }
+.event-option-card { border: 1px solid #e0e6d6; border-radius: 6px; overflow: hidden; margin: 20px 0; background: #fffefa; }
+.event-option-card > header { display: flex; align-items: flex-start; gap: 12px; padding: 21px 22px; background: #f5f7ef; border-bottom: 1px solid #e6ebde; }
+.event-option-card > header > span { display: grid; place-items: center; flex: 0 0 35px; height: 35px; border-radius: 50%; color: #83946e; background: #eaf0df; }
+.event-option-card h3 { font-size: 14px; font-weight: 500; color: #5e704d; margin: 0 0 7px; line-height: 1.7; letter-spacing: -.5px; }
+.event-option-card > header p { margin: 0; color: #929e85; font-size: 10px; line-height: 1.9; }
+.event-option-content { padding: 22px; }
+.event-option-field { margin-top: 17px; }
+.event-option-content > .event-option-field:first-child { margin-top: 0; }
+.event-option-field > input, .event-option-field > textarea, .event-option-field > select { width: 100%; }
+.event-option-note, .editor-event-hint, .event-option-bottom-note { font-size: 10px; line-height: 1.9; color: #929e84; white-space: pre-line; margin: 14px 0 0; word-break: keep-all; }
+.editor-event-hint { margin-bottom: 17px; }
+.event-option-bottom-note { border-top: 1px solid #e8ecdf; padding-top: 17px; margin-top: 24px; }
+.event-option-toggle { display: flex; align-items: center; gap: 9px; position: relative; width: fit-content; max-width: 100%; cursor: pointer; margin-bottom: 19px; }
+.event-option-toggle input { position: absolute; opacity: 0; width: 32px; height: 20px; margin: 0; }
+.event-option-toggle > span { position: relative; display: block; width: 32px; height: 20px; background: #dce3d1; border-radius: 12px; transition: background .2s; flex-shrink: 0; pointer-events: none; }
+.event-option-toggle > span:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: white; border-radius: 50%; box-shadow: 0 1px 4px #48533925; transition: transform .2s; }
+.event-option-toggle input:checked + span { background: #809766; }
+.event-option-toggle input:checked + span:before { transform: translateX(12px); }
+.event-option-toggle input:focus-visible + span { outline: 2px solid #779357; outline-offset: 3px; }
+.event-option-toggle input:disabled + span { opacity: .5; }
+.event-option-toggle strong { font-weight: 400; color: #758569; font-size: 11px; line-height: 1.8; }
+.event-option-volume { display: flex; align-items: center; gap: 13px; }
+.event-option-volume input { flex: 1; min-width: 0; accent-color: #83996e; }
+.event-option-volume output { color: #889b72; min-width: 34px; text-align: right; font-size: 11px; }
+.event-option-inline-button { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; min-height: 40px; padding: 8px 11px; background: #f1f5e8; border: 1px solid #dde6cf; border-radius: 4px; color: #748860; font-size: 10px; line-height: 1.8; text-decoration: none; }
+.event-option-inline-button:disabled { opacity: .65; cursor: default; }
+@media (max-width: 650px) {
+  .admin-app .editor-sidebar nav { justify-content: flex-start; overflow-x: auto; max-width: 100%; scrollbar-width: thin; overscroll-behavior-x: contain; }
+  .admin-app .editor-sidebar .editor-tab { flex: 0 0 76px; }
+  .event-option-card { margin: 17px 0; }
+  .event-option-card > header { padding: 17px 15px; gap: 10px; }
+  .event-option-card h3 { font-size: 12px; }
+  .event-option-card > header p { font-size: 9px; }
+  .event-option-card > header > span { width: 29px; height: 29px; flex-basis: 29px; }
+  .event-option-content { padding: 17px 15px; }
+  .event-option-note, .editor-event-hint, .event-option-bottom-note { font-size: 9px; }
+  .event-option-toggle strong { font-size: 10px; }
+  .event-option-toggle { margin-bottom: 17px; }
+  .event-option-inline-button { font-size: 9px; }
+}

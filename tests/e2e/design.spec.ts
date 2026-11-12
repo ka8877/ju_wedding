@@ -33,7 +33,8 @@ test('couple can customize, undo, back up and restore their invitation without c
   await expect(preview).toHaveAttribute('data-font', 'romantic');
   await expect(preview).toHaveAttribute('data-font-size', 'large');
   await expect(preview).toHaveAttribute('data-photo-shape', 'oval');
-  expect(await preview.locator('[data-section]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-section')))).toEqual(['invitation','verse','gallery','blessing']);
+  const sections = await preview.locator('[data-section]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-section')));
+  expect(sections).toEqual(['invitation','verse','gallery','calendar','rsvp','snap','shuttle','blessing']);
   await expect(preview.locator('[data-section="gallery"] h2')).toHaveText('우리가 함께한 날들');
   await page.getByRole('button', { name: '미리보기', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '청첩장 실시간 미리보기' })).toBeVisible();

@@ -1,0 +1,11 @@
+.invite-music-player { position: fixed; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 25; right: max(15px, calc((100vw - 520px) / 2 + 15px)); bottom: max(15px, env(safe-area-inset-bottom)); max-width: min(285px, calc(100vw - 30px)); color: #5d6a52; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
+.invite-music-toggle { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 11px 15px; border: 1px solid #dce2d3; border-radius: 30px; box-shadow: 0 3px 15px #46523a12; color: #5d6a52; background: #fffef8ed; backdrop-filter: blur(10px); font: inherit; font-size: 10px; cursor: pointer; }
+.invite-music-toggle > svg { flex-shrink: 0; }
+.invite-music-player:not(.invite-music-player--preview) .invite-music-toggle { width: 48px; height: 48px; padding: 6px; flex-direction: column; gap: 2px; }
+.invite-music-player:not(.invite-music-player--preview) .invite-music-toggle > span { font: 8px/1.2 Arial, sans-serif; letter-spacing: .03em; }
+.invite-music-toggle[aria-pressed='true'] { background: #eef3e5ed; border-color: #b9c9a9; }
+.invite-music-toggle:focus-visible { outline: 2px solid #71855e; outline-offset: 3px; }
+.invite-music-toggle:disabled { opacity: .65; cursor: wait; }
+.invite-music-player > p { order: -1; margin: 0; padding: 11px 13px; color: #6b6b5a; background: #fffef8; border: 1px solid #e0e3d8; border-radius: 8px; font-size: 10px; line-height: 1.8; }
+.invite-music-player--preview { position: relative; right: auto; bottom: auto; margin: 15px 16px 0 auto; width: fit-content; max-width: calc(100% - 32px); z-index: 1; }
+.invite-music-player--preview .invite-music-toggle { min-height: 38px; font-size: 9px; padding: 9px 12px; }

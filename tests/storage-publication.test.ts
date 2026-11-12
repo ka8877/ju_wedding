@@ -30,6 +30,9 @@ function reversedObjectKeys(value: unknown): unknown {
 }
 function invitation(): WeddingData {
   const data = structuredClone(defaultWedding);
+  // Keep the deliberately incomplete-event regression separate from the real couple defaults.
+  data.date = ''; data.time = '';
+  data.venue.name = ''; data.venue.hall = ''; data.venue.address = '';
   data.invitation = '사진과 장소를 준비하며, 새로운 디자인을 먼저 보여 드립니다.';
   data.design.heroTitle = 'Our beautiful\nbeginning.';
   data.theme = 'lavender';

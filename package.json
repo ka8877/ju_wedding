@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:db": "node tests/db/check.mjs",
+    "test:e2e:guest": "playwright test --config playwright.guests.config.ts",
+    "test:db": "node tests/db/check.mjs && node tests/db/guest-check.mjs",
     "check:connection": "node scripts/check-supabase.mjs"
   },
   "dependencies": {

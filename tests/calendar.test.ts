@@ -5,7 +5,7 @@ import { makeWeddingCalendar } from '../src/lib/calendar';
 const event = () => ({ ...structuredClone(defaultWedding), date: '2027-05-22', time: '14:30' });
 describe('guest calendar download', () => {
   it('does not invent a date, time or event duration', () => {
-    expect(makeWeddingCalendar(defaultWedding)).toBeNull();
+    expect(makeWeddingCalendar({ ...structuredClone(defaultWedding), date: '', time: '' })).toBeNull();
     expect(makeWeddingCalendar({ ...event(), time: '' })).toBeNull();
     expect(makeWeddingCalendar({ ...event(), date: '2027-02-30' })).toBeNull();
     expect(makeWeddingCalendar(event())).not.toContain('DTEND');
@@ -30,7 +30,8 @@ describe('guest calendar download', () => {
     expect(unfolded).not.toContain('�');
   });
   it('keeps a stable event UID across repeated downloads and omits unknown locations', () => {
-    const first = makeWeddingCalendar(event())!, second = makeWeddingCalendar(event())!;
+    const unknownVenue = { ...event(), venue: { ...defaultWedding.venue, name: '', hall: '', address: '' } };
+    const first = makeWeddingCalendar(unknownVenue)!, second = makeWeddingCalendar(unknownVenue)!;
     expect(first.match(/UID:[^\r]+/)?.[0]).toBe(second.match(/UID:[^\r]+/)?.[0]);
     expect(first).not.toContain('LOCATION:');
   });

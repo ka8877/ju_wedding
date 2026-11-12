@@ -73,6 +73,7 @@
 .invite-calendar-section { padding-top: 65px; }
 .invitation .invite-calendar-title { font-family: 'Baskerville', Georgia, serif; font-size: 33px; letter-spacing: .015em; }
 .invite-calendar-title span { color: var(--invite-muted); padding: 0 3px; }
+.invite-day-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding: 4px 12px; border-radius: 20px; background: var(--invite-light); color: var(--invite-accent); font: 11px/1.6 Georgia, serif; letter-spacing: .08em; }
 .invite-subtitle { color: var(--invite-muted); font-size: 10px; line-height: 1.9; margin-top: 10px !important; word-break: keep-all; }
 .invite-calendar { max-width: 300px; margin: 29px auto 0; padding: 17px 0; border-top: 1px solid var(--invite-line); border-bottom: 1px solid var(--invite-line); }
 .invite-calendar-row, .invite-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
@@ -93,6 +94,10 @@
 .invite-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 29px; }
 .invite-gallery-item { border: 0; padding: 0; background: var(--invite-light); aspect-ratio: 4 / 5; overflow: hidden; position: relative; border-radius: 2px; }
 .invite-gallery-item--wide { grid-column: span 2; aspect-ratio: 3 / 2; }
+.invite-gallery--mosaic { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.invite-gallery-item--half { grid-column: span 3; }
+.invite-gallery-item--third { grid-column: span 2; }
+.invite-gallery-toggle { margin-top: 24px; }
 .invite-gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
 .invite-gallery-item:hover img { transform: scale(1.04); }
 .invite-gallery-item > span { position: absolute; right: 8px; bottom: 8px; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #ffffffa8; border-radius: 50%; color: white; background: #3333331c; }
@@ -112,12 +117,23 @@
 .invite-map-links { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
 .invite-map-links a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid var(--invite-line); border-radius: 3px; font-size: 10px; }
 .invite-map-links a > svg { color: var(--invite-muted); }
+.invite-map-help { margin-top: 12px !important; color: var(--invite-muted); font-size: 9px; line-height: 1.8; word-break: keep-all; }
 .invite-map-icon { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; font: bold 10px/1 Arial, sans-serif; }
 .invite-map-icon--naver { background: #e0eedb; color: #56804c; }
 .invite-map-icon--kakao { background: #f2e8b6; color: #6d633c; }
 .invite-directions { text-align: left; margin-top: 27px; border-top: 1px solid var(--invite-line); padding-top: 24px; display: flex; flex-direction: column; gap: 22px; }
 .invite-directions h4 { color: var(--invite-accent); font-size: 12px; font-weight: 500; margin-bottom: 6px; }
 .invite-directions p { color: var(--invite-muted); font-size: 11px; line-height: 2; }
+.invite-rsvp-section { border-top: 1px solid var(--invite-line); background: var(--invite-bg); }
+.invite-snap-section { background: var(--invite-paper); }
+.invite-shuttle-section { background: var(--invite-paper); }
+.invite-shuttle-icon { color: var(--invite-accent); margin: 0 auto 15px; }
+.invite-shuttle-group { margin-top: 14px; text-align: left; border: 1px solid var(--invite-line); border-radius: 5px; background: var(--invite-bg); }
+.invite-shuttle-group:first-of-type { margin-top: 28px; }
+.invite-shuttle-group summary { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px 18px; min-height: 48px; cursor: pointer; list-style: none; color: var(--invite-accent); font-size: calc(11px * var(--invite-copy-scale, 1)); }
+.invite-shuttle-group summary::-webkit-details-marker { display: none; }
+.invite-shuttle-group[open] summary > svg { transform: rotate(180deg); }
+.invite-shuttle-group > p { padding: 0 18px 18px; color: var(--invite-muted); font-size: calc(11px * var(--invite-copy-scale, 1)); line-height: 2; }
 .invite-venue-pending { padding-top: 30px; color: var(--invite-accent); }
 .invite-venue-pending > p { font-family: 'Noto Serif KR', 'Batang', serif; font-size: 12px; line-height: 2.3; margin: 15px 0 14px; }
 .invite-venue-pending > span { font-size: 10px; color: var(--invite-muted); }

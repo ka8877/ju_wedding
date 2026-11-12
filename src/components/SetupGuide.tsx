@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ArrowLeft, CheckCircle2, Copy, ExternalLink, Flower2, LoaderCircle } from 'lucide-react';
 import schema from '../../supabase/migrations/001_wedding.sql?raw';
+import guestSchema from '../../supabase/migrations/002_guest_features.sql?raw';
 import { publicSupabaseConfig } from '../lib/public-config';
 import { normalizeWedding } from '../lib/validation';
 import { copyText } from '../lib/utils';
+import { getGuestCapabilities } from '../lib/guest-storage';
 import '../styles/setup.css';
 
 export default function SetupGuide() {
@@ -12,6 +14,8 @@ export default function SetupGuide() {
   const [message, setMessage] = useState('');
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [guestChecking, setGuestChecking] = useState(false);
+  const [guestResult, setGuestResult] = useState<{ ok: boolean; text: string } | null>(null);
   const project = new URL(import.meta.env.VITE_SUPABASE_URL || publicSupabaseConfig.url).hostname.split('.')[0];
   const dashboard = `https://supabase.com/dashboard/project/${project}`;
   async function copy(value: string) {
@@ -49,13 +53,24 @@ export default function SetupGuide() {
     } catch (e) { setResult({ ok: false, text: e instanceof Error ? e.message : '연결하지 못했습니다.' }); }
     finally { setChecking(false); }
   }
+  async function checkGuestFeatures() {
+    setGuestChecking(true); setGuestResult(null);
+    try {
+      const capability = await getGuestCapabilities();
+      setGuestResult({ ok: capability.status === 'ready', text: capability.status === 'ready'
+        ? `참석 응답과 비공개 현장 사진 저장 공간을 확인했어요. ${capability.snapOpen ? '현장 사진 접수가 열려 있어요.' : `현장 사진은 ${capability.snapOpenDate || '설정한 날짜'}부터 받을 수 있어요.`} 실제 응답 제출·사진 업로드는 별도로 확인해 주세요.`
+        : capability.message });
+    } catch { setGuestResult({ ok: false, text: '추가 기능의 연결을 확인하지 못했어요. 프로젝트 활성 상태와 아래 설정 SQL 실행 결과를 확인해 주세요.' }); }
+    finally { setGuestChecking(false); }
+  }
   return <main className="setup-page">
     <a href="#/" className="setup-back"><ArrowLeft size={15} />청첩장으로 돌아가기</a>
     <header><Flower2 size={35} strokeWidth={1} /><span>ONE LITTLE STEP, A LIFETIME OF MEMORIES</span><h1>처음 한 번만 연결하면,<br />두 분이 직접 꾸밀 수 있어요.</h1><p>이 화면은 Supabase 프로젝트를 만든 가족을 위한 초기 연결 안내입니다.<br />이후에는 주영님이 관리 화면에서 바로 수정하고 공개할 수 있어요.</p></header>
-    <section><b>01</b><h2>청첩장 저장 공간 만들기</h2><p>아래 설정 SQL을 복사해 Supabase의 SQL Editor에서 전체 실행하세요. 사진 저장소와 관리자 전용 권한이 함께 만들어져요. 다시 실행해도 기존 청첩장 데이터는 삭제되지 않아요.</p><div className="setup-actions"><button onClick={() => void copy(schema)}><Copy size={15} />초기 설정 SQL 복사</button><a href={`${dashboard}/sql/new`} target="_blank" rel="noreferrer">SQL Editor 열기<ExternalLink size={14} /></a></div></section>
+    <section><b>01</b><h2>청첩장 저장 공간 만들기</h2><p>아래 설정 SQL을 복사해 Supabase의 SQL Editor에서 전체 실행하세요. 사진 저장소와 관리자 전용 권한, 참석 응답·현장 사진 저장 공간이 함께 만들어져요. 다시 실행해도 기존 청첩장 데이터는 삭제되지 않아요.</p><div className="setup-actions"><button onClick={() => void copy(`${schema}\n\n${guestSchema}`)}><Copy size={15} />초기 설정 SQL 복사</button><a href={`${dashboard}/sql/new`} target="_blank" rel="noreferrer">SQL Editor 열기<ExternalLink size={14} /></a></div></section>
     <section><b>02</b><h2>관리자 계정 만들기 · 추가하기</h2><p>Authentication → Users → Add user에서 로그인할 이메일과 비밀번호로 계정을 만들어 주세요. Auto Confirm User를 켜 주세요. 비밀번호는 이 사이트나 채팅에 입력해 보내실 필요가 없어요.</p><p>관리자는 여러 명 등록할 수 있습니다. 주영님·현범님·가족이 각각 사용할 이메일로 계정을 만들고, 아래 3단계를 각 이메일에 반복해 주세요. 기존 관리자는 유지됩니다. 모두 같은 청첩장을 편집하며 동시에 수정하면 마지막 저장 내용이 적용됩니다.</p><a href={`${dashboard}/auth/users`} target="_blank" rel="noreferrer">관리자 계정 만들러 가기<ExternalLink size={14} /></a></section>
     <section><b>03</b><h2>이 계정에 편집 권한 주기</h2><p>방금 만든 이메일을 아래에 입력한 뒤 권한 SQL을 복사해 같은 SQL Editor에서 실행하세요. 결과의 <code>administrator_registered</code>가 <strong>true</strong>면 완료입니다.</p><label>관리자 이메일<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="관리자로 등록한 이메일" /></label><div className="setup-actions"><button disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())} onClick={() => void copy(adminSql)}><Copy size={15} />관리자 권한 SQL 복사</button><a href={`${dashboard}/sql/new`} target="_blank" rel="noreferrer">SQL Editor 열기<ExternalLink size={14} /></a></div><details><summary>추가로 확인할 로그인 설정</summary><p>Authentication 설정에서 새 사용자 공개 회원가입은 끄고 이메일 로그인은 켜 두세요. Site URL은 실제 청첩장 주소로 설정하면 됩니다. 관리자로 등록하지 않은 사람은 로그인해도 편집할 수 없어요.</p></details></section>
     {message && <p className="setup-message" role="status">{message}</p>}
     <section><b>04</b><h2>연결 확인 후 시작하기</h2><p>처음 연결 후에는 사진을 한 장 올려 공개한 다음, 다른 휴대폰에서 열어 보세요. 온라인 저장은 같은 기기 미리보기와 다르게 모든 하객에게 반영됩니다.</p><div className="setup-actions"><button disabled={checking} onClick={() => void check()}>{checking ? <LoaderCircle size={15} className="app-spin" /> : <CheckCircle2 size={15} />}연결 확인</button><a href="#/admin">관리 페이지로<ExternalLink size={14} /></a></div>{result && <p role={result.ok ? 'status' : 'alert'} className={result.ok ? 'setup-check-ok' : 'setup-check-error'}>{result.text}</p>}</section>
+    <section><b>05</b><h2>참석 응답 · 현장 사진 연결하기</h2><p>이미 청첩장을 사용 중이라면 추가 설정 SQL만 실행하세요. 응답과 연락처는 관리자만 조회하고, 현장 사진도 비공개로 보관됩니다. 관리 화면의 하객 응답에서 목록과 엑셀용 CSV를 내려받을 수 있어요.</p><p>현장 사진은 공개한 설정의 오픈 날짜부터 서버에서도 접수를 허용합니다. 관리 화면에서 날짜와 기능 사용 여부를 바꾸고 공개할 수 있어요.</p><div className="setup-actions"><button onClick={() => void copy(guestSchema)}><Copy size={15} />참석·현장 사진 설정 SQL 복사</button><a href={`${dashboard}/sql/new`} target="_blank" rel="noreferrer">SQL Editor 열기<ExternalLink size={14} /></a><button disabled={guestChecking} onClick={() => void checkGuestFeatures()}>{guestChecking ? <LoaderCircle size={15} className="app-spin" /> : <CheckCircle2 size={15} />}추가 기능 연결 확인</button></div>{guestResult && <p role={guestResult.ok ? 'status' : 'alert'} className={guestResult.ok ? 'setup-check-ok' : 'setup-check-error'}>{guestResult.text}</p>}</section>
   </main>;
 }

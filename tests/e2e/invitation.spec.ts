@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
-test('mobile invitation is honest about unknown event information and has no horizontal overflow', async ({ page }) => {
+test('mobile invitation shows the confirmed couple information and has no horizontal overflow', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'With you, always.' })).toBeVisible();
-  await expect(page.getByText('우리의 소중한 날을 준비하고 있어요')).toBeVisible();
+  await expect(page.getByText('2027년 2월 20일 토요일 오후 12:30').first()).toBeVisible();
+  await expect(page.getByText('HD현대글로벌R&D센터 아산홀').first()).toBeVisible();
   await expect(page.getByRole('img', { name: /웨딩 일러스트/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('link', { name: '우리 청첩장 관리' }).click();
@@ -76,7 +77,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await expect(page.getByRole('dialog', { name: '웨딩 사진 크게 보기' })).not.toBeVisible();
   await page.getByText('신부측 계좌번호').click();
   await page.getByRole('button', { name: '권주영 계좌번호 복사' }).click();
-  await expect(page.getByRole('status')).toContainText('계좌번호를 복사했어요');
+  await expect(page.locator('.invite-toast')).toContainText('계좌번호를 복사했어요');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('123-456');
   // A new unsaved / saved-only draft must not replace the locally published invitation.
   await page.goto('/#/admin');
@@ -91,6 +92,11 @@ test('drafts, photo upload, place selection, publication and account copy work e
 
 test('publishing from the bottom of the design editor gives visible feedback and allows unknown event details', async ({ page }) => {
   await page.goto('/#/admin');
+  await page.getByLabel('예식 날짜', { exact: true }).fill('');
+  await page.getByLabel(/^예식 시간/).fill('');
+  await page.getByRole('button', { name: '예식 장소', exact: true }).click();
+  await page.getByLabel('예식장 이름', { exact: true }).fill('');
+  await page.getByLabel('주소', { exact: true }).fill('');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
   await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
   await page.getByRole('button', { name: '블루 세레니티', exact: true }).click();

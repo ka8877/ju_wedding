@@ -19,7 +19,7 @@
 
 ### 2. 저장소와 주영님 계정 준비
 
-1. [이 프로젝트의 SQL Editor](https://supabase.com/dashboard/project/fasdkmqdgukptnuvofwp/sql/new)에서 [001_wedding.sql](../supabase/migrations/001_wedding.sql) 전체를 실행합니다. 초안·공개 문서와 사진 버킷이 만들어집니다. 재실행해도 기존 초대장과 관리자 등록은 유지됩니다.
+1. [이 프로젝트의 SQL Editor](https://supabase.com/dashboard/project/fasdkmqdgukptnuvofwp/sql/new)에서 [001_wedding.sql](../supabase/migrations/001_wedding.sql), [002_guest_features.sql](../supabase/migrations/002_guest_features.sql)을 순서대로 실행합니다. 사이트 연결 안내의 **초기 설정 SQL 복사**는 둘을 함께 복사합니다. 재실행해도 기존 청첩장과 관리자 등록은 유지됩니다.
 2. [이 프로젝트의 사용자 관리](https://supabase.com/dashboard/project/fasdkmqdgukptnuvofwp/auth/users)에서 **Add user → Create new user**를 선택하고 주영님이 사용할 이메일과 비밀번호로 사용자를 만듭니다. **Auto Confirm User**를 켭니다. 비밀번호는 채팅이나 저장소에 적지 않습니다.
 3. SQL Editor에서 실제 이메일을 넣어 관리자 자격을 등록합니다.
 
@@ -70,6 +70,16 @@ Cloudflare 운영 사이트에서 만든 QR과 공유 링크는 `https://hyunbeo
 
 메시지에 링크를 붙였을 때 표시되는 미리보기 이미지는 이름을 담은 기본 이미지입니다. 관리자 화면에서 고른 사진·디자인에 따라 자동 변경되지는 않습니다.
 
+## 참석 응답과 현장 사진 저장소 추가
+
+이미 기본 청첩장을 사용 중이라면 [연결 안내](https://hyunbeom-juyoung.pages.dev/#/setup)의 **05 참석 응답 · 현장 사진 연결하기**에서 추가 설정 SQL을 복사해 Supabase SQL Editor에서 실행합니다. 이 작업은 프로젝트 소유자 권한이 필요합니다. 공개 키로는 테이블과 권한을 생성할 수 없어, 코드 배포만으로 실제 접수가 활성화되지는 않습니다.
+
+**추가 기능 연결 확인**으로 저장 공간을 확인한 뒤, 관리 화면의 **추가 기능**에서 접수·오픈 날짜·신랑측/신부측 안내를 확인하고 공개합니다. 응답은 **하객 응답** 메뉴에서 필터링하고 Excel에서 열 수 있는 UTF-8 CSV로 내려받습니다. 연락처는 선택 사항이며, 응답은 관리자만 조회합니다. 전송 실패 시 완료 화면을 보여주지 않고 다시 시도할 수 있습니다.
+
+현장 사진은 기본으로 **2027-02-20 한국 시간 0시**부터 접수하며 서버에서도 날짜와 공개한 사용 여부를 검사합니다. 사진은 공개 갤러리와 분리된 비공개 버킷에 저장하고, 관리자 화면에서 한 시간 동안 유효한 링크로 확인합니다. JPG·PNG·WebP·AVIF를 한 번에 최대 5장 선택할 수 있고, 원본 8 MiB 이하·변환 후 장당 2 MiB 이하를 지원합니다. 한 탭에서 시간당 5장, 전체 최대 500개 예약 한도가 있으며 실패한 미업로드 예약은 만료 후 정리됩니다.
+
+관리 화면에서 음악은 자동 재생하지 않는 기본 연주 또는 HTTPS 음원 주소로 고를 수 있습니다. 초대 문구·사진·교통·대절버스 정보는 직접 입력합니다. 계좌는 신랑측/신부측 펼침 항목으로 표시됩니다. 카카오 전용 버튼은 **추가 기능 → 카카오 JavaScript 키**에 공개 키를 넣고 카카오 Developers에 실제 공유할 웹 도메인을 등록하면 사용할 수 있습니다. 키가 없을 때도 휴대폰 공유창이나 링크 복사로 카카오톡에 전할 수 있습니다.
+
 ## 현재 Cloudflare Pages 배포 설정
 
 현재 운영 프로젝트는 **hyunbeom-juyoung**이며, 무료 주소 **https://hyunbeom-juyoung.pages.dev/**에서 배포를 확인했습니다. 기존 Supabase 프로젝트와 공개한 청첩장 데이터는 그대로 사용합니다.
@@ -103,7 +113,7 @@ Cloudflare GitHub 앱은 이 저장소에만 연결돼 있습니다. `main` 수�
 - 사진이 다른 휴대폰에서도 열리고, 장소 지도·길찾기·주소 복사가 작동하는지.
 - 관리자 목록에 없는 로그인 사용자가 초안·사진을 수정하지 못하는지.
 
-`npm run test:db`는 실제 PostgreSQL(PGlite)에서 SQL·RLS 정책 17개를 검사합니다. 인증·저장소 스키마만 모의 구성하므로 호스팅된 Supabase Auth, Storage API의 실제 파일 제한과 CDN 검증을 대신하지 않습니다. Actions의 모바일 테스트도 모의 지도와 이 기기 저장 모드를 사용하며 실제 Supabase 로그인 검사는 아닙니다.
+`npm run test:db`는 실제 PostgreSQL(PGlite)에서 기본 청첩장과 하객 접수 SQL·RLS 정책을 검사합니다. 인증·저장소 스키마만 모의 구성하므로 호스팅된 Supabase Auth, Storage API의 실제 파일 제한과 CDN 검증을 대신하지 않습니다. 모바일 테스트는 로컬 편집 또는 별도 클라우드 모드의 모의 HTTP 응답을 사용하며 실제 계정 로그인·하객 접수 검사는 아닙니다.
 
 ## 사진과 계좌 공개 범위
 
@@ -127,6 +137,7 @@ npm test
 npm run test:db
 npm run build
 npm run test:e2e
+npm run test:e2e:guest
 npm run check:connection
 ```
 

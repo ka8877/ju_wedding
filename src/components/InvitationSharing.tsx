@@ -1,13 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Copy, Download, ExternalLink, Heart, LoaderCircle, QrCode, Share2, X } from 'lucide-react';
+import { Check, Copy, Download, ExternalLink, Heart, LoaderCircle, MessageCircle, QrCode, Share2, X } from 'lucide-react';
 import { invitationQr, invitationUrl } from '../lib/sharing';
 import { copyText } from '../lib/utils';
+import { loadKakaoSdk, shareKakaoInvitation } from '../lib/kakao-sharing';
 import '../styles/sharing.css';
 
-interface SharingProps { names: string; variant?: 'guest' | 'admin'; localPreview?: boolean }
+interface SharingProps { names: string; variant?: 'guest' | 'admin'; localPreview?: boolean; kakaoJavascriptKey?: string }
 
-export default function InvitationSharing({ names, variant = 'guest', localPreview = false }: SharingProps) {
+export default function InvitationSharing({ names, variant = 'guest', localPreview = false, kakaoJavascriptKey = '' }: SharingProps) {
   const [open, setOpen] = useState(false);
   const [qr, setQr] = useState('');
   const [qrError, setQrError] = useState(false);
@@ -17,6 +18,10 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
   const titleId = useId();
   const descriptionId = useId();
   const url = invitationUrl(window.location.href, import.meta.env.DEV || localPreview);
+
+  useEffect(() => {
+    if (/^[a-f\d]{32}$/i.test(kakaoJavascriptKey)) void loadKakaoSdk().catch(() => { /* Keep native sharing available when the SDK is unavailable. */ });
+  }, [kakaoJavascriptKey]);
 
   useEffect(() => () => clearTimeout(noticeTimer.current), []);
   useEffect(() => {
@@ -52,6 +57,10 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
       if (!(error instanceof DOMException && error.name === 'AbortError')) await copy();
     }
   }
+  async function shareKakao() {
+    try { await shareKakaoInvitation(kakaoJavascriptKey, names, url); }
+    catch { notify('카카오톡 공유를 열지 못했어요. 기기의 공유 또는 링크 복사를 이용해 주세요.'); await share(); }
+  }
   function download() {
     if (!qr) return;
     const link = document.createElement('a');
@@ -68,7 +77,9 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
           ? <button type="button" className="wedding-share-button" onClick={() => void share()}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button>
           : <button type="button" className="wedding-share-button" onClick={() => void copy()}><Copy size={15} />링크 복사</button>}
         <button type="button" className="wedding-share-button wedding-share-button--qr" onClick={() => { setMessage(''); setOpen(true); }}><QrCode size={16} strokeWidth={1.4} />QR 코드 보기</button>
+        {kakaoJavascriptKey && <button type="button" className="wedding-share-button wedding-share-button--kakao" onClick={() => void shareKakao()}><MessageCircle size={16} />카카오톡으로 공유</button>}
       </div>
+      {variant === 'guest' && !kakaoJavascriptKey && <p className="wedding-share-note">휴대폰 공유창에서 카카오톡을 선택하거나, 복사한 링크를 카카오톡으로 전해 주세요.</p>}
       {variant === 'admin' && <p className="wedding-share-note">{localPreview ? 'QR은 실제 공개 사이트로 연결돼요. 이 기기의 미리보기 수정은 전달되지 않아요.' : 'QR은 공개 청첩장으로 연결돼요. 편집한 내용은 공개 반영 후 전달됩니다.'}</p>}
       {message && !open && <p className="wedding-share-feedback" role="status"><Check size={13} />{message}</p>}
     </div>

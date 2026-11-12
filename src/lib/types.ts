@@ -4,6 +4,8 @@ export interface Person {
   phone: string;
   father: string;
   mother: string;
+  birthOrder: string;
+  childName: string;
 }
 export interface Photo { id: string; url: string; alt: string; }
 export interface Account { id: string; side: 'groom' | 'bride'; bank: string; number: string; holder: string; }
@@ -15,12 +17,23 @@ export interface Venue {
   lng: number | null;
   transport: string;
   parking: string;
+  subway: string;
+  bus: string;
+  car: string;
 }
 export type ThemeId = 'olive' | 'rose' | 'sand' | 'ivory' | 'sage' | 'lavender' | 'midnight' | 'peach' | 'sky';
 export type TemplateId = 'garden' | 'editorial' | 'photo' | 'classic' | 'chapel' | 'letter';
 export type FontId = 'serif' | 'sans' | 'romantic' | 'myeongjo' | 'handwriting';
 export type BackgroundId = 'plain' | 'paper' | 'linen' | 'watercolor' | 'petals' | 'starlight';
-export type SectionId = 'invitation' | 'verse' | 'calendar' | 'gallery' | 'location' | 'accounts' | 'blessing';
+export type SectionId = 'invitation' | 'verse' | 'calendar' | 'gallery' | 'rsvp' | 'snap' | 'location' | 'shuttle' | 'accounts' | 'blessing';
+export interface WeddingGuestFeatures {
+  music: { enabled: boolean; source: 'builtin' | 'url'; url: string; volume: number; };
+  gallery: { collapsedRows: number; };
+  rsvp: { enabled: boolean; title: string; groomMessage: string; brideMessage: string; note: string; };
+  snap: { enabled: boolean; title: string; openDate: string; message: string; };
+  shuttle: { enabled: boolean; title: string; daejeon: string; gyeongju: string; };
+  sharing: { kakaoJavascriptKey: string; };
+}
 export interface WeddingDesign {
   template: TemplateId;
   font: FontId;
@@ -43,6 +56,7 @@ export interface WeddingDesign {
 }
 export interface WeddingData {
   version: 1;
+  preferencesVersion: 1;
   groom: Person;
   bride: Person;
   date: string;
@@ -58,5 +72,6 @@ export interface WeddingData {
   accounts: Account[];
   theme: ThemeId;
   design: WeddingDesign;
+  guestFeatures: WeddingGuestFeatures;
 }
 export interface StoredWedding { data: WeddingData; updatedAt: string | null; }

@@ -1,9 +1,9 @@
 import type { BackgroundId, FontId, SectionId, TemplateId, ThemeId, WeddingData, WeddingDesign } from './types';
 
 export const sectionLabels: Record<SectionId, string> = {
-  invitation: '초대의 말', verse: '성경 말씀', calendar: '예식 달력', gallery: '사진 갤러리', location: '오시는 길', accounts: '마음 전하실 곳', blessing: '축복의 기도',
+  invitation: '초대의 말', verse: '성경 말씀', calendar: '예식 달력', gallery: '사진 갤러리', rsvp: '참석 여부', snap: '현장 스냅', location: '오시는 길', shuttle: '대절버스 안내', accounts: '마음 전하실 곳', blessing: '축복의 기도',
 };
-export const sectionIds: SectionId[] = ['invitation', 'verse', 'calendar', 'gallery', 'location', 'accounts', 'blessing'];
+export const sectionIds: SectionId[] = ['invitation', 'verse', 'calendar', 'gallery', 'rsvp', 'snap', 'location', 'shuttle', 'accounts', 'blessing'];
 export const defaultDesign: WeddingDesign = {
   template: 'garden', font: 'serif', background: 'plain', fontSize: 'normal', accentColor: '',
   heroTitle: 'With you,\nalways.', heroSubtitle: '함께여서, 더 아름다운 날', closingTitle: 'Forever begins with us.',
@@ -96,7 +96,16 @@ export const invitationPresets = [
 
 export function getDesign(data: Pick<WeddingData, 'design'>): WeddingDesign {
   const saved = data.design;
-  return { ...structuredClone(defaultDesign), ...saved, sectionTitles: { ...defaultDesign.sectionTitles, ...saved?.sectionTitles }, sectionOrder: [...(saved?.sectionOrder ?? []), ...sectionIds.filter(id => !saved?.sectionOrder?.includes(id))], hiddenSections: saved?.hiddenSections ?? [] };
+  const order = [...(saved?.sectionOrder ?? [])];
+  for (const id of sectionIds) {
+    if (order.includes(id)) continue;
+    const after: Partial<Record<SectionId, SectionId>> = { rsvp: 'gallery', snap: 'rsvp', shuttle: 'location' };
+    const anchor = after[id];
+    const index = anchor ? order.indexOf(anchor) : -1;
+    if (index >= 0) order.splice(index + 1, 0, id);
+    else order.push(id);
+  }
+  return { ...structuredClone(defaultDesign), ...saved, sectionTitles: { ...defaultDesign.sectionTitles, ...saved?.sectionTitles }, sectionOrder: order, hiddenSections: [...(saved?.hiddenSections ?? [])] };
 }
 export function applyTemplate(data: WeddingData, id: TemplateId): WeddingData {
   const preset = templates.find(t => t.id === id)!;

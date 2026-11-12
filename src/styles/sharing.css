@@ -34,5 +34,7 @@
 .wedding-share-button--primary { background: #71855c; border-color: #71855c; color: #fffdf7; }
 .wedding-share-button--primary:hover { background: #61754e; }
 .wedding-share-button--wide { grid-column: 1 / -1; }
+.wedding-share-button--kakao, .invitation .wedding-share-button--kakao { background: #fee500; border-color: #fee500; color: #302a22; }
+.wedding-share-button--kakao:hover, .invitation .wedding-share-button--kakao:hover { background: #f5dc00; }
 @media (max-width: 650px) { .wedding-sharing--admin { padding: 20px; margin-top: 17px; } .wedding-share-card-heading h2 { font-size: 14px; } }
 @media (max-width: 360px) { .wedding-share-dialog-content { padding: 40px 17px 22px; } .wedding-share-dialog-actions .wedding-share-button { font-size: 10px; padding: 11px 7px; } }
