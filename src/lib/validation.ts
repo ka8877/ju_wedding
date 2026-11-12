@@ -41,6 +41,7 @@ export function isWeddingData(value: unknown): value is WeddingData {
     && Array.isArray(d.photos) && d.photos.length <= 24 && d.photos.every(p => p && text(p.id, 100) && text(p.alt, 200) && text(p.url, 16_000_000) && publicImageUrl(p.url))
     && record(d.venue) && (['name','hall','address','transport','parking','subway','bus','car'] as const).every(k => text(d.venue[k]))
     && coordinate(d.venue.lat, 90) && coordinate(d.venue.lng, 180)
+    && text(d.venue.naverMapClientId, 100) && /^[A-Za-z0-9_-]*$/.test(d.venue.naverMapClientId)
     && Array.isArray(d.accounts) && d.accounts.length <= 12 && d.accounts.every(a => a && ['groom','bride'].includes(a.side) && ['id','bank','number','holder'].every(k => text(a[k as keyof typeof a], 100)))
     && isValidDesign(d.design) && isValidGuestFeatures(d.guestFeatures);
 }
@@ -114,6 +115,7 @@ export function normalizeWedding(value: unknown): WeddingData {
   const blank = (v: unknown) => typeof v === 'string' && !v.trim();
   const venue = record(raw.venue) ? {
     ...raw.venue,
+    naverMapClientId: raw.venue.naverMapClientId === undefined ? '' : raw.venue.naverMapClientId,
     subway: raw.venue.subway === undefined ? '' : raw.venue.subway,
     bus: raw.venue.bus === undefined ? '' : raw.venue.bus,
     car: raw.venue.car === undefined ? '' : raw.venue.car,

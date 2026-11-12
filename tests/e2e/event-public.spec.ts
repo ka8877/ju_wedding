@@ -6,7 +6,7 @@ import type { WeddingData } from '../../src/lib/types';
 const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4AWP4+vrOfwAJUQO8AaEsBQAAAABJRU5ErkJggg==';
 
 async function publishFixture(page: Page, data: WeddingData) {
-  await page.route('https://www.openstreetmap.org/**', route => route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }));
+  await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }));
   await page.goto('/');
   await page.evaluate(async wedding => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -44,7 +44,7 @@ test('known wedding facts, family order, transport and shuttle guidance appear i
   await expect(page.locator('.invite-family-row').nth(1).locator('strong')).toHaveText('주영');
   expect(await page.locator('.invite-content-section').evaluateAll(elements => elements.map(element => element.getAttribute('data-section')))).toEqual(['invitation', 'calendar', 'gallery', 'rsvp', 'snap', 'location', 'shuttle', 'accounts']);
   for (const title of ['지하철', '버스', '자가용']) await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: '카카오맵 길찾기' })).toHaveAttribute('href', /map\.kakao\.com\/link\/search\//);
+  await expect(page.getByRole('link', { name: '카카오맵 길찾기' })).toHaveAttribute('href', /map\.kakao\.com\/link\/to\/.*37\.3768838,127\.1043929/);
   const daejeon = page.locator('.invite-shuttle-group').first();
   await expect(daejeon.locator('p')).not.toBeVisible();
   await daejeon.locator('summary').click();

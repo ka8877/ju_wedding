@@ -21,7 +21,7 @@ describe('Juyoung’s confirmed event preferences', () => {
     expect(defaultWedding.time).toBe('12:30');
     expect(defaultWedding.groom).toMatchObject({ father: '조성진', mother: '이진용', birthOrder: '장남', childName: '현범' });
     expect(defaultWedding.bride).toMatchObject({ father: '권용덕', mother: '이선애', birthOrder: '차녀', childName: '주영' });
-    expect(defaultWedding.venue).toMatchObject({ name: 'HD현대글로벌R&D센터', hall: '아산홀', address: '경기 성남시 분당구 분당수서로 477', lat: null, lng: null, subway: '', bus: '', car: '' });
+    expect(defaultWedding.venue).toMatchObject({ name: 'HD현대글로벌R&D센터', hall: '아산홀', address: '경기 성남시 분당구 분당수서로 477', lat: 37.3768838, lng: 127.1043929, naverMapClientId: '', subway: '', bus: '', car: '' });
     expect(defaultWedding.accounts).toEqual([]);
     expect(defaultWedding.photos).toEqual([]);
     expect(defaultGuestFeatures.music).toMatchObject({ enabled: true, source: 'builtin', url: '' });

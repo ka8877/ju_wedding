@@ -114,9 +114,12 @@
 .invite-map { width: 100%; height: 235px; display: block; border: 1px solid var(--invite-line); border-radius: 3px; filter: saturate(.55); margin-top: 18px; }
 .invite-location-placeholder { background: var(--invite-paper); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; color: var(--invite-accent); margin-top: 22px; }
 .invite-location-placeholder span { font-size: 10px; color: var(--invite-muted); }
-.invite-map-links { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
+.invite-map-links { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 12px; }
 .invite-map-links a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid var(--invite-line); border-radius: 3px; font-size: 10px; }
 .invite-map-links a > svg { color: var(--invite-muted); }
+.invite-map-links a.invite-map-link--primary { min-height: 50px; background: #03a94d; border-color: #03a94d; color: #fff; font-size: 12px; font-weight: 600; }
+.invite-map-link--primary .invite-map-icon--naver { background: #fff; color: #03a94d; }
+.invite-map-links a.invite-map-link--primary > svg { color: #fff; }
 .invite-map-help { margin-top: 12px !important; color: var(--invite-muted); font-size: 9px; line-height: 1.8; word-break: keep-all; }
 .invite-map-icon { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; font: bold 10px/1 Arial, sans-serif; }
 .invite-map-icon--naver { background: #e0eedb; color: #56804c; }

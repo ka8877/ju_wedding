@@ -9,6 +9,8 @@ import InvitationSharing from './InvitationSharing';
 import MusicPlayer from './MusicPlayer';
 import GuestRsvp from './GuestRsvp';
 import GuestSnap from './GuestSnap';
+import VenueMap from './VenueMap';
+import { getNaverVenueUrl, getVenueCoordinates } from '../lib/venue-map';
 import '../styles/invitation.css';
 
 interface InvitationProps { data: WeddingData; preview?: boolean }
@@ -46,11 +48,9 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
   const eventMillis = date && hasTime ? date.getTime() : undefined;
   const hasContacts = Boolean(data.groom.phone || data.bride.phone);
   const hasVenue = Boolean(data.venue.name || data.venue.address);
-  const validCoordinates = typeof data.venue.lat === 'number' && typeof data.venue.lng === 'number' && Number.isFinite(data.venue.lat) && Number.isFinite(data.venue.lng) && Math.abs(data.venue.lat) <= 90 && Math.abs(data.venue.lng) <= 180;
+  const coordinates = getVenueCoordinates(data.venue);
   const venueQuery = encodeURIComponent(`${data.venue.name} ${data.venue.address}`.trim());
-  const naverVenueUrl = data.venue.name.trim() === 'HD현대글로벌R&D센터' && data.venue.address.includes('분당수서로 477')
-    ? 'https://m.place.naver.com/place/1156613092?entry=ple'
-    : `https://map.naver.com/p/search/${venueQuery}`;
+  const naverVenueUrl = getNaverVenueUrl(data.venue);
   const collapsedRows = features.gallery.collapsedRows;
   const galleryLimit = collapsedRows === 0 ? data.photos.length : design.galleryLayout === 'mosaic'
     ? Array.from({ length: collapsedRows }, (_, row) => row % 2 === 0 ? 2 : 3).reduce((sum, count) => sum + count, 0)
@@ -185,8 +185,8 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           {data.venue.hall && <p className="invite-venue-hall">{data.venue.hall}</p>}
           {data.venue.address && <div className="invite-address"><span>{data.venue.address}</span><button aria-label="주소 복사" onClick={() => copy(data.venue.address, '주소를 복사했어요')}><Copy size={14} /></button></div>}
           {!data.venue.address && <p className="invite-pending-info">정확한 주소는 추후 안내드릴게요.</p>}
-          {validCoordinates ? <iframe className="invite-map" title={`${data.venue.name || '예식장'} 위치 지도`} loading="lazy" referrerPolicy="no-referrer" src={`https://www.openstreetmap.org/export/embed.html?bbox=${data.venue.lng! - 0.006}%2C${data.venue.lat! - 0.004}%2C${data.venue.lng! + 0.006}%2C${data.venue.lat! + 0.004}&layer=mapnik&marker=${data.venue.lat}%2C${data.venue.lng}`} /> : <div className="invite-location-placeholder"><MapPin size={27} strokeWidth={1} /><span>아래 지도 앱에서 길을 확인해 주세요.</span></div>}
-          <div className="invite-map-links"><a href={naverVenueUrl} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--naver">N</span>네이버 지도<ArrowUpRight size={13} /></a><a href={validCoordinates ? `https://map.kakao.com/link/to/${encodeURIComponent(data.venue.name || '예식장')},${data.venue.lat},${data.venue.lng}` : `https://map.kakao.com/link/search/${venueQuery}`} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--kakao">K</span>카카오맵 길찾기<ArrowUpRight size={13} /></a></div>
+          <VenueMap venue={data.venue} className="invite-venue-map" />
+          <div className="invite-map-links"><a className="invite-map-link--primary" href={naverVenueUrl} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--naver" aria-hidden="true">N</span>네이버 지도 열기<ArrowUpRight size={14} /></a><a href={coordinates ? `https://map.kakao.com/link/to/${encodeURIComponent(data.venue.name || '예식장')},${coordinates.lat},${coordinates.lng}` : `https://map.kakao.com/link/search/${venueQuery}`} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--kakao" aria-hidden="true">K</span>카카오맵 길찾기<ArrowUpRight size={13} /></a></div>
           {data.venue.address && <p className="invite-map-help">티맵 이용 시 위 주소를 복사해 목적지를 검색해 주세요.</p>}
           {(data.venue.subway || data.venue.bus || data.venue.car || data.venue.transport || data.venue.parking) && <div className="invite-directions">{data.venue.subway && <div><h4>지하철</h4><p className="invite-preserve">{data.venue.subway}</p></div>}{data.venue.bus && <div><h4>버스</h4><p className="invite-preserve">{data.venue.bus}</p></div>}{data.venue.car && <div><h4>자가용</h4><p className="invite-preserve">{data.venue.car}</p></div>}{data.venue.transport && <div><h4>대중교통 안내</h4><p className="invite-preserve">{data.venue.transport}</p></div>}{data.venue.parking && <div><h4>주차 안내</h4><p className="invite-preserve">{data.venue.parking}</p></div>}</div>}
         </> : <div className="invite-venue-pending"><MapPin size={25} strokeWidth={1} /><p>소중한 분들을 모실 공간을<br />정성껏 준비하고 있어요.</p><span>장소가 정해지면 이곳에서 안내드릴게요.</span></div>}

@@ -1,0 +1,11 @@
+.venue-map { margin-top: 18px; width: 100%; min-width: 0; text-align: left; }
+.venue-map-frame { height: 260px; position: relative; overflow: hidden; border: 1px solid var(--invite-line, #e1e5dc); border-radius: 5px; background: #edf1e9; }
+.venue-map-frame > iframe { display: block; width: 100%; height: 100%; border: 0; }
+.venue-map-naver { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+.venue-map-naver.is-ready { visibility: visible; pointer-events: auto; }
+.venue-map-caption { display: flex; justify-content: space-between; gap: 12px; margin: 9px 0 0 !important; color: var(--invite-muted, #7b8574); font-size: 9px !important; line-height: 1.7 !important; }
+.venue-map-caption > span:first-child { flex-shrink: 0; }
+.venue-map-caption > span:last-child { text-align: right; overflow-wrap: anywhere; }
+.editor-venue-map .venue-map-frame { height: 290px; }
+.editor-venue-map .venue-map-caption { font-size: 11px !important; }
+@media (max-width: 360px) { .venue-map-frame { height: 240px; } }

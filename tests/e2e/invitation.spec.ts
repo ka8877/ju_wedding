@@ -22,7 +22,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.route('https://nominatim.openstreetmap.org/search?**', async route => {
     await route.fulfill({ json: [{ place_id: 1, name: '테스트 예식장', display_name: '서울특별시 중구 테스트로 1', lat: '37.5665', lon: '126.9780' }] });
   });
-  await page.route('https://www.openstreetmap.org/**', async route => { await route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }); });
+  await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, async route => { await route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }); });
   await page.goto('/#/admin');
   await page.getByLabel('예식 날짜', { exact: true }).fill('2027-05-22');
   await page.getByLabel(/^예식 시간/).fill('14:30');

@@ -15,6 +15,7 @@ export interface Venue {
   address: string;
   lat: number | null;
   lng: number | null;
+  naverMapClientId: string;
   transport: string;
   parking: string;
   subway: string;

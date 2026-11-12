@@ -26,7 +26,7 @@ export const defaultWedding: WeddingData = {
   verse: '그런즉 믿음, 소망, 사랑, 이 세 가지는 항상 있을 것인데\n그 중의 제일은 사랑이라.',
   verseReference: '고린도전서 13:13',
   coverPhoto: '', photos: [],
-  venue: { name: 'HD현대글로벌R&D센터', hall: '아산홀', address: '경기 성남시 분당구 분당수서로 477', lat: null, lng: null, transport: '', parking: '', subway: '', bus: '', car: '' },
+  venue: { name: 'HD현대글로벌R&D센터', hall: '아산홀', address: '경기 성남시 분당구 분당수서로 477', lat: 37.3768838, lng: 127.1043929, naverMapClientId: '', transport: '', parking: '', subway: '', bus: '', car: '' },
   accounts: [], theme: 'olive', design: structuredClone(defaultDesign),
   guestFeatures: structuredClone(defaultGuestFeatures),
 };
