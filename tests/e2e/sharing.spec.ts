@@ -4,10 +4,16 @@ import jsQR from 'jsqr';
 
 const publicUrl = 'https://ka8877.github.io/ju_wedding/';
 
+test.beforeEach(async ({ page }) => {
+  await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<p>예식장 지도</p>' }));
+});
+
 test('guests can scan, save and copy a real QR that points to the public invitation', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const externalRequests: string[] = [];
-  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:5175') && !request.url().startsWith('data:')) externalRequests.push(request.url()); });
+  // The venue iframe has its own provider; QR generation in the invitation
+  // itself must still work without calling an external QR service.
+  page.on('request', request => { if (request.frame() === page.mainFrame() && !request.url().startsWith('http://127.0.0.1:5175') && !request.url().startsWith('data:')) externalRequests.push(request.url()); });
   await page.goto('/?tracking=private#/');
   const trigger = page.getByRole('button', { name: 'QR 코드 보기', exact: true });
   await trigger.click();
