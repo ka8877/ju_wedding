@@ -69,6 +69,20 @@ npm run check:connection
 
 메시지에 링크를 붙였을 때 표시되는 미리보기 이미지는 이름을 담은 기본 이미지입니다. 관리자 화면에서 고른 사진·디자인에 따라 자동 변경되지는 않습니다.
 
+## 개인 아이디 없는 무료 주소로 이전하기
+
+Cloudflare Pages 무료 플랜에서 `원하는프로젝트이름.pages.dev` 주소를 사용할 수 있습니다. 실제 주소는 프로젝트 생성 시 정해지며, 아래 설정을 준비하는 것만으로 주소가 확보되거나 이전되지는 않습니다. 기존 Supabase 프로젝트와 공개한 청첩장 데이터는 그대로 사용합니다.
+
+1. Cloudflare 대시보드의 **Workers & Pages → Pages**에서 GitHub 저장소 `ka8877/ju_wedding`을 연결합니다. GitHub 접근 승인이 필요하면 이 저장소만 선택합니다.
+2. 운영 브랜치를 **main**, 빌드 명령을 `npm test && npm run test:db && npm run build`, 출력 폴더를 **dist**로 설정합니다.
+3. 빌드 환경 변수에 **NODE_VERSION=24**, **BASE_PATH=/**, **VITE_PUBLIC_SITE_URL=https://실제프로젝트이름.pages.dev/**를 설정합니다. 새 주소가 정해진 뒤 정확히 입력하세요. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요 없습니다.
+4. 배포가 성공하면 새 주소에서 공개 내용·관리자 로그인·사진·QR을 확인합니다. canonical·메시지 공유 이미지·로컬 미리보기의 QR 기본 주소도 위 환경 변수로 함께 설정됩니다.
+5. Supabase **Authentication → URL Configuration → Site URL**을 새 주소에 맞춥니다. 기존 GitHub 주소와 이전에 저장한 QR은 기존 사이트로 계속 연결되며, 새 QR은 새 사이트에서 저장할 수 있습니다.
+
+이후 `main` 수정은 Cloudflare Pages에서 검사·빌드 후 자동 배포됩니다. 사진·문구는 계속 관리 화면에서 공개합니다. 기존 GitHub Pages 자동 배포도 유지되므로, 새 주소를 실제로 확인하기 전에는 기존 사이트를 삭제하지 마세요.
+
+설정 참고: [Cloudflare Git 연동 안내](https://developers.cloudflare.com/pages/get-started/git-integration/).
+
 ## 실제 연결 후 확인할 것
 
 `npm run check:connection`은 관리자 비밀번호를 받지 않는 읽기 전용 검사입니다. 다음 동작은 실제 관리자 계정으로 별도 확인합니다.

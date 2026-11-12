@@ -1,8 +1,12 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolvePublicSiteUrl } from './src/lib/site-url';
 
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), 'VITE_'), ...process.env };
+  const publicSiteUrl = resolvePublicSiteUrl(env.VITE_PUBLIC_SITE_URL);
+  const shareImageUrl = new URL('invitation-share.png', publicSiteUrl).href;
+  const htmlAttribute = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
   const url = env.VITE_SUPABASE_URL;
   const key = env.VITE_SUPABASE_ANON_KEY;
   if (Boolean(url) !== Boolean(key)) throw new Error('Supabase URL과 공개용 키를 모두 설정하거나, 둘 다 비워 미리보기로 실행하세요.');
@@ -12,5 +16,16 @@ export default defineConfig(({ mode }) => {
     try { role = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString()).role; } catch { /* The SDK will validate other public key formats. */ }
   }
   if (key?.startsWith('sb_secret_') || role === 'service_role') throw new Error('프런트엔드에 비밀 키를 사용할 수 없습니다. Supabase publishable 또는 anon 키를 사용하세요.');
-  return { plugins: [react()], base: process.env.BASE_PATH || '/', server: { port: 5173 } };
+  return {
+    plugins: [react(), {
+      name: 'invitation-sharing-metadata',
+      transformIndexHtml: {
+        order: 'pre',
+        handler: html => html.replaceAll('__PUBLIC_SITE_URL__', htmlAttribute(publicSiteUrl)).replaceAll('__PUBLIC_SHARE_IMAGE_URL__', htmlAttribute(shareImageUrl)),
+      },
+    }],
+    define: { 'import.meta.env.VITE_PUBLIC_SITE_URL': JSON.stringify(publicSiteUrl) },
+    base: process.env.BASE_PATH || '/',
+    server: { port: 5173 },
+  };
 });

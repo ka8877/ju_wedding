@@ -3,7 +3,7 @@ import { invitationQr, invitationUrl, publicInvitationUrl } from '../src/lib/sha
 
 describe('guest invitation links', () => {
   it('removes editor routes and tracking queries while preserving the deployed base path', () => {
-    expect(invitationUrl('https://ka8877.github.io/ju_wedding/?token=private#/admin')).toBe(publicInvitationUrl);
+    expect(invitationUrl('https://ka8877.github.io/ju_wedding/?token=private#/admin')).toBe('https://ka8877.github.io/ju_wedding/');
     expect(invitationUrl('https://wedding.example/couple/?tracking=123#/setup')).toBe('https://wedding.example/couple/');
   });
 

@@ -1,4 +1,6 @@
-export const publicInvitationUrl = 'https://ka8877.github.io/ju_wedding/';
+import { resolvePublicSiteUrl } from './site-url';
+
+export const publicInvitationUrl = resolvePublicSiteUrl(import.meta.env.VITE_PUBLIC_SITE_URL);
 
 /** Share the guest page, never an editor route or a development server. */
 export function invitationUrl(href: string, preview = false): string {
