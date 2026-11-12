@@ -35,7 +35,7 @@ export function loadKakaoSdk(): Promise<KakaoSdk> {
 }
 
 export async function shareKakaoInvitation(key: string, names: string, href: string): Promise<void> {
-  if (!/^[a-f\d]{32}$/i.test(key)) throw new Error('카카오 JavaScript 키와 웹 도메인 등록을 확인해 주세요.');
+  if (!/^[a-f\d]{32}$/i.test(key)) throw new Error('카카오톡 공유를 준비하지 못했어요.');
   const url = resolvePublicSiteUrl(href);
   const sdk = await loadKakaoSdk();
   if (!sdk.isInitialized()) sdk.init(key);

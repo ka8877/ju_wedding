@@ -1,5 +1,6 @@
 .wedding-sharing { margin-top: 24px; }
-.wedding-share-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 9px; }
+.wedding-share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.wedding-share-actions > .wedding-share-button--kakao { grid-column: 1 / -1; min-height: 50px; font-size: 12px; font-weight: 600; }
 .wedding-share-button, .invitation .wedding-share-button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 44px; padding: 11px 15px; border: 1px solid #d6ddcb; border-radius: 4px; background: transparent; color: #647452; font-family: 'Noto Sans KR', sans-serif; font-size: 11px; line-height: 1.5; text-decoration: none; }
 .invitation .wedding-share-button { border-color: var(--invite-line); color: var(--invite-accent); }
 .wedding-share-button:hover { background: #edf2e6; }
@@ -14,6 +15,8 @@
 .wedding-sharing--admin .wedding-share-actions { justify-content: flex-start; margin-top: 17px; }
 .wedding-share-note { font-family: 'Noto Sans KR', sans-serif; font-size: 10px; line-height: 1.9; color: #8c9780; margin: 15px 0 0; word-break: keep-all; }
 .wedding-share-feedback { display: flex; justify-content: center; gap: 6px; align-items: center; color: #61794b; font-family: 'Noto Sans KR', sans-serif; font-size: 11px; line-height: 1.8; margin: 12px 0 0; }
+.wedding-share-feedback--error { color: #9b624e; align-items: flex-start; }
+.wedding-share-feedback--error > svg { flex-shrink: 0; margin-top: 3px; }
 .wedding-share-dialog { width: min(390px, calc(100vw - 32px)); max-height: calc(100dvh - 36px); padding: 0; border: 1px solid #e0e6d6; border-radius: 10px; background: #fffef9; color: #47533c; box-shadow: 0 25px 100px #202b2350; overflow: auto; overscroll-behavior: contain; }
 .wedding-share-dialog::backdrop { background: #29342aba; backdrop-filter: blur(5px); }
 .wedding-share-dialog-content { padding: 39px 25px 25px; position: relative; text-align: center; }
