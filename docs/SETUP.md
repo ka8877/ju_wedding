@@ -1,10 +1,11 @@
 # 무료 주소에서 사진과 내용을 직접 수정하기
 
-- 청첩장: **https://ka8877.github.io/ju_wedding/**
-- 관리 페이지: **https://ka8877.github.io/ju_wedding/#/admin**
-- 처음 한 번 연결 안내: **https://ka8877.github.io/ju_wedding/#/setup**
+- 청첩장: **https://hyunbeom-juyoung.pages.dev/**
+- 관리 페이지: **https://hyunbeom-juyoung.pages.dev/#/admin**
+- 처음 한 번 연결 안내: **https://hyunbeom-juyoung.pages.dev/#/setup**
+- 기존 보조 주소: **https://ka8877.github.io/ju_wedding/**
 
-유료 도메인은 사용하지 않습니다. 코드가 `main`에 반영되면 검사 후 GitHub Pages로 자동 배포됩니다. Supabase를 연결하면 주영님은 관리 페이지에서 사진·문구·장소·계좌를 변경하고 **공개**만 누르면 됩니다. 그때마다 GitHub를 열거나 코드를 배포할 필요가 없습니다.
+유료 도메인은 사용하지 않습니다. 코드가 `main`에 반영되면 검사·빌드 후 Cloudflare Pages 운영 주소와 GitHub Pages 보조 주소로 자동 배포됩니다. Supabase를 연결하면 주영님은 관리 페이지에서 사진·문구·장소·계좌를 변경하고 **공개**만 누르면 됩니다. 그때마다 GitHub를 열거나 코드를 배포할 필요가 없습니다.
 
 이 안내는 관리 화면 상단의 **연결 안내**, 또는 **관리자 추가·연결 안내**에서도 새 탭으로 열 수 있습니다. 편집 중인 내용은 그대로 유지됩니다.
 
@@ -30,7 +31,7 @@ on conflict (user_id) do nothing;
 ```
 
 4. **Authentication → Sign In / Providers → Email**에서 이메일 로그인은 사용하고 공개 회원가입은 끕니다. 이 앱은 관리자 전용이며 회원가입만으로 관리 권한을 주지 않습니다.
-5. **Authentication → URL Configuration → Site URL**을 `https://ka8877.github.io/ju_wedding/`로 설정합니다. 현재는 이메일·비밀번호 로그인이라 관리 해시 경로로 이메일 인증을 리디렉트할 필요가 없습니다.
+5. **Authentication → URL Configuration → Site URL**은 현재 운영 주소인 `https://hyunbeom-juyoung.pages.dev/`로 맞추는 것을 권장합니다. 현재 이메일·비밀번호 로그인은 리디렉션을 사용하지 않아 Site URL 변경이 새 주소 로그인의 선행 조건은 아닙니다. 새 주소에서는 기존 관리자 계정으로 다시 로그인하면 됩니다.
 
 이 작업은 Supabase 프로젝트 소유자 권한이 필요합니다. 공개 키만으로 계정 생성·SQL 실행을 대신할 수는 없습니다.
 
@@ -50,14 +51,14 @@ npm run check:connection
 
 현재 클라우드 환경에서 프로젝트의 `fasdkmqdgukptnuvofwp.supabase.co` 주소가 차단됐다면 먼저 환경의 네트워크 허용 설정이 적용돼야 합니다. 연결 점검을 실제로 통과하기 전에는 사진 저장이나 관리자 로그인이 검증됐다고 안내하지 않습니다.
 
-코드를 `main`에 반영하면 **Test and deploy invitation**이 검사 후 무료 GitHub Pages 주소로 자동 배포합니다. 실행 결과 요약에는 청첩장·관리 페이지·최초 연결 안내 링크와 실제 연결 검사 결과가 표시됩니다. Supabase 연결 검사는 진단이며, SQL 미준비나 일시적인 연결 실패가 코드 배포 자체를 막지는 않습니다. 이때 요약에 **연결 점검 미통과**가 표시되며 사진 저장·관리자 로그인이 준비됐다는 뜻은 아닙니다. 사용자에게 GitHub 변수 등록이나 배포 버튼 클릭을 반복 요청하지 않습니다.
+코드를 `main`에 반영하면 Cloudflare Pages가 아래의 현재 빌드 설정으로 검사·배포합니다. GitHub Actions의 **Test and deploy invitation**도 보조 GitHub Pages 사이트를 검사 후 자동 배포합니다. Actions 실행 결과 요약에는 보조 사이트의 청첩장·관리 페이지·최초 연결 안내 링크와 실제 연결 검사 결과가 표시됩니다. Supabase 연결 검사는 진단이며, SQL 미준비나 일시적인 연결 실패가 GitHub Pages 코드 배포 자체를 막지는 않습니다. 이때 요약에 **연결 점검 미통과**가 표시되며 사진 저장·관리자 로그인이 준비됐다는 뜻은 아닙니다. 사용자에게 GitHub 변수 등록이나 배포 버튼 클릭을 반복 요청하지 않습니다.
 
 ## 주영님이 사용하는 순서
 
-1. [관리 페이지](https://ka8877.github.io/ju_wedding/#/admin)에 이메일·비밀번호로 로그인합니다.
+1. [관리 페이지](https://hyunbeom-juyoung.pages.dev/#/admin)에 이메일·비밀번호로 로그인합니다.
 2. 사진과 기본 정보를 입력한 뒤, 디자인 탭에서 **추천 조합** 하나를 고르거나 **랜덤 스타일 추천**을 눌러 보세요. 마음에 드는 조합이면 세부 옵션을 고를 필요가 없습니다. 더 바꾸고 싶을 때만 **직접 세부 꾸미기**를 여세요.
 3. **초안 저장** 후 미리보기로 확인하고 **공개**합니다.
-4. 다른 휴대폰이나 시크릿 창에서 [청첩장](https://ka8877.github.io/ju_wedding/)을 열어 확인합니다.
+4. 다른 휴대폰이나 시크릿 창에서 [청첩장](https://hyunbeom-juyoung.pages.dev/)을 열어 확인합니다.
 
 사진·문구 변경에는 GitHub 작업이 필요 없습니다. 디자인 코드 변경만 `main` 반영 → 자동 검사 → 자동 배포 순서로 진행됩니다.
 
@@ -65,21 +66,30 @@ npm run check:connection
 
 관리 화면의 **소중한 분께 전해요**에서 링크를 복사하거나 **QR 코드 보기 → QR 이미지 저장**으로 1024px PNG를 내려받을 수 있습니다. 하객용 청첩장 하단에서도 QR과 공유 버튼을 사용할 수 있습니다. QR은 외부 생성 서비스 없이 기기에서 만들며, 흰 여백을 포함하므로 인쇄할 때 가장자리를 자르지 마세요.
 
-로컬 미리보기에서도 QR과 공유 링크는 실제 무료 청첩장 주소로 연결됩니다. 관리자 주소·로그인 정보·저장하지 않은 초안은 QR에 포함되지 않습니다. 내용을 바꿔도 청첩장 주소가 같으면 기존에 저장하거나 인쇄한 QR을 계속 사용할 수 있습니다. 공유하기 전에 **공개 청첩장에 반영**하고 다른 휴대폰에서 확인해 주세요.
+Cloudflare 운영 사이트에서 만든 QR과 공유 링크는 `https://hyunbeom-juyoung.pages.dev/`로 연결됩니다. 로컬 미리보기는 `VITE_PUBLIC_SITE_URL`에 설정한 공개 주소를 사용하고, 변수를 생략하면 기존 GitHub Pages 주소를 사용합니다. 관리자 주소·로그인 정보·저장하지 않은 초안은 QR에 포함되지 않습니다. 이전에 저장하거나 인쇄한 GitHub Pages QR도 보조 사이트로 계속 연결됩니다. 공유하기 전에 **공개 청첩장에 반영**하고 다른 휴대폰에서 확인해 주세요.
 
 메시지에 링크를 붙였을 때 표시되는 미리보기 이미지는 이름을 담은 기본 이미지입니다. 관리자 화면에서 고른 사진·디자인에 따라 자동 변경되지는 않습니다.
 
-## 개인 아이디 없는 무료 주소로 이전하기
+## 현재 Cloudflare Pages 배포 설정
 
-Cloudflare Pages 무료 플랜에서 `원하는프로젝트이름.pages.dev` 주소를 사용할 수 있습니다. 실제 주소는 프로젝트 생성 시 정해지며, 아래 설정을 준비하는 것만으로 주소가 확보되거나 이전되지는 않습니다. 기존 Supabase 프로젝트와 공개한 청첩장 데이터는 그대로 사용합니다.
+현재 운영 프로젝트는 **hyunbeom-juyoung**이며, 무료 주소 **https://hyunbeom-juyoung.pages.dev/**에서 배포를 확인했습니다. 기존 Supabase 프로젝트와 공개한 청첩장 데이터는 그대로 사용합니다.
 
-1. Cloudflare 대시보드의 **Workers & Pages → Pages**에서 GitHub 저장소 `ka8877/ju_wedding`을 연결합니다. GitHub 접근 승인이 필요하면 이 저장소만 선택합니다.
-2. 운영 브랜치를 **main**, 빌드 명령을 `npm test && npm run test:db && npm run build`, 출력 폴더를 **dist**로 설정합니다.
-3. 빌드 환경 변수에 **NODE_VERSION=24**, **BASE_PATH=/**, **VITE_PUBLIC_SITE_URL=https://실제프로젝트이름.pages.dev/**를 설정합니다. 새 주소가 정해진 뒤 정확히 입력하세요. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요 없습니다.
-4. 배포가 성공하면 새 주소에서 공개 내용·관리자 로그인·사진·QR을 확인합니다. canonical·메시지 공유 이미지·로컬 미리보기의 QR 기본 주소도 위 환경 변수로 함께 설정됩니다.
-5. Supabase **Authentication → URL Configuration → Site URL**을 새 주소에 맞춥니다. 기존 GitHub 주소와 이전에 저장한 QR은 기존 사이트로 계속 연결되며, 새 QR은 새 사이트에서 저장할 수 있습니다.
+| 항목 | 설정값 |
+|---|---|
+| GitHub 저장소 | `ka8877/ju_wedding` |
+| 운영 브랜치 | `main` |
+| 빌드 명령(권장) | `npm test && npm run test:db && npm run build` |
+| 출력 폴더 | `dist` |
+| 루트 폴더 | 저장소 루트(빈칸 기본값) |
+| `NODE_VERSION` | `24` |
+| `BASE_PATH` | `/` |
+| `VITE_PUBLIC_SITE_URL` | `https://hyunbeom-juyoung.pages.dev/` |
 
-이후 `main` 수정은 Cloudflare Pages에서 검사·빌드 후 자동 배포됩니다. 사진·문구는 계속 관리 화면에서 공개합니다. 기존 GitHub Pages 자동 배포도 유지되므로, 새 주소를 실제로 확인하기 전에는 기존 사이트를 삭제하지 마세요.
+Cloudflare GitHub 앱은 이 저장소에만 연결돼 있습니다. `main` 수정은 Cloudflare Pages에서 검사·빌드 후 자동 배포됩니다. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요하지 않으며, 운영 빌드에 `VITE_LOCAL_PREVIEW=true`를 설정하지 않습니다.
+
+공유 미리보기의 canonical·OG 주소와 로컬 QR 기본 주소는 `VITE_PUBLIC_SITE_URL`을 사용합니다. 코드 자체의 기본값은 여전히 기존 GitHub Pages 주소이므로, 다른 환경에서 이 변수를 생략하면 기존 주소를 사용합니다. Preview 배포를 별도로 설정할 때도 해당 환경의 공개 주소 설정을 확인하세요.
+
+새 주소의 공개 내용과 관리자 로그인 화면, QR 버튼, 공유 메타데이터는 확인했습니다. 실제 관리자 로그인·사진 업로드는 별도 확인 대상입니다. 사진·문구는 계속 관리 화면에서 공개하며, 기존 GitHub Pages 자동 배포와 이전에 인쇄한 QR도 계속 사용할 수 있습니다.
 
 설정 참고: [Cloudflare Git 연동 안내](https://developers.cloudflare.com/pages/get-started/git-integration/).
 
