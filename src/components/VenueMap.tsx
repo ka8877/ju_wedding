@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Venue } from '../lib/types';
 import { getGoogleVenueMapUrl, getVenueCoordinates } from '../lib/venue-map';
+import { naverMapClientId } from '../lib/integrations';
 import '../styles/venue-map.css';
 
 interface MapInstance { destroy?: () => void; }
@@ -76,7 +77,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
   const coordinates = getVenueCoordinates(venue);
   const lat = coordinates?.lat;
   const lng = coordinates?.lng;
-  const clientId = venue.naverMapClientId.trim();
+  const clientId = naverMapClientId(venue.naverMapClientId);
   const mapTitle = title || `${venue.name || '예식장'} 위치 지도`;
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
     let mapTimer: ReturnType<typeof setTimeout> | undefined;
     const authFailed = () => { failed = true; if (!cancelled) setNaverReady(false); };
     authenticationFailures.add(authFailed);
-    // Do not issue SDK requests for every keystroke in the venue editor.
+    // Public and editor previews share the same centrally configured SDK.
     const debounce = window.setTimeout(() => {
       void loadNaverMaps(clientId).then(sdk => {
         if (cancelled || !canvas.current) return;

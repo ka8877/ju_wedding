@@ -58,16 +58,16 @@ export async function loadPublic(requirePublished = false): Promise<StoredWeddin
   // A newly created project has no wedding schema yet. Keep an explicitly
   // unpublished invitation available; this never enables browser-local editing.
   if (error?.code === 'PGRST202' && !requirePublished) return initial();
-  if (error?.code === 'PGRST202') throw new Error('작성 내용은 서버에 저장했지만 공개 조회 함수가 없어 하객용 반영을 확인하지 못했습니다. 처음 연결 안내의 초기 설정 SQL을 실행해 주세요.');
+  if (error?.code === 'PGRST202') throw new Error('작성한 내용은 저장했지만 공개 반영 여부를 확인하지 못했어요. 잠시 후 청첩장을 다시 확인해 주세요.');
   if (error) throw new Error('청첩장을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-  if (!data?.length && requirePublished) throw new Error('서버 저장 후 공개 청첩장을 찾지 못했습니다. 공개 조회 설정을 확인하고 다시 시도해 주세요.');
+  if (!data?.length && requirePublished) throw new Error('저장한 청첩장을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.');
   if (!data?.length) return initial();
   return { data: checked(data[0].data), updatedAt: data[0].updated_at };
 }
 export async function requireAdmin(): Promise<void> {
   if (!supabase) return;
   const { data, error } = await supabase.rpc('is_wedding_admin');
-  if (error?.code === 'PGRST202') throw new Error('청첩장 초기 연결이 아직 준비되지 않았습니다. 처음 연결 안내에서 설정을 완료해 주세요.');
+  if (error?.code === 'PGRST202') throw new Error('지금은 편집 화면을 열 수 없어요. 잠시 후 다시 시도해 주세요.');
   if (error || data !== true) throw new Error('이 계정에는 관리 권한이 없습니다. 초대받은 관리자 계정으로 로그인해 주세요.');
 }
 export async function loadBrowserDraft(): Promise<StoredWedding | null> {
@@ -80,7 +80,7 @@ export async function loadDraft(): Promise<StoredWedding> {
   }
   await requireAdmin();
   const { data, error } = await supabase.from('wedding_content').select('draft,updated_at').eq('id', 'main').maybeSingle();
-  if (error) throw new Error('관리자 초안을 불러오지 못했습니다. 연결 설정을 확인해 주세요.');
+  if (error) throw new Error('초안을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
   return data ? { data: checked(data.draft), updatedAt: data.updated_at } : initial();
 }
 export async function saveDraft(data: WeddingData): Promise<string> {
@@ -140,6 +140,6 @@ export async function uploadPhoto(file: File): Promise<string> {
   const extension = photo.type === 'image/webp' ? 'webp' : 'png';
   const path = `main/${crypto.randomUUID()}.${extension}`;
   const { error } = await supabase.storage.from('wedding-photos').upload(path, photo, { contentType: photo.type, cacheControl: '31536000', upsert: false });
-  if (error) throw new Error('사진을 올리지 못했습니다. 로그인 상태와 사진 저장소 설정을 확인해 주세요.');
+  if (error) throw new Error('사진을 올리지 못했어요. 잠시 후 다시 시도해 주세요.');
   return supabase.storage.from('wedding-photos').getPublicUrl(path).data.publicUrl;
 }

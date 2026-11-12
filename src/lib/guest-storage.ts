@@ -10,7 +10,7 @@ const guestClient = cloudConfigured ? createClient(projectUrl, publicKey, {
   auth: { storageKey: 'wedding-guest-submissions', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   global: { fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(20_000) }) },
 }) : null;
-const setupMessage = '참석 응답·현장 사진 저장 공간을 아직 연결하지 않았어요. 관리 화면의 연결 안내에서 추가 설정 SQL을 실행해 주세요.';
+const setupMessage = '하객 자료를 불러오지 못했어요. 잠시 후 새로고침해 주세요.';
 const guestPendingMessage = '아직 접수를 준비하고 있어요. 잠시 후 다시 확인하거나 신랑·신부에게 연락해 주세요.';
 const localMessage = '미리보기에서는 실제 응답이나 현장 사진을 접수하지 않아요. 공개 청첩장에서 이용해 주세요.';
 const missingSchema = (error: { code?: string } | null) => Boolean(error && ['PGRST202', '42883', '42P01', '42501'].includes(error.code || ''));
@@ -94,10 +94,10 @@ export async function listGuestPhotos(): Promise<GuestPhotoRecord[]> {
   await requireAdmin();
   const { data, error } = await supabase.rpc('list_wedding_guest_photos');
   if (error) throw new Error(missingSchema(error) ? setupMessage : '현장 사진 목록을 불러오지 못했어요. 로그인 상태와 연결을 확인해 주세요.');
-  if (!Array.isArray(data)) throw new Error('현장 사진 목록 형식을 확인하지 못했어요. 연결 안내를 확인해 주세요.');
+  if (!Array.isArray(data)) throw new Error('현장 사진 목록을 확인하지 못했어요. 잠시 후 새로고침해 주세요.');
   if (!data.length) return [];
   const { data: links, error: linkError } = await supabase.storage.from('wedding-guest-photos').createSignedUrls(data.map(row => row.storage_path), 3600, { download: true });
-  if (linkError) throw new Error('사진 다운로드 링크를 만들지 못했어요. 저장 공간의 관리자 읽기 권한을 확인해 주세요.');
+  if (linkError) throw new Error('사진을 열 수 없어요. 잠시 후 새로고침해 주세요.');
   const byPath = new Map((links ?? []).map(link => [link.path, link.signedUrl]));
   return data.map(row => ({ id: row.id, guestName: row.guest_name, fileName: row.file_name, storagePath: row.storage_path,
     createdAt: row.created_at, downloadUrl: byPath.get(row.storage_path) || null }));

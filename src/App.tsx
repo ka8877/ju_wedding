@@ -36,7 +36,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         {error && <p className="app-error" role="alert">{error}</p>}
         <button className="app-button" disabled={busy}>{busy ? <LoaderCircle size={17} className="app-spin" /> : <LockKeyhole size={16} />}{busy ? '로그인 중…' : '우리 청첩장 꾸미기'}</button>
       </form>
-      <small>계정 정보가 기억나지 않으면 청첩장을 준비한 가족에게 문의해 주세요.<br /><a href="#/setup">처음 연결하는 가족을 위한 안내</a></small>
+      <small>계정 정보가 기억나지 않으면 청첩장을 준비한 가족에게 문의해 주세요.</small>
     </section>
     <div className="login-signature">Hyunbeom & Juyoung</div>
   </main>;
@@ -133,7 +133,7 @@ export default function App() {
   if (setupOpen) return <Suspense fallback={<main className="app-loading">연결 안내를 불러오고 있어요.</main>}><SetupGuide /></Suspense>;
   if (isAdmin && cloudConfigured && authReady && !session) return <Login onLogin={() => { void load(); }} />;
   if (loading || !authReady) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><p>소중한 이야기를 불러오고 있어요.</p></main>;
-  if (loadError) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><h1>잠시만 기다려 주세요.</h1><p role="alert">{loadError}</p><button className="app-button" onClick={() => { void load(); }}>다시 불러오기</button>{isAdmin && <><a className="app-text-button" href="#/setup">처음 연결하는 가족을 위한 안내</a><button className="app-text-button" onClick={() => { void logout(); }}>청첩장으로 돌아가기 / 로그아웃</button></>}</main>;
+  if (loadError) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><h1>잠시만 기다려 주세요.</h1><p role="alert">{loadError}</p><button className="app-button" onClick={() => { void load(); }}>다시 불러오기</button>{isAdmin && <><button className="app-text-button" onClick={() => { void logout(); }}>청첩장으로 돌아가기 / 로그아웃</button></>}</main>;
 
   if (isAdmin) return <Suspense fallback={<main className="app-loading">관리 화면을 불러오고 있어요.</main>}><Admin data={data} onChange={next => {
     const previous = dataRef.current; if (next === previous) return;

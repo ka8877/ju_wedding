@@ -6,14 +6,21 @@ const publicUrl = 'https://ka8877.github.io/ju_wedding/';
 
 test.beforeEach(async ({ page }) => {
   await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<p>예식장 지도</p>' }));
+  await page.route('https://t1.kakaocdn.net/**', route => route.abort());
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({ contentType: 'application/javascript', body: 'window.navermap_authFailure();' }));
 });
 
-test('guests can scan, save and copy a real QR that points to the public invitation', async ({ page, context }) => {
+test('guests can scan, save and copy a real QR that points to the public invitation', async ({ page, context, baseURL }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const externalRequests: string[] = [];
   // The venue iframe has its own provider; QR generation in the invitation
   // itself must still work without calling an external QR service.
-  page.on('request', request => { if (request.frame() === page.mainFrame() && !request.url().startsWith('http://127.0.0.1:5175') && !request.url().startsWith('data:')) externalRequests.push(request.url()); });
+  page.on('request', request => {
+    const url = request.url();
+    const serviceSdk = url === 'https://t1.kakaocdn.net/kakao_js_sdk/2.8.5/kakao.min.js'
+      || url.startsWith('https://oapi.map.naver.com/openapi/v3/maps.js?');
+    if (request.frame() === page.mainFrame() && !url.startsWith(baseURL!) && !url.startsWith('data:') && !serviceSdk) externalRequests.push(url);
+  });
   await page.goto('/?tracking=private#/');
   const trigger = page.getByRole('button', { name: 'QR 코드 보기', exact: true });
   await trigger.click();
@@ -66,4 +73,32 @@ test('native sharing and the editor share the public page rather than a local dr
   const dialog = page.getByRole('dialog', { name: '마음을 담은 초대' });
   await expect(dialog.getByRole('link')).toHaveAttribute('href', publicUrl);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+
+test('Kakao sharing opens the device share sheet without exposing service setup', async ({ page }) => {
+  await page.route('https://t1.kakaocdn.net/**', route => route.abort());
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: async (data: ShareData) => { sessionStorage.setItem('wedding-test-kakao-share', JSON.stringify(data)); } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: '카카오톡으로 공유', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-share'))).not.toBeNull();
+  const payload = JSON.parse((await page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-share')))!);
+  expect(payload.url).toBe(publicUrl);
+  await expect(page.locator('.wedding-share-feedback')).toHaveText('공유창에서 카카오톡을 선택해 주세요.');
+  await expect(page.locator('.wedding-sharing')).not.toContainText(/API|JavaScript|개발자|Client ID/);
+});
+
+test('Kakao sharing copies the link with an honest paste instruction when device sharing is unavailable', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.route('https://t1.kakaocdn.net/**', route => route.abort());
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: '카카오톡으로 공유', exact: true }).click();
+  await expect(page.locator('.wedding-share-feedback')).toHaveText('링크를 복사했어요. 카카오톡 대화창에 붙여넣어 전해 주세요.');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(publicUrl);
+  await expect(page.locator('.wedding-share-feedback')).not.toContainText(/전달되었습니다|전송 완료|공유 완료/);
 });

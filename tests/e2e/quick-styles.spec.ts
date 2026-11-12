@@ -34,13 +34,10 @@ test('quick recommendations and random styling preserve personal content without
   await expect(page.getByRole('dialog', { name: '청첩장 실시간 미리보기' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: '청첩장 실시간 미리보기' })).not.toBeVisible();
-  const popupPromise = page.waitForEvent('popup');
-  await page.getByRole('link', { name: '연결 안내', exact: true }).click();
-  const popup = await popupPromise;
-  await expect(popup.getByRole('heading', { name: /처음 한 번만 연결하면/ })).toBeVisible();
+  await expect(page.locator('a[href="#/setup"]')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /연결 안내/ })).toHaveCount(0);
   await expect(page).toHaveURL(/#\/admin$/);
   await expect(preview).toContainText('두 사람이 직접 쓴 소중한 초대 문구입니다.');
-  await popup.close();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });

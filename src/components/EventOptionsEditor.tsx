@@ -1,6 +1,6 @@
 import { cloneElement, isValidElement, useId } from 'react';
 import type { ReactElement, ReactNode } from 'react';
-import { Bus, Camera, ClipboardCheck, ExternalLink, Images, Music2, Share2 } from 'lucide-react';
+import { Bus, Camera, ClipboardCheck, Images, Music2 } from 'lucide-react';
 import type { WeddingData, WeddingGuestFeatures } from '../lib/types';
 
 interface Props { data: WeddingData; onChange: (data: WeddingData) => void; }
@@ -33,10 +33,9 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
   return <div className="event-options-editor">
     <div className="editor-section-heading"><span className="editor-eyebrow">06 / LITTLE DETAILS</span><h2>작은 디테일까지, 두 분답게.</h2><p>음악과 사진, 하객분들께 전할 안내를 편하게 조정해요.<br />변경한 내용은 아래에서 초안 저장 후 공개 반영해 주세요.</p></div>
 
-    <Card icon={<Music2 size={19} />} title="가볍고 기분 좋은 배경음악" description="밝고 맑은 기본 연주를 준비했어요. 음악 버튼을 눌러야 재생됩니다.">
+    <Card icon={<Music2 size={19} />} title="가볍고 기분 좋은 배경음악" description={features.music.source === 'url' ? '미리 준비한 음악이 재생돼요. 하객이 음악 버튼을 누르면 시작됩니다.' : '밝고 맑은 기본 연주를 준비했어요. 하객이 음악 버튼을 누르면 시작됩니다.'}>
       <Toggle label="배경음악 사용" checked={features.music.enabled} onChange={enabled => update('music', { enabled })} />
-      <Field label="배경음악 선택"><select value={features.music.source} onChange={event => update('music', { source: event.target.value as 'builtin' | 'url' })}><option value="builtin">산뜻한 기본 연주</option><option value="url">내 음악 주소 사용</option></select></Field>
-      {features.music.source === 'url' && <Field label="배경음악 파일 주소" hint="재생할 수 있는 HTTPS 음원 파일 주소를 넣어 주세요. 사용 권한이 있는 음악을 선택해 주세요."><input type="url" value={features.music.url} onChange={event => update('music', { url: event.target.value })} placeholder="https://…/our-music.mp3" maxLength={2000} autoComplete="off" /></Field>}
+      {features.music.source === 'url' && <button type="button" className="event-option-inline-button" onClick={() => update('music', { source: 'builtin' })}>기본 음악으로 바꾸기</button>}
       <div className="editor-field event-option-field"><label htmlFor={volumeId}>배경음악 음량</label><div className="event-option-volume"><input id={volumeId} type="range" aria-describedby={`${volumeId}-hint`} min={0} max={100} step={1} value={Math.round(features.music.volume * 100)} onChange={event => update('music', { volume: Number(event.target.value) / 100 })} /><output htmlFor={volumeId}>{Math.round(features.music.volume * 100)}%</output></div><small id={`${volumeId}-hint`}>하객분들이 글을 읽을 때 편안하도록 작은 음량을 권해요.</small></div>
     </Card>
 
@@ -52,7 +51,7 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
       <Field label="신랑측 참석 안내"><textarea rows={3} value={features.rsvp.groomMessage} onChange={event => update('rsvp', { groomMessage: event.target.value })} maxLength={1500} /></Field>
       <Field label="신부측 참석 안내"><textarea rows={3} value={features.rsvp.brideMessage} onChange={event => update('rsvp', { brideMessage: event.target.value })} maxLength={1500} /></Field>
       <Field label="참석 확인 안내 문구" hint="하객 화면 아래에 작은 회색 글씨로 표시해요."><input value={features.rsvp.note} onChange={event => update('rsvp', { note: event.target.value })} maxLength={300} /></Field>
-      <p className="event-option-note">접수 내역은 하객 응답 메뉴에서 확인하고 엑셀용 CSV로 내려받을 수 있어요. 저장소 연결이 준비되면 실제 접수가 열립니다.</p>
+      <p className="event-option-note">참석 내역은 하객 응답 메뉴에서 확인하고 엑셀로 열 수 있는 파일로 내려받을 수 있어요.</p>
     </Card>
 
     <Card icon={<Camera size={19} />} title="예식 날 함께 남기는 현장 스냅" description="하객분들이 찍은 사진을 두 분에게 보내는 공간이에요.">
@@ -70,11 +69,6 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
       <Field label="경주 대절버스 안내"><textarea rows={4} value={features.shuttle.gyeongju} onChange={event => update('shuttle', { gyeongju: event.target.value })} placeholder="출발 장소 · 집결 시간 · 탑승 안내" maxLength={2000} /></Field>
     </Card>
 
-    <Card icon={<Share2 size={19} />} title="카카오톡으로 초대 전하기" description="기본 휴대폰 공유와 QR은 별도 설정 없이 사용할 수 있어요.">
-      <Field label="카카오 JavaScript 키" hint="카카오톡 직접 공유를 연결할 때만 입력해 주세요. Secret 키나 관리자 비밀번호는 넣지 않아요."><input value={features.sharing.kakaoJavascriptKey} onChange={event => update('sharing', { kakaoJavascriptKey: event.target.value.trim() })} maxLength={100} autoComplete="off" spellCheck={false} placeholder="선택 사항 · 카카오 개발자 JavaScript 키" /></Field>
-      <p className="event-option-note">카카오 개발자 앱의 Web 플랫폼에 이 청첩장의 도메인을 등록해야 해요. 키를 비워 두면 휴대폰의 기본 공유로 전할 수 있습니다.</p>
-      <a className="event-option-inline-button" href="https://developers.kakao.com/console/app" target="_blank" rel="noreferrer">카카오 개발자 앱 설정<ExternalLink size={13} /></a>
-    </Card>
     <p className="event-option-bottom-note">페이지의 표시 순서와 숨기기는 디자인 → 직접 세부 꾸미기 → 청첩장의 순서와 제목에서 바꿀 수 있어요.</p>
   </div>;
 }

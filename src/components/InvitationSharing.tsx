@@ -4,11 +4,12 @@ import { Check, Copy, Download, ExternalLink, Heart, LoaderCircle, MessageCircle
 import { invitationQr, invitationUrl } from '../lib/sharing';
 import { copyText } from '../lib/utils';
 import { loadKakaoSdk, shareKakaoInvitation } from '../lib/kakao-sharing';
+import { kakaoJavascriptKey as configuredKakaoJavascriptKey } from '../lib/integrations';
 import '../styles/sharing.css';
 
 interface SharingProps { names: string; variant?: 'guest' | 'admin'; localPreview?: boolean; kakaoJavascriptKey?: string }
 
-export default function InvitationSharing({ names, variant = 'guest', localPreview = false, kakaoJavascriptKey = '' }: SharingProps) {
+export default function InvitationSharing({ names, variant = 'guest', localPreview = false, kakaoJavascriptKey: legacyKakaoKey = '' }: SharingProps) {
   const [open, setOpen] = useState(false);
   const [qr, setQr] = useState('');
   const [qrError, setQrError] = useState(false);
@@ -18,6 +19,7 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
   const titleId = useId();
   const descriptionId = useId();
   const url = invitationUrl(window.location.href, import.meta.env.DEV || localPreview);
+  const kakaoJavascriptKey = configuredKakaoJavascriptKey(legacyKakaoKey);
 
   useEffect(() => {
     if (/^[a-f\d]{32}$/i.test(kakaoJavascriptKey)) void loadKakaoSdk().catch(() => { /* Keep native sharing available when the SDK is unavailable. */ });
@@ -58,8 +60,21 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
     }
   }
   async function shareKakao() {
-    try { await shareKakaoInvitation(kakaoJavascriptKey, names, url); }
-    catch { notify('카카오톡 공유를 열지 못했어요. 기기의 공유 또는 링크 복사를 이용해 주세요.'); await share(); }
+    if (kakaoJavascriptKey) {
+      try { await shareKakaoInvitation(kakaoJavascriptKey, names, url); return; }
+      catch { /* Keep device sharing and copying available if Kakao is unavailable. */ }
+    }
+    if (navigator.share) {
+      try {
+        notify('공유창에서 카카오톡을 선택해 주세요.');
+        await navigator.share({ title: `${names}의 결혼식`, text: '소중한 당신을 초대합니다.', url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+    try { await copyText(url); notify('링크를 복사했어요. 카카오톡 대화창에 붙여넣어 전해 주세요.'); }
+    catch { notify('아래 청첩장 주소를 복사해 카카오톡으로 전해 주세요.'); setOpen(true); }
   }
   function download() {
     if (!qr) return;
@@ -77,9 +92,9 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
           ? <button type="button" className="wedding-share-button" onClick={() => void share()}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button>
           : <button type="button" className="wedding-share-button" onClick={() => void copy()}><Copy size={15} />링크 복사</button>}
         <button type="button" className="wedding-share-button wedding-share-button--qr" onClick={() => { setMessage(''); setOpen(true); }}><QrCode size={16} strokeWidth={1.4} />QR 코드 보기</button>
-        {kakaoJavascriptKey && <button type="button" className="wedding-share-button wedding-share-button--kakao" onClick={() => void shareKakao()}><MessageCircle size={16} />카카오톡으로 공유</button>}
+        <button type="button" className="wedding-share-button wedding-share-button--kakao" onClick={() => void shareKakao()}><MessageCircle size={16} />카카오톡으로 공유</button>
       </div>
-      {variant === 'guest' && !kakaoJavascriptKey && <p className="wedding-share-note">휴대폰 공유창에서 카카오톡을 선택하거나, 복사한 링크를 카카오톡으로 전해 주세요.</p>}
+      {variant === 'guest' && !kakaoJavascriptKey && <p className="wedding-share-note">공유창에서 카카오톡을 선택하거나, 복사한 링크를 대화창에 붙여넣어 주세요.</p>}
       {variant === 'admin' && <p className="wedding-share-note">{localPreview ? 'QR은 실제 공개 사이트로 연결돼요. 이 기기의 미리보기 수정은 전달되지 않아요.' : 'QR은 공개 청첩장으로 연결돼요. 편집한 내용은 공개 반영 후 전달됩니다.'}</p>}
       {message && !open && <p className="wedding-share-feedback" role="status"><Check size={13} />{message}</p>}
     </div>

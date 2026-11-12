@@ -187,6 +187,10 @@ test('anonymous visitors see the admin login rather than private guest responses
   const requests = await mockServer(page);
   await page.goto('/#/admin');
   await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('비밀번호', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '우리 청첩장 꾸미기', exact: true })).toBeVisible();
+  await expect(page.locator('a[href="#/setup"]')).toHaveCount(0);
+  await expect(page.locator('.login-page')).not.toContainText(/SQL|Supabase|API|Client ID|처음 연결/);
   await expect(page.getByRole('heading', { name: '함께해 주시는 마음', exact: true })).toHaveCount(0);
   expect(requests.some(request => /wedding_rsvps|list_wedding_guest_photos/.test(request.path))).toBe(false);
 });
@@ -206,7 +210,7 @@ test('authenticated managers can view private replies and export a safe Excel-co
   await expect(manager).toContainText('010-1234-5678');
   if (process.env.CAPTURE_GUEST_UI) { await manager.scrollIntoViewIfNeeded(); await page.screenshot({ path: '/tmp/ju-wedding-guest-manager-mobile.png' }); }
   const downloadEvent = page.waitForEvent('download');
-  await manager.getByRole('button', { name: '현재 목록 CSV 저장', exact: true }).click();
+  await manager.getByRole('button', { name: '엑셀용 파일 저장', exact: true }).click();
   const download = await downloadEvent;
   expect(download.suggestedFilename()).toMatch(/\.csv$/);
   const csv = await readFile((await download.path())!, 'utf8');

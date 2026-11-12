@@ -102,18 +102,23 @@ test('a rejected Naver key leaves the embedded map and default Naver venue link 
   expect(errors).toEqual([]);
 });
 
-test('the public Naver Client ID survives saving and reloading in the venue editor', async ({ page }) => {
+test('editors can update the venue by address without configuring map credentials or coordinates', async ({ page }) => {
   await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<p>표시된 예식장 지도</p>' }));
   await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.abort());
   await page.goto('/#/admin');
+  await expect(page.locator('a[href="#/setup"]')).toHaveCount(0);
   await page.getByRole('button', { name: '예식 장소', exact: true }).click();
-  await page.locator('summary').filter({ hasText: '네이버 지도 화면 연결' }).click();
-  await page.getByLabel('네이버 지도 Client ID', { exact: true }).fill('saved-public-client-id');
+  await expect(page.getByLabel(/Client ID|위도|경도/)).toHaveCount(0);
+  await expect(page.locator('summary').filter({ hasText: /네이버 지도 화면 연결|지도 위치 직접 입력/ })).toHaveCount(0);
+  await page.getByLabel('예식장 이름', { exact: true }).fill('새로운 예식장');
+  await page.getByLabel('주소', { exact: true }).fill('서울특별시 중구 세종대로 110');
+  const map = page.getByTitle('선택한 예식장 지도', { exact: true });
+  await expect(map).toBeVisible();
+  expect(new URL((await map.getAttribute('src'))!).searchParams.get('q')).toContain('서울특별시 중구 세종대로 110');
   await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
   await page.reload();
   await page.getByRole('button', { name: '예식 장소', exact: true }).click();
-  await page.locator('summary').filter({ hasText: '네이버 지도 화면 연결' }).click();
-  await expect(page.getByLabel('네이버 지도 Client ID', { exact: true })).toHaveValue('saved-public-client-id');
-  await expect(page.getByTitle('선택한 예식장 지도', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('주소', { exact: true })).toHaveValue('서울특별시 중구 세종대로 110');
+  await expect(page.getByLabel(/Client ID|위도|경도/)).toHaveCount(0);
 });

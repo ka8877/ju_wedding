@@ -131,13 +131,13 @@ describe('publishing through the actual Supabase SDK with mocked HTTP', () => {
 
   it('rejects missing public RPC even after the content write succeeds', async () => {
     scenario.missingRpc = true;
-    await expect(storage.publishWedding(invitation())).rejects.toThrow('공개 조회 함수가 없어');
+    await expect(storage.publishWedding(invitation())).rejects.toThrow('공개 반영 여부를 확인하지 못했어요');
     expect(written?.published).toEqual(invitation());
   });
 
   it('rejects an empty guest readback after the content write succeeds', async () => {
     scenario.noPublicRows = true;
-    await expect(storage.publishWedding(invitation())).rejects.toThrow('공개 청첩장을 찾지 못했습니다');
+    await expect(storage.publishWedding(invitation())).rejects.toThrow('저장한 청첩장을 확인하지 못했어요');
   });
 
   it('rejects a guest document that differs from the intended publication', async () => {
