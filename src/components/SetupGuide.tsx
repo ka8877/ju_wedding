@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ArrowLeft, CheckCircle2, Copy, ExternalLink, Flower2, LoaderCircle } from 'lucide-react';
 import schema from '../../supabase/migrations/001_wedding.sql?raw';
 import { publicSupabaseConfig } from '../lib/public-config';
+import { normalizeWedding } from '../lib/validation';
 import { copyText } from '../lib/utils';
 import '../styles/setup.css';
 
@@ -22,16 +23,29 @@ export default function SetupGuide() {
   async function check() {
     setChecking(true); setResult(null);
     try {
-      const publicClient = createClient(import.meta.env.VITE_SUPABASE_URL || publicSupabaseConfig.url, import.meta.env.VITE_SUPABASE_ANON_KEY || publicSupabaseConfig.key, { auth: { storageKey: 'wedding-anonymous-connection-check', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-      const { data, error } = await publicClient.rpc('get_published_wedding');
+      const url = import.meta.env.VITE_SUPABASE_URL || publicSupabaseConfig.url;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY || publicSupabaseConfig.key;
+      const publicClient = createClient(url, key, { auth: { storageKey: 'wedding-anonymous-connection-check', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+      const { data, error } = await publicClient.rpc('get_published_wedding').abortSignal(AbortSignal.timeout(15_000));
       if (error) throw new Error(error.code === 'PGRST202' ? '아직 저장 공간 초기화가 안 됐어요. 1단계의 SQL 전체를 실행한 뒤 다시 확인해 주세요.' : 'Supabase 연결을 확인하지 못했습니다. 프로젝트 활성 상태와 공개 키, 1단계 실행 결과를 확인해 주세요.');
-      if (!Array.isArray(data)) throw new Error('연결 응답 형식이 맞지 않습니다. 1단계 SQL을 다시 확인해 주세요.');
+      if (!Array.isArray(data) || data.length > 1) throw new Error('연결 응답 형식이 맞지 않습니다. 1단계 SQL을 다시 확인해 주세요.');
+      for (const row of data) {
+        try {
+          normalizeWedding(row?.data);
+          if (typeof row.updated_at !== 'string' || !Number.isFinite(Date.parse(row.updated_at))) throw new Error();
+        } catch { throw new Error('공개한 청첩장 형식을 확인하지 못했어요. 관리자 화면에서 내용을 확인하고 다시 공개해 주세요.'); }
+      }
       // The public-key client must not expose private administrator drafts.
       for (const [table, column] of [['wedding_content', 'id'], ['wedding_admins', 'user_id']]) {
-        const { error: privateError } = await publicClient.from(table).select(column).limit(1);
+        const { error: privateError } = await publicClient.from(table).select(column).limit(1).abortSignal(AbortSignal.timeout(15_000));
         if (!privateError || privateError.code !== '42501') throw new Error('초안과 관리자 목록의 공개 권한을 확인해야 합니다. 1단계 SQL을 실행하고 RLS를 확인해 주세요.');
       }
-      setResult({ ok: true, text: '공개 청첩장 읽기 연결을 확인했어요. 이제 등록한 관리자 계정으로 로그인해 사진을 올리고, 다른 휴대폰에서도 공개 반영을 확인해 주세요.' });
+      const headers: Record<string, string> = { apikey: key };
+      if (key.split('.').length === 3) headers.Authorization = `Bearer ${key}`;
+      const photo = await fetch(`${url.replace(/\/$/, '')}/storage/v1/object/public/wedding-photos/main/.connection-check-${crypto.randomUUID()}.webp`, { headers, signal: AbortSignal.timeout(15_000) });
+      const photoResult = await photo.json().catch(() => null);
+      if (![400, 404].includes(photo.status) || !/object not found/i.test(`${photoResult?.message || ''} ${photoResult?.error || ''}`)) throw new Error('사진 저장 공간이 아직 준비되지 않았어요. 1단계 SQL을 실행해 wedding-photos 버킷을 만든 뒤 다시 확인해 주세요.');
+      setResult({ ok: true, text: `공개 청첩장 조회·초안과 관리자 목록 보호·사진 저장 공간을 확인했어요.${data.length ? ' 공개한 청첩장도 정상적으로 읽었어요.' : ' 아직 공개한 청첩장은 없어요.'} 관리자 로그인과 실제 사진 업로드는 별도로 확인해 주세요.` });
     } catch (e) { setResult({ ok: false, text: e instanceof Error ? e.message : '연결하지 못했습니다.' }); }
     finally { setChecking(false); }
   }
