@@ -3,6 +3,14 @@
 .venue-map-frame > iframe { display: block; width: 100%; height: 100%; border: 0; }
 .venue-map-naver { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
 .venue-map-naver.is-ready { visibility: visible; pointer-events: auto; }
+.venue-map-status { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; padding: 22px 14px; color: var(--invite-accent, #547447); text-align: center; }
+.venue-map-brand { font: 600 9px/1.2 'Noto Sans KR', sans-serif; letter-spacing: .13em; color: #25824c; }
+.venue-map-status p { margin: 0 !important; font-size: 11px !important; line-height: 1.9 !important; color: var(--invite-muted, #72816b); }
+.venue-map-status > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.venue-map-status button, .venue-map-status a { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 38px; padding: 8px 10px; border: 1px solid var(--invite-line, #d3ddcd); border-radius: 4px; background: transparent; color: inherit; font: inherit; font-size: 10px; cursor: pointer; text-decoration: none; }
+.venue-map-loading { animation: venue-map-spin 1.2s linear infinite; }
+@keyframes venue-map-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .venue-map-loading { animation: none; } }
 .venue-map-caption { display: flex; justify-content: space-between; gap: 12px; margin: 9px 0 0 !important; color: var(--invite-muted, #7b8574); font-size: 9px !important; line-height: 1.7 !important; }
 .venue-map-caption > span:first-child { flex-shrink: 0; }
 .venue-map-caption > span:last-child { text-align: right; overflow-wrap: anywhere; }

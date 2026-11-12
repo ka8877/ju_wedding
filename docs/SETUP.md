@@ -74,9 +74,11 @@ Cloudflare 운영 사이트에서 만든 QR과 공유 링크는 `https://hyunbeo
 
 지도·공유 연결은 청첩장 콘텐츠와 분리해 개발자가 한 번 설정합니다. `src/lib/integrations.ts`의 `publicIntegrationConfig`에 **공개용** 식별자를 등록하거나, 두 호스팅의 빌드 환경 변수 `VITE_NAVER_MAP_CLIENT_ID`, `VITE_KAKAO_JAVASCRIPT_KEY`를 설정하고 배포합니다. 환경 변수 → 코드의 서비스 설정 → 예전 문서에 저장된 공개값 순서로 유효한 값을 사용합니다. Client Secret, REST API secret, 계정 비밀번호는 프런트엔드에 넣지 않습니다. 사용자는 이 값을 입력하거나 수정하지 않습니다.
 
-네이버 지도는 [네이버 클라우드 Maps 애플리케이션](https://guide.ncloud-docs.com/docs/application-maps-app-vpc)의 **Web Dynamic Map**을 활성화하고 웹 서비스 URL에 `https://hyunbeom-juyoung.pages.dev`와 `https://ka8877.github.io`를 등록합니다. 발급된 공개용 Client ID는 `naverMapClientId` 또는 `VITE_NAVER_MAP_CLIENT_ID`에 등록합니다. 기본 버튼은 네이버 지도로 연결되며, 화면 지도는 인증키 없이도 Google 지도로 표시됩니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다. 기존 문서의 좌표가 비어 있어도 같은 장소와 주소라면 이 위치를 표시합니다. 인증·네트워크 오류가 나면 기본 지도를 유지합니다.
+네이버 지도는 현재 **Application Services → Maps**에서 신청하고 [Maps 애플리케이션](https://guide.ncloud-docs.com/docs/application-maps-app-vpc)에 **Dynamic Map**, **Geocoding**을 활성화합니다. 앱 이름은 `현범주영청첩장`, 웹 서비스 URL은 `https://hyunbeom-juyoung.pages.dev`와 `https://ka8877.github.io`입니다. 공개용 Client ID는 `naverMapClientId` 또는 `VITE_NAVER_MAP_CLIENT_ID`에 등록합니다. 연결된 지도는 로딩·실패 때도 Google 지도로 대체하지 않으며 다시 시도와 네이버 지도 열기를 제공합니다. 예식장 좌표가 없으면 입력한 주소로 위치를 찾으므로 사용자는 좌표를 입력하지 않습니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다.
 
-카카오톡 직접 공유는 Kakao Developers 앱에 실제 공유할 두 사이트의 웹 도메인을 등록하고, **JavaScript 키**를 `kakaoJavascriptKey` 또는 `VITE_KAKAO_JAVASCRIPT_KEY`에 등록합니다. 카카오톡 공유 버튼은 연결 여부와 관계없이 표시합니다. 직접 공유를 사용할 수 없으면 기기 공유창에서 카카오톡을 선택하고, 기기 공유도 지원하지 않으면 링크를 복사해 대화창에 붙여넣도록 안내합니다. 복사만 한 상태를 전송 완료로 표시하지 않습니다.
+카카오톡은 첫 번째 기본 공유 버튼이며 공식 SDK의 `Share.sendDefault`를 호출합니다. Kakao Developers 앱 이름은 `현범주영청첩장`으로 하고, 개인 개발자의 서비스 출처는 `현범·주영`으로 등록할 수 있습니다. 실제 소유자 정보는 로그인한 계정에서 확인합니다. **앱 → 플랫폼 키 → JavaScript 키 → JavaScript SDK 도메인**과 **앱 → 제품 링크 관리 → 웹 도메인** 양쪽에 위 두 사이트를 등록하고 기본 제품 링크는 Cloudflare 주소로 설정합니다. **JavaScript 키**는 `kakaoJavascriptKey` 또는 `VITE_KAKAO_JAVASCRIPT_KEY`에 등록합니다. 기본 공유에는 카카오 로그인·친구 권한·비즈 앱 전환이 필요하지 않습니다. 직접 공유가 실패하면 오류와 재시도 안내를 표시하며 기기 공유나 복사로 자동 전환하지 않습니다. 링크 복사와 QR은 별도 보조 버튼입니다.
+
+본인 계정으로 앱을 등록하고 두 호스트에서 실제 지도·공유를 검증한 뒤 배포합니다. 공개용 키가 없고 현재 작업환경에서 두 콘솔 접속도 차단돼 있어 실제 연동은 아직 완료되지 않았습니다. 네이버 콘솔은 결제수단 등록을 요구할 수 있으며 소유자가 직접 처리해야 합니다. 대표 계정의 무료 제공량을 확인하고 호출 한도를 낮게 설정하며 **한도 초과 사용**은 끕니다. 카카오 유료 쿼터 설정은 사용하지 않습니다. 사용자가 청첩장을 편집하는 화면에는 이 과정이 나타나지 않습니다.
 
 ## 참석 응답과 현장 사진 저장소 추가
 
