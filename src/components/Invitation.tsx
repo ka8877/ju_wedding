@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { ArrowDown, ArrowUpRight, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Heart, MapPin, MessageCircle, Phone, Share2, X } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Heart, MapPin, MessageCircle, Phone, X } from 'lucide-react';
 import type { SectionId, WeddingData } from '../lib/types';
 import { getDesign, sectionIds } from '../lib/design';
 import { copyText } from '../lib/utils';
 import { downloadWeddingCalendar } from '../lib/calendar';
+import InvitationSharing from './InvitationSharing';
 import '../styles/invitation.css';
 
 interface InvitationProps { data: WeddingData; preview?: boolean }
@@ -84,17 +85,6 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
     toastTimer.current = setTimeout(() => setCopied(''), 2800);
   }
 
-  async function share() {
-    const url = new URL(window.location.href);
-    url.hash = '';
-    url.search = '';
-    const shareData = { title: `${data.groom.name} · ${data.bride.name}의 결혼식`, text: '소중한 당신을 초대합니다.', url: url.toString() };
-    if (navigator.share) {
-      try { await navigator.share(shareData); } catch (error) {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) await copy(url.toString(), '청첩장 링크를 복사했어요');
-      }
-    } else await copy(url.toString(), '청첩장 링크를 복사했어요');
-  }
 
   const remaining = eventMillis ? eventMillis - now : 0;
   const days = Math.max(0, Math.floor(remaining / 86_400_000));
@@ -188,7 +178,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
     <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-background={design.background} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} style={style} ref={root}>
       <section className="invite-hero" aria-labelledby="wedding-title">{heroLayouts[design.template]}</section>
       {visibleSections.map(id => <div key={id} className="invite-section-wrapper">{sections[id]}</div>)}
-      <footer className="invite-closing invite-reveal">{decoration}<p className="invite-preserve">{data.closing}</p><span className="invite-closing-script invite-preserve">{design.closingTitle}</span><div className="invite-closing-names">{data.groom.name}<Heart size={10} strokeWidth={1.2} />{data.bride.name}</div><button className="invite-share" onClick={share}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button><div className="invite-footer-mark"><span>WITH LOVE,</span><strong>{data.groom.englishName || data.groom.name} & {data.bride.englishName || data.bride.name}</strong></div></footer>
+      <footer className="invite-closing invite-reveal">{decoration}<p className="invite-preserve">{data.closing}</p><span className="invite-closing-script invite-preserve">{design.closingTitle}</span><div className="invite-closing-names">{data.groom.name}<Heart size={10} strokeWidth={1.2} />{data.bride.name}</div>{!preview && <InvitationSharing names={`${data.groom.name} · ${data.bride.name}`} />}<div className="invite-footer-mark"><span>WITH LOVE,</span><strong>{data.groom.englishName || data.groom.name} & {data.bride.englishName || data.bride.name}</strong></div></footer>
 
       {copied && <div className="invite-toast" role="status"><Check size={15} />{copied}</div>}
       <dialog className="invite-lightbox" ref={galleryDialog} onCancel={() => setLightbox(null)} onClick={event => { if (event.target === event.currentTarget) setLightbox(null); }} onKeyDown={event => { if (lightbox === null) return; if (event.key === 'ArrowRight') setLightbox((lightbox + 1) % data.photos.length); if (event.key === 'ArrowLeft') setLightbox((lightbox - 1 + data.photos.length) % data.photos.length); }} aria-label="웨딩 사진 크게 보기"><button className="invite-dialog-close" aria-label="사진 닫기" onClick={() => setLightbox(null)}><X size={24} /></button>{lightbox !== null && data.photos[lightbox] && <><img src={data.photos[lightbox].url} alt={data.photos[lightbox].alt || '웨딩 사진'} /><div className="invite-lightbox-controls"><button aria-label="이전 사진" onClick={() => setLightbox((lightbox - 1 + data.photos.length) % data.photos.length)}><ChevronLeft size={23} /></button><span>{lightbox + 1} / {data.photos.length}</span><button aria-label="다음 사진" onClick={() => setLightbox((lightbox + 1) % data.photos.length)}><ChevronRight size={23} /></button></div></>}</dialog>
