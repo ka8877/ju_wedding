@@ -9,6 +9,7 @@ interface MapInstance { destroy?: () => void; }
 interface MarkerInstance { setMap: (map: MapInstance | null) => void; }
 interface Coordinates { lat: number; lng: number; }
 interface NaverMaps {
+  onJSContentLoaded?: (() => void) | null;
   LatLng: new (lat: number, lng: number) => unknown;
   Map: new (element: HTMLElement, options: Record<string, unknown>) => MapInstance;
   Marker: new (options: Record<string, unknown>) => MarkerInstance;
@@ -57,7 +58,15 @@ function loadNaverMaps(clientId: string): Promise<NaverMaps> {
     script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(clientId)}&submodules=geocoder`;
     script.dataset.weddingNaverMaps = clientId;
     let finished = false;
-    const cleanup = () => { clearTimeout(timer); authenticationFailures.delete(authFailed); };
+    let mapsWaitingForModules: NaverMaps | undefined;
+    let previousContentLoaded: NaverMaps['onJSContentLoaded'];
+    let contentLoaded: (() => void) | undefined;
+    const cleanup = () => {
+      clearTimeout(timer); authenticationFailures.delete(authFailed);
+      if (mapsWaitingForModules && mapsWaitingForModules.onJSContentLoaded === contentLoaded) {
+        mapsWaitingForModules.onJSContentLoaded = previousContentLoaded;
+      }
+    };
     const fail = () => {
       if (finished) return;
       finished = true; cleanup(); script.remove(); sdkRequests.delete(clientId);
@@ -71,7 +80,18 @@ function loadNaverMaps(clientId: string): Promise<NaverMaps> {
       if (finished) return;
       const maps = browser().naver?.maps;
       if (!maps?.Map || !maps.LatLng || !maps.Marker || !maps.Event) { fail(); return; }
-      finished = true; cleanup(); activeSdkKey = clientId; resolve(maps);
+      const ready = () => {
+        if (finished) return;
+        if (!maps.Service?.geocode) { fail(); return; }
+        finished = true; cleanup(); activeSdkKey = clientId; resolve(maps);
+      };
+      if (maps.Service?.geocode) { ready(); return; }
+      // maps.js loads requested submodules in separate scripts. Its own load
+      // event can fire before the geocoder exists, so wait for SDK completion.
+      mapsWaitingForModules = maps;
+      previousContentLoaded = maps.onJSContentLoaded;
+      contentLoaded = () => { ready(); previousContentLoaded?.(); };
+      maps.onJSContentLoaded = contentLoaded;
     };
     document.head.append(script);
   });

@@ -64,7 +64,8 @@ test('a configured Naver key displays the interactive Naver canvas and a marker 
         LatLng: class { constructor(lat, lng) { this.lat = lat; this.lng = lng; } },
         Map: class { constructor(element, options) { this.element = element; element.dataset.center = options.center.lat + ',' + options.center.lng; } destroy() {} },
         Marker: class { constructor(options) { const pin = document.createElement('span'); pin.textContent = options.title; options.map.element.append(pin); } setMap() {} },
-        Event: { addListenerOnce(map, event, listener) { return setTimeout(listener, 20); }, removeListener(handle) { clearTimeout(handle); }, clearInstanceListeners() {} }
+        Event: { addListenerOnce(map, event, listener) { return setTimeout(listener, 20); }, removeListener(handle) { clearTimeout(handle); }, clearInstanceListeners() {} },
+        Service: { Status: { OK: 200 }, geocode() {} }
       } };
     ` });
   });
@@ -173,6 +174,35 @@ test('a custom address is resolved by the official Naver geocoder without editor
   expect(new URL(sdkUrl).searchParams.get('submodules')).toBe('geocoder');
   expect(await page.evaluate(() => (window as Window & { weddingGeocodeQueries?: string[] }).weddingGeocodeQueries)).toEqual([data.venue.address]);
   await expect(location.locator('iframe')).toHaveCount(0);
+});
+
+test('a custom address waits for the Naver geocoder submodule after the core SDK loads', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
+    contentType: 'application/javascript',
+    body: `${naverSdkMock}
+      const geocoder = window.naver.maps.Service;
+      delete window.naver.maps.Service;
+      window.naver.maps.onJSContentLoaded = () => { window.weddingPreviousSdkCallbackCalled = true; };
+      window.weddingFinishGeocoder = () => {
+        window.naver.maps.Service = geocoder;
+        window.naver.maps.onJSContentLoaded?.();
+      };
+    `,
+  }));
+  const data = structuredClone(defaultWedding);
+  data.venue = { ...data.venue, naverMapClientId: 'test-public-client-id', name: '새 주소 예식장', address: '서울특별시 중구 세종대로 110', lat: null, lng: null };
+  await publishFixture(page, data);
+  const map = page.locator('[data-section="location"] .venue-map');
+  await expect.poll(() => page.evaluate(() => typeof (window as Window & { weddingFinishGeocoder?: () => void }).weddingFinishGeocoder)).toBe('function');
+  await expect(map).toHaveAttribute('data-map-state', 'loading');
+  await page.evaluate(() => (window as Window & { weddingFinishGeocoder?: () => void }).weddingFinishGeocoder?.());
+  await expect(map).toHaveAttribute('data-map-state', 'ready');
+  await expect(map.getByRole('region')).toHaveAttribute('data-center', '37.5665,126.978');
+  expect(await page.evaluate(() => (window as Window & { weddingGeocodeQueries?: string[] }).weddingGeocodeQueries)).toEqual([data.venue.address]);
+  expect(await page.evaluate(() => (window as Window & { weddingPreviousSdkCallbackCalled?: boolean }).weddingPreviousSdkCallbackCalled)).toBe(true);
+  expect(errors).toEqual([]);
 });
 
 test('a late Naver authentication error removes the old canvas and can retry the Naver connection', async ({ page }) => {
