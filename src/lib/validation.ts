@@ -1,6 +1,7 @@
 import type { Person, WeddingData, WeddingGuestFeatures } from './types';
 import { backgrounds, defaultDesign, fonts, getDesign, palettes, sectionIds, templates } from './design.ts';
 import { defaultGuestFeatures, defaultWedding } from './defaults.ts';
+import { isBuiltinMusicTrackId } from './music';
 
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value));
 const text = (value: unknown, max = 3000): value is string => typeof value === 'string' && value.length <= max;
@@ -50,7 +51,9 @@ function isValidGuestFeatures(value: unknown): boolean {
   if (!record(value)) return false;
   const f = value as unknown as WeddingGuestFeatures;
   return record(f.music) && typeof f.music.enabled === 'boolean' && ['builtin', 'url'].includes(f.music.source)
+    && isBuiltinMusicTrackId(f.music.trackId)
     && text(f.music.url, 2000) && publicAudioUrl(f.music.url) && Number.isFinite(f.music.volume) && f.music.volume >= 0 && f.music.volume <= 1
+    && record(f.opening) && typeof f.opening.enabled === 'boolean'
     && record(f.gallery) && Number.isInteger(f.gallery.collapsedRows) && f.gallery.collapsedRows >= 0 && f.gallery.collapsedRows <= 6
     && record(f.rsvp) && typeof f.rsvp.enabled === 'boolean' && text(f.rsvp.title, 100)
     && text(f.rsvp.groomMessage, 1500) && text(f.rsvp.brideMessage, 1500) && text(f.rsvp.note, 300)
@@ -67,7 +70,7 @@ function isValidDesign(value: unknown): boolean {
   return templates.some(t => t.id === d.template) && fonts.some(f => f.id === d.font) && backgrounds.some(b => b.id === d.background) && ['small','normal','large'].includes(d.fontSize)
     && typeof d.accentColor === 'string' && (d.accentColor === '' || /^#[0-9a-fA-F]{6}$/.test(d.accentColor))
     && designText(d.heroTitle, 100) && designText(d.heroSubtitle, 150) && designText(d.closingTitle, 150)
-    && ['arch','rectangle','oval'].includes(d.photoShape) && Number.isFinite(d.photoPosition) && d.photoPosition >= 0 && d.photoPosition <= 100
+    && ['arch','rectangle','oval'].includes(d.photoShape) && ['auto','garden'].includes(d.coverStyle) && Number.isFinite(d.photoPosition) && d.photoPosition >= 0 && d.photoPosition <= 100
     && ['mosaic','grid','film'].includes(d.galleryLayout) && typeof d.showDecoration === 'boolean'
     && sections(d.sectionOrder, true) && sections(d.hiddenSections) && !!d.sectionTitles && typeof d.sectionTitles === 'object'
     && ['invitation','gallery','location','accounts'].every(k => designText(d.sectionTitles[k as keyof typeof d.sectionTitles], 100))

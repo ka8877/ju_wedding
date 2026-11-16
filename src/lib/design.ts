@@ -7,7 +7,7 @@ export const sectionIds: SectionId[] = ['invitation', 'verse', 'calendar', 'gall
 export const defaultDesign: WeddingDesign = {
   template: 'garden', font: 'serif', background: 'plain', fontSize: 'normal', accentColor: '',
   heroTitle: 'With you,\nalways.', heroSubtitle: '함께여서, 더 아름다운 날', closingTitle: 'Forever begins with us.',
-  photoShape: 'arch', photoPosition: 50, galleryLayout: 'mosaic', showDecoration: true,
+  photoShape: 'arch', coverStyle: 'auto', photoPosition: 50, galleryLayout: 'mosaic', showDecoration: true,
   sectionOrder: [...sectionIds], hiddenSections: [],
   sectionTitles: { invitation: '우리, 결혼합니다.', gallery: '사랑이 머문 순간들', location: '마음이 만나는 곳', accounts: '마음 전하실 곳' },
   showBlessing: false, blessingTitle: '우리의 가정을 위한 기도',

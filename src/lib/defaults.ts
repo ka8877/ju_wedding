@@ -2,7 +2,8 @@ import type { WeddingData, WeddingGuestFeatures } from './types';
 import { defaultDesign } from './design.ts';
 
 export const defaultGuestFeatures: WeddingGuestFeatures = {
-  music: { enabled: true, source: 'builtin', url: '', volume: 0.22 },
+  music: { enabled: true, source: 'builtin', trackId: 'little-waltz', url: '', volume: 0.22 },
+  opening: { enabled: true },
   gallery: { collapsedRows: 3 },
   rsvp: {
     enabled: true, title: '참석 여부를 알려주세요',

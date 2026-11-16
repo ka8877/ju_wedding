@@ -1,7 +1,8 @@
 import { cloneElement, isValidElement, useId } from 'react';
 import type { ReactElement, ReactNode } from 'react';
-import { Bus, Camera, ClipboardCheck, Images, Music2 } from 'lucide-react';
+import { Bus, Camera, ClipboardCheck, DoorOpen, Images, Music2 } from 'lucide-react';
 import type { WeddingData, WeddingGuestFeatures } from '../lib/types';
+import MusicLibraryPicker from './MusicLibraryPicker';
 
 interface Props { data: WeddingData; onChange: (data: WeddingData) => void; }
 
@@ -33,8 +34,14 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
   return <div className="event-options-editor">
     <div className="editor-section-heading"><span className="editor-eyebrow">06 / LITTLE DETAILS</span><h2>작은 디테일까지, 두 분답게.</h2><p>음악과 사진, 하객분들께 전할 안내를 편하게 조정해요.<br />변경한 내용은 아래에서 초안 저장 후 공개 반영해 주세요.</p></div>
 
-    <Card icon={<Music2 size={19} />} title="가볍고 기분 좋은 배경음악" description={features.music.source === 'url' ? '미리 준비한 음악이 재생돼요. 하객이 음악 버튼을 누르면 시작됩니다.' : '밝고 맑은 기본 연주를 준비했어요. 하객이 음악 버튼을 누르면 시작됩니다.'}>
+    <Card icon={<DoorOpen size={19} />} title="문을 열며 시작하는 초대" description="초록빛 정원의 첫 장면에서 문을 열면 두 분의 초대장이 펼쳐져요.">
+      <Toggle label="첫 방문에 문 열림 효과 사용" checked={features.opening.enabled} onChange={enabled => update('opening', { enabled })} />
+      <p className="event-option-note">같은 방문 중에는 한 번만 보여 드려요. 하객은 언제든 건너뛸 수 있고, 움직임 줄이기를 사용하면 애니메이션 없이 열립니다.</p>
+    </Card>
+
+    <Card icon={<Music2 size={19} />} title="가볍고 기분 좋은 배경음악" description={features.music.source === 'url' ? '미리 준비한 음악이 재생돼요. 하객이 음악 버튼을 누르면 시작됩니다.' : '서로 다른 분위기의 연주 다섯 곡 중에서 골라 보세요. 음악 버튼을 누르면 시작됩니다.'}>
       <Toggle label="배경음악 사용" checked={features.music.enabled} onChange={enabled => update('music', { enabled })} />
+      <MusicLibraryPicker settings={features.music} onChange={music => update('music', music)} />
       {features.music.source === 'url' && <button type="button" className="event-option-inline-button" onClick={() => update('music', { source: 'builtin' })}>기본 음악으로 바꾸기</button>}
       <div className="editor-field event-option-field"><label htmlFor={volumeId}>배경음악 음량</label><div className="event-option-volume"><input id={volumeId} type="range" aria-describedby={`${volumeId}-hint`} min={0} max={100} step={1} value={Math.round(features.music.volume * 100)} onChange={event => update('music', { volume: Number(event.target.value) / 100 })} /><output htmlFor={volumeId}>{Math.round(features.music.volume * 100)}%</output></div><small id={`${volumeId}-hint`}>하객분들이 글을 읽을 때 편안하도록 작은 음량을 권해요.</small></div>
     </Card>

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers';
 
 test('clipboard fallback can copy from a native QR dialog', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);

@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers';
 import jsQR from 'jsqr';
 
 const publicUrl = 'https://ka8877.github.io/ju_wedding/';

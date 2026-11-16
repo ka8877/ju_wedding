@@ -10,6 +10,8 @@ import MusicPlayer from './MusicPlayer';
 import GuestRsvp from './GuestRsvp';
 import GuestSnap from './GuestSnap';
 import VenueMap from './VenueMap';
+import InvitationOpening from './InvitationOpening';
+import '../styles/cover-style.css';
 import { getNaverVenueUrl, getVenueCoordinates } from '../lib/venue-map';
 import '../styles/invitation.css';
 
@@ -127,8 +129,10 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
   const englishNames = <p className="invite-english-names">{data.groom.englishName || data.groom.name} <span>&</span> {data.bride.englishName || data.bride.name}</p>;
   const heading = <div className="invite-hero-heading"><p className="invite-kicker invite-preserve">{design.heroSubtitle}</p>{title}{englishNames}</div>;
   const details = <div className="invite-hero-details"><div className="invite-korean-names"><span>{data.groom.name}</span><span className="invite-name-divider">&</span><span>{data.bride.name}</span></div>{date ? <><p className="invite-hero-date">{dateLabel(date, data.time)}</p>{!hasTime && <p className="invite-pending-info">예식 시간은 추후 안내드릴게요.</p>}</> : <p className="invite-hero-date invite-muted">우리의 소중한 날을 준비하고 있어요</p>}{hasVenue && <p className="invite-hero-venue">{data.venue.name} {data.venue.hall}</p>}</div>;
-  const art = { garden: 'botanical-still-life.svg', editorial: 'editorial-flower.svg', photo: 'cinematic-garden.svg', classic: 'editorial-flower.svg', chapel: 'chapel-window.svg', letter: 'love-letter.svg' }[design.template];
-  const cover = <div className={`invite-cover${data.coverPhoto ? ' invite-cover--photo' : ' invite-cover--illustration'}`}><img src={data.coverPhoto || `${import.meta.env.BASE_URL}${art}`} alt={data.coverPhoto ? `${data.groom.name}와 ${data.bride.name}의 웨딩 사진` : '사진을 등록하기 전, 사랑의 시작을 담은 웨딩 일러스트'} className="invite-cover-image" fetchPriority="high" style={{ objectPosition: `center ${design.photoPosition}%` }} />{!data.coverPhoto && design.showDecoration && design.template === 'garden' && <span className="invite-cover-note">a little love, a lifetime together</span>}{design.showDecoration && design.template === 'garden' && <div className="invite-cover-stamp" aria-hidden="true"><span>TOGETHER</span><Heart size={19} strokeWidth={1} /><span>IS A BEAUTIFUL PLACE</span></div>}</div>;
+  const art = { garden: 'garden-wedding.webp', editorial: 'editorial-flower.svg', photo: 'cinematic-garden.svg', classic: 'editorial-flower.svg', chapel: 'chapel-window.svg', letter: 'love-letter.svg' }[design.template];
+  const gardenCover = design.coverStyle === 'garden' || (!data.coverPhoto && design.template === 'garden');
+  const coverPhoto = design.coverStyle === 'garden' ? '' : data.coverPhoto;
+  const cover = <div className={`invite-cover${coverPhoto ? ' invite-cover--photo' : ' invite-cover--illustration'}${gardenCover ? ' invite-cover--garden' : ''}`}><img src={coverPhoto || `${import.meta.env.BASE_URL}${gardenCover ? 'garden-wedding.webp' : art}`} alt={coverPhoto ? `${data.groom.name}와 ${data.bride.name}의 웨딩 사진` : gardenCover ? '초록빛 정원에서 손을 잡은 신랑과 신부의 웨딩 일러스트' : '테마에 어울리는 웨딩 일러스트'} className="invite-cover-image" fetchPriority="high" style={{ objectPosition: gardenCover ? 'center' : `center ${design.photoPosition}%` }} />{gardenCover && <div className="invite-illustration-names"><span>{data.groom.name}</span><em>그리고</em><span>{data.bride.name}</span></div>}{!gardenCover && !coverPhoto && design.showDecoration && design.template === 'garden' && <span className="invite-cover-note">a little love, a lifetime together</span>}{!gardenCover && design.showDecoration && design.template === 'garden' && <div className="invite-cover-stamp" aria-hidden="true"><span>TOGETHER</span><Heart size={19} strokeWidth={1} /><span>IS A BEAUTIFUL PLACE</span></div>}</div>;
   const masthead = <div className="invite-masthead"><span>THE WEDDING OF</span><span className="invite-small-heart">{design.showDecoration && <Heart size={12} strokeWidth={1.3} />} TWO HEARTS, ONE STORY</span></div>;
   const scroll = visibleSections.length > 0 ? <a href="#our-invitation" className="invite-scroll" onClick={event => { event.preventDefault(); root.current?.querySelector('.invite-content-section')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }}><span>OUR STORY BEGINS</span><ArrowDown size={14} strokeWidth={1.2} /></a> : null;
   const cross = <svg className="invite-chapel-cross" width="25" height="34" viewBox="0 0 25 34" fill="none" aria-hidden="true"><path d="M12.5 1V33M1 11H24" stroke="currentColor" strokeWidth="1.3" /></svg>;
@@ -201,6 +205,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
   };
   return (
     <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-background={design.background} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} style={style} ref={root}>
+      <InvitationOpening enabled={features.opening.enabled} groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} preview={preview} />
       <MusicPlayer settings={features.music} preview={preview} />
       <section className="invite-hero" aria-labelledby="wedding-title">{heroLayouts[design.template]}</section>
       {visibleSections.map(id => <div key={id} className="invite-section-wrapper">{sections[id]}</div>)}

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers';
 import type { Page } from '@playwright/test';
 import { defaultWedding } from '../../src/lib/defaults';
 import type { WeddingData } from '../../src/lib/types';
