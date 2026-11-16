@@ -15,8 +15,8 @@ describe('optional native Kakao invitation sharing', () => {
         link: { mobileWebUrl: 'https://hyunbeom-juyoung.pages.dev/', webUrl: 'https://hyunbeom-juyoung.pages.dev/' },
       }),
     }));
-    await shareKakaoInvitation('a'.repeat(32), '두 사람', 'https://ka8877.github.io/ju_wedding/');
-    expect(sendDefault.mock.calls[1][0].content.imageUrl).toBe('https://ka8877.github.io/ju_wedding/invitation-share.png');
+    await shareKakaoInvitation('a'.repeat(32), '두 사람', 'https://wedding.example/invitation/');
+    expect(sendDefault.mock.calls[1][0].content.imageUrl).toBe('https://wedding.example/invitation/invitation-share.png');
   });
   it('does not initialize or share malformed keys, editor routes or tracking URLs', async () => {
     const init = vi.fn(), sendDefault = vi.fn();

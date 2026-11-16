@@ -2,17 +2,13 @@ import { resolvePublicSiteUrl } from './site-url';
 
 export const publicInvitationUrl = resolvePublicSiteUrl(import.meta.env.VITE_PUBLIC_SITE_URL);
 
-/** Share the guest page, never an editor route or a development server. */
-export function invitationUrl(href: string, preview = false): string {
-  if (preview) return publicInvitationUrl;
-  try {
-    const url = new URL(href);
-    const local = /^(localhost|0\.0\.0\.0|127(?:\.\d+){3}|\[::1\])$/.test(url.hostname) || url.hostname.endsWith('.localhost');
-    if (local || !['http:', 'https:'].includes(url.protocol) || url.username || url.password) return publicInvitationUrl;
-    url.search = '';
-    url.hash = '';
-    return url.href;
-  } catch { return publicInvitationUrl; }
+/**
+ * Every share uses the single public invitation, including local/admin previews
+ * and visits through an old address. The browser's current origin is never a
+ * share target. Arguments remain for existing callers of this public helper.
+ */
+export function invitationUrl(_href: string, _preview = false): string {
+  return publicInvitationUrl;
 }
 
 type Point = readonly [number, number];

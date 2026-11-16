@@ -73,6 +73,7 @@ test('drafts, photo upload, place selection, publication and account copy work e
   const calendar = await readFile(calendarPath!, 'utf8');
   expect(calendar).toContain('DTSTART:20270522T053000Z');
   expect(calendar).toContain('테스트 예식장');
+  expect(calendar).toContain('URL:https://hyunbeom-juyoung.pages.dev/\r\n');
   await page.getByRole('button', { name: /함께한 순간 1 1 크게 보기/ }).click();
   await expect(page.getByRole('dialog', { name: '웨딩 사진 크게 보기' })).toBeVisible();
   await page.keyboard.press('Escape');

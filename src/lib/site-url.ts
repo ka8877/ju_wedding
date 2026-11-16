@@ -1,4 +1,4 @@
-export const defaultPublicSiteUrl = 'https://ka8877.github.io/ju_wedding/';
+export const defaultPublicSiteUrl = 'https://hyunbeom-juyoung.pages.dev/';
 
 /** The public guest page is a directory URL, so sharing assets keep its base path. */
 export function resolvePublicSiteUrl(value?: string): string {

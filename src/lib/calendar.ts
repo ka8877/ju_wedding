@@ -1,4 +1,5 @@
 import type { WeddingData } from './types';
+import { publicInvitationUrl } from './sharing';
 
 const escapeText = (value: string) => value.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/;/g, '\\;').replace(/,/g, '\\,');
 const timestamp = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
@@ -38,7 +39,7 @@ export function makeWeddingCalendar(data: WeddingData, options: { now?: Date; ur
   return lines.map(fold).join('\r\n') + '\r\n';
 }
 export function downloadWeddingCalendar(data: WeddingData): boolean {
-  const contents = makeWeddingCalendar(data, { url: window.location.href });
+  const contents = makeWeddingCalendar(data, { url: publicInvitationUrl });
   if (!contents) return false;
   const url = URL.createObjectURL(new Blob([contents], { type: 'text/calendar;charset=utf-8' }));
   const link = document.createElement('a'); link.href = url; link.download = `juyoung-hyunbeom-${data.date}.ics`;
