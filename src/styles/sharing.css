@@ -22,8 +22,8 @@
 .wedding-share-eyebrow { font-size: 8px; font-family: 'Noto Sans KR', sans-serif; letter-spacing: 1.8px; color: #96a184; }
 .wedding-share-dialog h2 { font-family: 'Noto Serif KR', serif; font-size: 23px; letter-spacing: -1px; font-weight: 400; margin: 17px 0 10px; }
 .wedding-share-dialog-content > p:not([class]) { font-family: 'Noto Sans KR', sans-serif; font-size: 11px; line-height: 1.9; color: #87917b; margin: 0; }
-.wedding-qr-frame { display: flex; align-items: center; justify-content: center; width: min(280px, 100%); aspect-ratio: 1; margin: 20px auto 15px; background: transparent; }
-.wedding-qr-frame img { display: block; width: 100%; height: auto; aspect-ratio: 1; filter: drop-shadow(0 5px 9px #53644213); }
+.wedding-qr-frame { display: flex; align-items: center; justify-content: center; width: min(300px, 100%); aspect-ratio: 1; margin: 20px auto 15px; background: transparent; }
+.wedding-qr-frame img { display: block; width: 100%; height: auto; aspect-ratio: 1; mix-blend-mode: multiply; }
 .wedding-qr-frame > span { display: flex; align-items: center; flex-direction: column; gap: 12px; font-size: 10px; color: #8c987e; }
 .wedding-qr-frame > p { font-size: 11px; line-height: 1.9; color: #9b755f; }
 .wedding-share-names { font-family: 'Noto Serif KR', serif; font-size: 14px; letter-spacing: 1px; margin: 0 0 10px; color: #6c7a5c; }

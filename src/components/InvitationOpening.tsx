@@ -16,9 +16,10 @@ interface InvitationOpeningProps {
   onOpened?: () => void;
 }
 
-type OpeningPhase = 'closed' | 'ready' | 'opening';
+type OpeningPhase = 'closed' | 'ready' | 'holding' | 'opening';
 const completedInMemory = new Set<string>();
-const openingDuration = 2300;
+const coverHoldDuration = 1400;
+const openingDuration = { full: 3700, reduced: 1600 };
 
 function hasOpened(key: string) {
   if (completedInMemory.has(key)) return true;
@@ -50,8 +51,8 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   onOpenedRef.current = onOpened;
   const titleId = useId();
   const descriptionId = useId();
-  // Show the automatic reveal once even when an older entrance was completed.
-  const storageKey = `wedding-opening:v3:${sessionKey}`;
+  // Show the slower reveal once even when an older entrance was completed.
+  const storageKey = `wedding-opening:v4:${sessionKey}`;
   const replay = previewRequest > 0;
   const openingIdentity = replay ? `${storageKey}:preview:${previewRequest}` : storageKey;
   const visible = phase !== 'closed';
@@ -114,14 +115,14 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     let started = false;
     let firstFrame = 0;
     let secondFrame = 0;
-    // Paint the closed doors before starting. A slow or failed image can only
-    // delay the entrance for half a second, never hold guests at the cover.
+    // Decode before the deliberate readable hold when possible. A slow or
+    // failed image adds at most half a second before that hold begins.
     const start = () => {
       if (cancelled || started) return;
       started = true;
       clearTimeout(timeout);
       firstFrame = requestAnimationFrame(() => {
-        secondFrame = requestAnimationFrame(() => { if (!cancelled) setPhase('opening'); });
+        secondFrame = requestAnimationFrame(() => { if (!cancelled) setPhase('holding'); });
       });
     };
     const timeout = window.setTimeout(start, 500);
@@ -137,8 +138,15 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   }, [phase]);
 
   useEffect(() => {
+    if (phase !== 'holding') return;
+    const timer = window.setTimeout(() => setPhase('opening'), coverHoldDuration);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
     if (phase !== 'opening') return;
-    const timer = window.setTimeout(complete, motion === 'reduced' ? 400 : openingDuration);
+    // Let the finished reveal breathe briefly before removing the modal.
+    const timer = window.setTimeout(complete, openingDuration[motion]);
     return () => window.clearTimeout(timer);
   }, [phase, complete, motion]);
 

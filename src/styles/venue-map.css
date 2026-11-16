@@ -5,7 +5,7 @@
 .venue-map-views button:focus-visible, .venue-map-station a:focus-visible { outline: 2px solid var(--invite-accent, #547447); outline-offset: 2px; }
 .venue-map-frame { height: 360px; position: relative; overflow: hidden; border: 1px solid var(--invite-line, #e1e5dc); border-radius: 7px; background: #edf1e9; }
 .venue-map-frame.is-pending { position: absolute; top: 0; left: 0; width: 100%; visibility: hidden; pointer-events: none; }
-.venue-map-naver { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+.venue-map-naver { width: 100%; height: 100%; visibility: hidden; pointer-events: none; }
 .venue-map-naver.is-ready { visibility: visible; pointer-events: auto; }
 .venue-map-pin { display: flex; flex-direction: column; align-items: center; width: max-content; max-width: 190px; transform: translate(-50%, -100%); font-family: 'Noto Sans KR', sans-serif; }
 .venue-map-pin > span:first-child { max-width: 190px; padding: 7px 10px; border: 1px solid #fff; border-radius: 6px; background: #4f6843; color: #fff; box-shadow: 0 2px 6px #1e301f38; font-size: 11px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; text-align: center; }

@@ -43,10 +43,10 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   await expect(image).toBeVisible();
   const source = (await image.getAttribute('src'))!;
   const pixels = readPng(source);
-  expect(pixels.width).toBe(1024);
+  expect(pixels.width).toBe(1536);
   expect(scanPng(source)).toBe(publicUrl);
-  expect(Array.from(pixels.data.slice(0, 4))).toEqual([0, 0, 0, 0]);
-  await expect(dialog.locator('.wedding-qr-frame')).toHaveAttribute('data-qr-shape', 'heart');
+  expect(Array.from(pixels.data.slice(0, 4))).toEqual([255, 255, 255, 255]);
+  await expect(dialog.locator('.wedding-qr-frame')).toHaveAttribute('data-qr-shape', 'heart-pattern');
   await dialog.getByRole('button', { name: '링크 복사', exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(publicUrl);
   await expect(dialog.getByRole('status')).toContainText('링크를 복사했어요');
@@ -56,7 +56,7 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   expect(download.suggestedFilename()).toBe('juyoung-hyunbeom-invitation-qr.png');
   const file = await readFile((await download.path())!);
   expect(file.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
-  expect(file.readUInt32BE(16)).toBe(1024);
+  expect(file.readUInt32BE(16)).toBe(1536);
   expect(scanPng(file)).toBe(publicUrl);
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
@@ -128,7 +128,7 @@ test('the heart PNG scans at its actual displayed size on a 320px phone', async 
     const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fffef9'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(element, 0, 0, canvas.width, canvas.height);
     return { png: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height };
   });
-  expect(displayed.width).toBeLessThanOrEqual(280);
+  expect(displayed.width).toBeLessThanOrEqual(300);
   expect(displayed.width).toBeGreaterThanOrEqual(235);
   expect(scanPng(displayed.png)).toBe(publicUrl);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

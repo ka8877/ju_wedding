@@ -41,58 +41,59 @@ function scanline(outline: readonly Point[], y: number): number[] {
 }
 
 /**
- * A real heart-shaped raster with an untouched square QR in the middle.
- * The four-module white quiet zone is part of the raster, never a CSS margin.
- * Transparent outer corners let the saved PNG retain the heart silhouette.
+ * A QR module pattern with a heart silhouette, not a square QR in a heart frame.
+ * Rotating the symbol puts its finder anchors in the two shoulders
+ * and lower point. Only non-functional data at the top cleft is trimmed; finder,
+ * alignment, timing and format modules are always painted in full. The white
+ * buffers around all three finders stay clear of the surrounding dot pattern.
  */
 export async function invitationQrPixels(url: string) {
   const QRCode = await import('qrcode');
-  const qr = QRCode.create(url, { errorCorrectionLevel: 'M' });
-  const width = 1024, height = 1024, quietZone = 4;
-  const pixels = new Uint8ClampedArray(width * height * 4);
-  const outside = heartOutline(), inside = heartOutline(0.972);
+  // The short canonical link uses H correction. Longer optional payloads use
+  // M before their modules become too dense for the small phone preview.
+  const highCorrection = QRCode.create(url, { errorCorrectionLevel: 'H' });
+  const qr = highCorrection.modules.size > 45 ? QRCode.create(url, { errorCorrectionLevel: 'M' }) : highCorrection;
+  const width = 1536, height = 1536;
+  const pixels = new Uint8ClampedArray(width * height * 4).fill(255);
+  const modules = qr.modules.size;
+  const centerX = width / 2, centerY = height * 0.51;
+  const moduleSize = width * 0.4 * Math.SQRT2 / modules;
+  const cosine = -Math.SQRT1_2, sine = -Math.SQRT1_2; // 225 degrees
+  const silhouette = heartOutline();
   for (let y = 0; y < height; y += 1) {
-    const outerSpans = scanline(outside, (y + 0.5) / height);
-    const innerSpans = scanline(inside, (y + 0.5) / height);
-    for (let span = 0; span < outerSpans.length; span += 2) {
-      const left = Math.max(0, Math.ceil(outerSpans[span] * width));
-      const right = Math.min(width, Math.floor(outerSpans[span + 1] * width));
-      for (let x = left; x < right; x += 1) {
-        const inner = innerSpans.some((edge, index) => index % 2 === 0 && x / width >= edge && x / width <= innerSpans[index + 1]);
-        const offset = (y * width + x) * 4;
-        // Ivory paper with a restrained rose wash, framed in sage.
-        const rose = Math.max(0, (x / width + y / height - 0.8) / 1.1);
-        pixels[offset] = inner ? Math.round(251 - rose * 7) : 131;
-        pixels[offset + 1] = inner ? Math.round(248 - rose * 15) : 151;
-        pixels[offset + 2] = inner ? Math.round(237 - rose * 7) : 114;
-        pixels[offset + 3] = 255;
+    const spans = scanline(silhouette, (y + 0.5) / height);
+    for (let x = 0; x < width; x += 1) {
+      const dx = x + 0.5 - centerX, dy = y + 0.5 - centerY;
+      const u = (cosine * dx + sine * dy) / moduleSize + modules / 2;
+      const v = (-sine * dx + cosine * dy) / moduleSize + modules / 2;
+      const column = Math.floor(u), row = Math.floor(v);
+      const insideSymbol = column >= 0 && column < modules && row >= 0 && row < modules;
+      const reserved = insideSymbol && Boolean(qr.modules.isReserved(row, column));
+      const position = (x + 0.5) / width;
+      let insideHeart = false;
+      for (let span = 0; span < spans.length; span += 2) {
+        if (position >= spans[span] && position <= spans[span + 1]) { insideHeart = true; break; }
       }
-    }
-  }
-  const fill = (left: number, top: number, size: number, color: readonly number[]) => {
-    for (let y = top; y < top + size; y += 1) {
-      for (let x = left; x < left + size; x += 1) pixels.set(color, (y * width + x) * 4);
-    }
-  };
-  // Whole-pixel modules are sharp at print resolution. The scan square stays
-  // safely above the tapered point and below the heart's central notch.
-  const moduleSize = Math.floor(560 / (qr.modules.size + quietZone * 2));
-  const qrSize = moduleSize * (qr.modules.size + quietZone * 2);
-  const left = Math.floor((width - qrSize) / 2), top = 234;
-  fill(left, top, qrSize, [255, 255, 255, 255]);
-  for (let row = 0; row < qr.modules.size; row += 1) {
-    for (let column = 0; column < qr.modules.size; column += 1) {
-      if (qr.modules.get(row, column)) fill(left + (column + quietZone) * moduleSize, top + (row + quietZone) * moduleSize, moduleSize, [24, 33, 25, 255]);
-    }
-  }
-  // A small rose heart at the tip gives the exported image its own keepsake detail.
-  const accent = heartOutline();
-  for (let y = 0; y < 54; y += 1) {
-    const spans = scanline(accent, (y + 0.5) / 54);
-    for (let span = 0; span < spans.length; span += 2) {
-      for (let x = Math.ceil(spans[span] * 58); x < Math.floor(spans[span + 1] * 58); x += 1) {
-        pixels.set([193, 139, 140, 255], ((858 + y) * width + 483 + x) * 4);
+      if (!insideHeart && !reserved) continue;
+      let dark: boolean;
+      if (insideSymbol) {
+        dark = Boolean(qr.modules.get(row, column));
+      } else {
+        // These buffers extend four modules beyond each finder corner. Unlike
+        // the earlier design, no square white moat separates the whole symbol
+        // from the heart pattern. Its outer white canvas remains print-friendly.
+        const finderBuffer = column >= -4 && column < 8 && row >= -4 && row < 8
+          || column >= modules - 8 && column < modules + 4 && row >= -4 && row < 8
+          || column >= -4 && column < 8 && row >= modules - 8 && row < modules + 4;
+        if (finderBuffer) continue;
+        const texture = (Math.imul(column + 211, 73856093) ^ Math.imul(row + 217, 19349663)) >>> 0;
+        dark = texture % 100 < 54;
       }
+      if (!dark) continue;
+      const rounded = !reserved && (!insideSymbol || modules <= 45);
+      if (rounded && (u - column - 0.5) ** 2 + (v - row - 0.5) ** 2 > 0.44 ** 2) continue;
+      const offset = (y * width + x) * 4;
+      pixels[offset] = 31; pixels[offset + 1] = 53; pixels[offset + 2] = 34;
     }
   }
   return { pixels, width, height };

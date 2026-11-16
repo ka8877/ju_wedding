@@ -1,0 +1,59 @@
+name: Verify deployed invitation
+
+'on':
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: read
+
+concurrency:
+  group: production-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  naver-map:
+    runs-on: ubuntu-latest
+    # Pull requests diagnose the currently deployed site, not the PR preview.
+    # Main must pass against its own completed Cloudflare production build.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Install browser
+        run: |
+          npx playwright install --with-deps chromium
+          node --input-type=module -e 'import { chromium } from "@playwright/test"; console.log(`PLAYWRIGHT_CHROMIUM_EXECUTABLE=${chromium.executablePath()}`)' >> "$GITHUB_ENV"
+      - name: Wait for this main commit on Cloudflare
+        if: github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for (let attempt = 0; attempt < 30; attempt++) {
+              const { data } = await github.rest.checks.listForRef({ ...context.repo, ref: context.sha });
+              const deployment = data.check_runs.find(run => run.name === 'Cloudflare Pages');
+              if (deployment?.status === 'completed') {
+                if (deployment.conclusion !== 'success') throw new Error('Cloudflare production deployment failed.');
+                return;
+              }
+              await new Promise(resolve => setTimeout(resolve, 10_000));
+            }
+            throw new Error('Cloudflare production deployment did not finish in five minutes.');
+      - name: Verify real production Naver map
+        run: npx playwright test --config playwright.production.config.ts
+      - name: Save production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-map-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results-production/
+          if-no-files-found: ignore
+          retention-days: 7

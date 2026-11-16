@@ -105,9 +105,9 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
         <button type="button" className="wedding-share-close" aria-label="QR 코드 닫기" onClick={() => setOpen(false)} autoFocus><X size={21} /></button>
         <span className="wedding-share-eyebrow">A LITTLE INVITATION, WITH LOVE</span>
         <h2 id={titleId}>마음을 담은 초대</h2>
-        <p id={descriptionId}>하트 속 QR을 휴대폰 카메라로 비추면<br />청첩장을 바로 열 수 있어요.</p>
-        <div className="wedding-qr-frame" data-qr-shape="heart">
-          {qr ? <img src={qr} width={1024} height={1024} alt="공개 청첩장으로 연결되는 QR 코드" />
+        <p id={descriptionId}>하트 QR을 휴대폰 카메라로 비추면<br />청첩장을 바로 열 수 있어요.</p>
+        <div className="wedding-qr-frame" data-qr-shape="heart-pattern">
+          {qr ? <img src={qr} width={1536} height={1536} alt="공개 청첩장으로 연결되는 QR 코드" />
             : qrError ? <p role="alert">QR을 만들지 못했어요.<br />링크 복사로 전해 주세요.</p>
               : <span role="status"><LoaderCircle className="app-spin" size={24} />QR을 준비하고 있어요</span>}
         </div>
