@@ -6,7 +6,7 @@ import type { VenueMapView } from '../lib/venue-map';
 import { naverMapClientId } from '../lib/integrations';
 import '../styles/venue-map.css';
 
-interface MapInstance { destroy?: () => void; fitBounds?: (bounds: unknown, margin: Record<string, number>) => void; }
+interface MapInstance { isReady?: boolean; destroy?: () => void; fitBounds?: (bounds: unknown, margin: Record<string, number>) => void; }
 interface MarkerInstance { setMap: (map: MapInstance | null) => void; }
 interface Coordinates { lat: number; lng: number; }
 interface NaverMaps {
@@ -17,7 +17,7 @@ interface NaverMaps {
   Map: new (element: HTMLElement, options: Record<string, unknown>) => MapInstance;
   Marker: new (options: Record<string, unknown>) => MarkerInstance;
   Event: {
-    addListenerOnce: (map: MapInstance, event: string, listener: () => void) => unknown;
+    once: (map: MapInstance, event: string, listener: () => void) => unknown;
     removeListener: (listener: unknown) => void;
     clearInstanceListeners?: (instance: MapInstance) => void;
   };
@@ -28,10 +28,13 @@ interface NaverMaps {
   };
 }
 type NaverWindow = Window & { naver?: { maps?: NaverMaps }; navermap_authFailure?: () => void };
+class NaverMapError extends Error {
+  constructor(readonly code: string, message: string) { super(message); this.name = 'NaverMapError'; }
+}
 const browser = () => window as NaverWindow;
 const sdkRequests = new Map<string, Promise<NaverMaps>>();
 const geocodeRequests = new Map<string, Promise<Coordinates>>();
-const authenticationFailures = new Set<() => void>();
+const authenticationFailures = new Set<(error: NaverMapError) => void>();
 let activeSdkKey = '';
 let authenticationHookInstalled = false;
 
@@ -42,7 +45,8 @@ function installAuthenticationHook() {
   browser().navermap_authFailure = () => {
     if (activeSdkKey) sdkRequests.delete(activeSdkKey);
     activeSdkKey = '';
-    authenticationFailures.forEach(listener => listener());
+    const error = new NaverMapError('authentication', 'Naver Maps rejected the application or its web service URL');
+    authenticationFailures.forEach(listener => listener(error));
     previous?.();
   };
 }
@@ -70,22 +74,22 @@ function loadNaverMaps(clientId: string): Promise<NaverMaps> {
         mapsWaitingForModules.onJSContentLoaded = previousContentLoaded;
       }
     };
-    const fail = () => {
+    const fail = (error: NaverMapError) => {
       if (finished) return;
       finished = true; cleanup(); script.remove(); sdkRequests.delete(clientId);
-      reject(new Error('Naver Maps could not be loaded'));
+      reject(error);
     };
-    const authFailed = () => fail();
-    const timer = window.setTimeout(fail, 10_000);
+    const authFailed = (error: NaverMapError) => fail(error);
+    const timer = window.setTimeout(() => fail(new NaverMapError('sdk-timeout', 'Naver Maps SDK or its geocoder did not finish loading')), 10_000);
     authenticationFailures.add(authFailed);
-    script.onerror = fail;
+    script.onerror = () => fail(new NaverMapError('sdk-network', 'Naver Maps SDK request failed'));
     script.onload = () => {
       if (finished) return;
       const maps = browser().naver?.maps;
-      if (!maps?.Map || !maps.LatLng || !maps.Marker || !maps.Event) { fail(); return; }
+      if (!maps?.Map || !maps.LatLng || !maps.Marker || !maps.Event?.once || !maps.Event.removeListener) { fail(new NaverMapError('sdk-api-unavailable', 'Naver Maps SDK loaded without the required map APIs')); return; }
       const ready = () => {
         if (finished) return;
-        if (!maps.Service?.geocode) { fail(); return; }
+        if (!maps.Service?.geocode) { fail(new NaverMapError('geocoder-unavailable', 'Naver Maps geocoder submodule is unavailable')); return; }
         finished = true; cleanup(); activeSdkKey = clientId; resolve(maps);
       };
       if (maps.Service?.geocode) { ready(); return; }
@@ -109,19 +113,19 @@ function geocodeAddress(sdk: NaverMaps, clientId: string, address: string): Prom
   if (existing) return existing;
   const request = new Promise<Coordinates>((resolve, reject) => {
     const service = sdk.Service;
-    if (!service || !address) { reject(new Error('Venue address is unavailable')); return; }
-    const timer = window.setTimeout(() => reject(new Error('Venue lookup timed out')), 8_000);
+    if (!service || !address) { reject(new NaverMapError('geocode-address-unavailable', 'Venue address is unavailable')); return; }
+    const timer = window.setTimeout(() => reject(new NaverMapError('geocode-timeout', 'Venue lookup timed out')), 8_000);
     try {
       service.geocode({ query: address, count: 1 }, (status, response) => {
         clearTimeout(timer);
         const match = response?.v2?.addresses?.[0];
         const lat = Number(match?.y), lng = Number(match?.x);
         if (status !== service.Status.OK || !match?.x?.trim() || !match.y?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-          reject(new Error('Venue address could not be found')); return;
+          reject(new NaverMapError('geocode-no-match', 'Venue address could not be found')); return;
         }
         resolve({ lat, lng });
       });
-    } catch (error) { clearTimeout(timer); reject(error); }
+    } catch { clearTimeout(timer); reject(new NaverMapError('geocode-request', 'Naver Maps geocoder request failed')); }
   });
   geocodeRequests.set(key, request);
   void request.catch(() => geocodeRequests.delete(key));
@@ -162,21 +166,32 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
     setState({ key: requestKey, status: 'loading' });
     let cancelled = false;
     let failed = false;
+    let initialized = false;
     let map: MapInstance | undefined;
     const markers: MarkerInstance[] = [];
+    let initListener: unknown;
     let idleListener: unknown;
     let maps: NaverMaps | undefined;
     let mapTimer: ReturnType<typeof setTimeout> | undefined;
+    let stage = 'sdk';
     const element = canvas.current;
-    const destroy = () => {
+    const clearReadyListeners = () => {
+      if (initListener !== undefined) { maps?.Event.removeListener(initListener); initListener = undefined; }
       if (idleListener !== undefined) { maps?.Event.removeListener(idleListener); idleListener = undefined; }
+    };
+    const destroy = () => {
+      clearReadyListeners();
       markers.forEach(marker => marker.setMap(null)); markers.length = 0;
       if (map) { maps?.Event.clearInstanceListeners?.(map); map.destroy?.(); map = undefined; }
       element?.replaceChildren();
     };
-    const fail = () => {
+    const fail = (reason: unknown) => {
       if (cancelled || failed) return;
       failed = true; clearTimeout(mapTimer); destroy();
+      const code = reason instanceof NaverMapError ? reason.code : stage;
+      const message = reason instanceof NaverMapError ? reason.message : 'Naver Maps SDK call failed';
+      // Keep operational details in developer tools, away from guest-facing copy.
+      console.error(`[VenueMap] ${code}: ${message}`, { stage, errorType: reason instanceof Error ? reason.name : 'unknown' });
       setState({ key: requestKey, status: 'error' });
     };
     authenticationFailures.add(fail);
@@ -185,8 +200,10 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
       void loadNaverMaps(clientId).then(async sdk => {
         if (cancelled || failed || !element) return;
         maps = sdk;
+        stage = 'geocoding';
         const pin = lat !== undefined && lng !== undefined ? { lat, lng } : await geocodeAddress(sdk, clientId, address);
         if (cancelled || failed) return;
+        stage = 'map-initialization';
         const position = new sdk.LatLng(pin.lat, pin.lng);
         const viewport = getVenueMapViewport(venue, view, pin)!;
         map = new sdk.Map(element, {
@@ -194,6 +211,18 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
           logoControl: true, scaleControl: true, scrollWheel: false,
           ...(sdk.Position ? { zoomControlOptions: { position: sdk.Position.TOP_RIGHT } } : {}),
         });
+        const ready = () => {
+          if (cancelled || failed || initialized) return;
+          initialized = true;
+          clearTimeout(mapTimer); clearReadyListeners();
+          setState({ key: requestKey, status: 'ready' });
+        };
+        mapTimer = setTimeout(() => fail(new NaverMapError('map-initialization-timeout', 'Naver Maps did not report map initialization')), 8_000);
+        // Raster maps emit init without an initial idle event. Register before
+        // fitBounds, which can emit idle synchronously, and also handle an SDK
+        // map that completed initialization during its constructor.
+        initListener = sdk.Event.once(map, 'init', ready);
+        idleListener = sdk.Event.once(map, 'idle', ready);
         const addMarker = (name: string, point: unknown, kind: 'venue' | 'station') => {
           markers.push(new sdk.Marker({
             map, position: point, title: name, zIndex: kind === 'venue' ? 20 : 10,
@@ -210,10 +239,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
             ), { top: 65, right: 45, bottom: 65, left: 45 });
           }
         }
-        mapTimer = setTimeout(fail, 8_000);
-        idleListener = sdk.Event.addListenerOnce(map, 'idle', () => {
-          if (!cancelled && !failed) { clearTimeout(mapTimer); setState({ key: requestKey, status: 'ready' }); }
-        });
+        if (map.isReady) ready();
       }).catch(fail);
     }, lat !== undefined && lng !== undefined ? 0 : 600);
     return () => {

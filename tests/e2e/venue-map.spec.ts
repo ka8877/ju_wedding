@@ -159,18 +159,83 @@ const naverSdkMock = `
     Point: class { constructor(x, y) { this.x = x; this.y = y; } },
     LatLngBounds: class { constructor(southwest, northeast) { this.southwest = southwest; this.northeast = northeast; } },
     Map: class {
-      constructor(element, options) { this.element = element; element.dataset.center = options.center.lat + ',' + options.center.lng; element.dataset.zoom = options.zoom; element.dataset.initialWidth = element.clientWidth; element.dataset.initialHeight = element.clientHeight; delete element.dataset.bounds; }
-      fitBounds(bounds) { this.element.dataset.bounds = JSON.stringify(bounds); }
-      destroy() {}
+      constructor(element, options) {
+        this.element = element; this.listeners = new Set(); this.isReady = window.weddingMapInitialization === 'constructor';
+        // The real SDK sets a relative position on its map container.
+        element.style.position = 'relative'; element.style.overflow = 'hidden';
+        element.dataset.center = options.center.lat + ',' + options.center.lng; element.dataset.zoom = options.zoom; element.dataset.initialWidth = element.clientWidth; element.dataset.initialHeight = element.clientHeight; delete element.dataset.bounds;
+        if (!window.weddingMapInitialization || window.weddingMapInitialization === 'init') this.initTimer = setTimeout(() => { this.isReady = true; this.emit('init'); }, 20);
+      }
+      emit(event) {
+        window.weddingMapEvents = [...(window.weddingMapEvents || []), event];
+        for (const handle of [...this.listeners]) if (handle.event === event) { this.listeners.delete(handle); handle.listener(); }
+      }
+      fitBounds(bounds) { this.element.dataset.bounds = JSON.stringify(bounds); if (window.weddingMapInitialization === 'fit-bounds-idle') this.emit('idle'); }
+      destroy() { clearTimeout(this.initTimer); this.listeners.clear(); }
     },
     Marker: class {
       constructor(options) { const pin = document.createElement('span'); pin.dataset.markerTitle = options.title; pin.dataset.position = options.position.lat + ',' + options.position.lng; if (options.icon?.content) pin.append(options.icon.content); else pin.textContent = options.title; options.map.element.append(pin); }
       setMap() {}
     },
-    Event: { addListenerOnce(map, event, listener) { return setTimeout(listener, 20); }, removeListener(handle) { clearTimeout(handle); }, clearInstanceListeners() {} },
+    Event: {
+      once(map, event, listener) { const handle = { map, event, listener }; map.listeners.add(handle); return handle; },
+      removeListener(handle) { handle.map.listeners.delete(handle); }, clearInstanceListeners(map) { map.listeners.clear(); }
+    },
     Service: { Status: { OK: 200 }, geocode(options, callback) { window.weddingGeocodeQueries = [...(window.weddingGeocodeQueries || []), options.query]; setTimeout(() => callback(200, { v2: { addresses: [{ x: '126.9780', y: '37.5665' }] } }), 20); } }
   } };
 `;
+
+test('a raster map becomes ready on SDK init without waiting for an idle event', async ({ page }) => {
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({ contentType: 'application/javascript', body: naverSdkMock }));
+  const data = structuredClone(defaultWedding);
+  data.venue.naverMapClientId = 'test-public-client-id';
+  await publishFixture(page, data);
+  const map = page.locator('[data-section="location"] .venue-map');
+  await expect(map).toHaveAttribute('data-map-state', 'ready');
+  await expect(map.getByRole('region')).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { weddingMapEvents?: string[] }).weddingMapEvents)).toEqual(['init']);
+});
+
+test('a map initialized in its constructor becomes ready even when no later init event is emitted', async ({ page }) => {
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
+    contentType: 'application/javascript', body: `window.weddingMapInitialization = 'constructor'; ${naverSdkMock}`,
+  }));
+  const data = structuredClone(defaultWedding);
+  data.venue.naverMapClientId = 'test-public-client-id';
+  await publishFixture(page, data);
+  await expect(page.locator('[data-section="location"] .venue-map')).toHaveAttribute('data-map-state', 'ready');
+  expect(await page.evaluate(() => (window as Window & { weddingMapEvents?: string[] }).weddingMapEvents || [])).toEqual([]);
+});
+
+test('the SDK idle event emitted synchronously by fitBounds is observed', async ({ page }) => {
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
+    contentType: 'application/javascript', body: `window.weddingMapInitialization = 'fit-bounds-idle'; ${naverSdkMock}`,
+  }));
+  const data = structuredClone(defaultWedding);
+  data.venue.naverMapClientId = 'test-public-client-id';
+  await publishFixture(page, data);
+  await expect(page.locator('[data-section="location"] .venue-map')).toHaveAttribute('data-map-state', 'ready');
+  expect(await page.evaluate(() => (window as Window & { weddingMapEvents?: string[] }).weddingMapEvents)).toEqual(['idle']);
+});
+
+test('a map that never initializes still times out and exposes its reason only in developer tools', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.clock.install();
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
+    contentType: 'application/javascript', body: `window.weddingMapInitialization = 'never'; ${naverSdkMock}`,
+  }));
+  const data = structuredClone(defaultWedding);
+  data.venue.naverMapClientId = 'test-public-client-id';
+  await publishFixture(page, data);
+  const map = page.locator('[data-section="location"] .venue-map');
+  await expect(map.locator('.venue-map-naver')).toHaveAttribute('data-initial-height', /^[1-9]\d*$/);
+  await page.clock.fastForward(8_100);
+  await expect(map).toHaveAttribute('data-map-state', 'error');
+  await expect(map.getByRole('alert')).toContainText('네이버 지도를 불러오지 못했어요.');
+  await expect(map.getByRole('alert')).not.toContainText('map-initialization-timeout');
+  expect(errors.some(message => message.includes('[VenueMap] map-initialization-timeout:'))).toBe(true);
+});
 
 test('a configured Naver map remains compact while loading and shows view controls only when ready', async ({ page }) => {
   let releaseSdk!: () => void;
