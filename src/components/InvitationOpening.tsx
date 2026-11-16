@@ -41,18 +41,17 @@ function isSectionLink() {
 export default function InvitationOpening({ enabled, groomName, brideName, imageUrl, sessionKey, preview = false, previewRequest = 0, onOpened }: InvitationOpeningProps) {
   const [phase, setPhase] = useState<OpeningPhase>('closed');
   const [imageFailed, setImageFailed] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const [motion, setMotion] = useState<'full' | 'reduced'>('full');
+  const [motion, setMotion] = useState<'full' | 'reduced'>(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
   const dialog = useRef<HTMLDialogElement>(null);
+  const artwork = useRef<HTMLImageElement>(null);
   const completedKey = useRef('');
   const returnFocus = useRef<HTMLElement | null>(null);
-  const optedIntoMotion = useRef(false);
   const onOpenedRef = useRef(onOpened);
   onOpenedRef.current = onOpened;
   const titleId = useId();
   const descriptionId = useId();
-  // Show the redesigned reveal once even when the old entrance was completed.
-  const storageKey = `wedding-opening:v2:${sessionKey}`;
+  // Show the automatic reveal once even when an older entrance was completed.
+  const storageKey = `wedding-opening:v3:${sessionKey}`;
   const replay = previewRequest > 0;
   const openingIdentity = replay ? `${storageKey}:preview:${previewRequest}` : storageKey;
   const visible = phase !== 'closed';
@@ -79,20 +78,16 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   useEffect(() => {
     if (!replay && (!enabled || preview || isSectionLink() || hasOpened(storageKey))) { setPhase('closed'); return; }
     returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    optedIntoMotion.current = false;
     setMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
     setPhase('ready');
   }, [enabled, preview, replay, previewRequest, storageKey]);
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const change = () => {
-      setReducedMotion(preference.matches);
-      if (preference.matches && phase === 'opening' && !optedIntoMotion.current) complete();
-    };
+    const change = () => setMotion(preference.matches ? 'reduced' : 'full');
     preference.addEventListener('change', change);
     return () => preference.removeEventListener('change', change);
-  }, [phase, complete]);
+  }, []);
 
   useEffect(() => { setImageFailed(false); }, [imageUrl]);
 
@@ -114,18 +109,38 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   }, [visible, complete, replay]);
 
   useEffect(() => {
-    if (phase !== 'opening') return;
-    const timer = window.setTimeout(complete, openingDuration);
-    return () => window.clearTimeout(timer);
-  }, [phase, complete]);
+    if (phase !== 'ready') return;
+    let cancelled = false;
+    let started = false;
+    let firstFrame = 0;
+    let secondFrame = 0;
+    // Paint the closed doors before starting. A slow or failed image can only
+    // delay the entrance for half a second, never hold guests at the cover.
+    const start = () => {
+      if (cancelled || started) return;
+      started = true;
+      clearTimeout(timeout);
+      firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => { if (!cancelled) setPhase('opening'); });
+      });
+    };
+    const timeout = window.setTimeout(start, 500);
+    const image = artwork.current;
+    if (!image || image.complete) start();
+    else void image.decode().then(start, start);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, [phase]);
 
-  function openInvitation(withMotion = false) {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced && !withMotion) { complete(); return; }
-    optedIntoMotion.current = withMotion;
-    setMotion('full');
-    setPhase('opening');
-  }
+  useEffect(() => {
+    if (phase !== 'opening') return;
+    const timer = window.setTimeout(complete, motion === 'reduced' ? 400 : openingDuration);
+    return () => window.clearTimeout(timer);
+  }, [phase, complete, motion]);
 
   if (!visible) return null;
 
@@ -142,7 +157,7 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     <div className="invite-opening-stage">
       <div className="invite-opening-doors" aria-hidden="true">
         {(['left', 'right'] as const).map(side => <div className={`invite-opening-door invite-opening-door--${side}`} key={side}>
-          {!imageFailed && imageUrl && <img className="invite-opening-art" src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" />}
+          {!imageFailed && imageUrl && <img className="invite-opening-art" ref={side === 'left' ? artwork : undefined} src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" />}
           <span className="invite-opening-door-wash" />
           <span className="invite-opening-door-frame" />
           <span className="invite-opening-door-handle" />
@@ -155,14 +170,7 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
         <h2 id={titleId}><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></h2>
         <p className="invite-opening-message" id={descriptionId}>우리의 시작에<br />소중한 당신을 초대합니다.</p>
       </div>
-      <div className="invite-opening-actions">
-        {reducedMotion && <p className="invite-opening-mode-note">기기의 움직임 줄이기 설정에 따라<br />초대장은 바로 열립니다.</p>}
-        <button className="invite-opening-enter" type="button" autoFocus disabled={phase === 'opening'} onClick={() => openInvitation()}>
-          <span>{phase === 'opening' ? '초대장을 열고 있어요' : '초대장 열기'}</span><ArrowRight size={15} strokeWidth={1.5} aria-hidden="true" />
-        </button>
-        {reducedMotion && <button className="invite-opening-motion-preview" type="button" disabled={phase === 'opening'} onClick={() => openInvitation(true)}>문 열림 효과 보기</button>}
-      </div>
-      <button className="invite-opening-skip" type="button" onClick={complete}>건너뛰기<ArrowRight size={13} strokeWidth={1.3} aria-hidden="true" /></button>
+      <button className="invite-opening-skip" type="button" autoFocus onClick={complete}>건너뛰기<ArrowRight size={13} strokeWidth={1.3} aria-hidden="true" /></button>
       <span className="invite-opening-progress" role="status">{phase === 'opening' ? '초대장을 열고 있어요.' : ''}</span>
     </div>
   </dialog>, document.body);

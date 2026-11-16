@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { invitationQr, invitationUrl, publicInvitationUrl } from '../src/lib/sharing';
+import jsQR from 'jsqr';
+import { invitationQrPixels, invitationUrl, publicInvitationUrl } from '../src/lib/sharing';
 
 describe('guest invitation links', () => {
   it('removes editor routes and tracking queries while preserving the deployed base path', () => {
@@ -17,12 +18,18 @@ describe('guest invitation links', () => {
     }
   });
 
-  it('generates a downloadable 1024 pixel PNG locally', async () => {
-    const qr = await invitationQr(publicInvitationUrl);
-    expect(qr).toMatch(/^data:image\/png;base64,/);
-    const file = Buffer.from(qr.split(',')[1], 'base64');
-    expect(file.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
-    expect(file.readUInt32BE(16)).toBe(1024);
-    expect(file.readUInt32BE(20)).toBe(1024);
+  it.each([
+    'https://hyunbeom-juyoung.pages.dev/',
+    'https://ka8877.github.io/ju_wedding/',
+    `https://wedding.example/${'our-love-story/'.repeat(10)}`,
+  ])('keeps a real, scannable code inside the heart for %s', async url => {
+    const { pixels, width, height } = await invitationQrPixels(url);
+    expect({ width, height }).toEqual({ width: 1024, height: 1024 });
+    expect(jsQR(pixels, width, height)?.data).toBe(url);
+    const alpha = (x: number, y: number) => pixels[(y * width + x) * 4 + 3];
+    // Transparent corners and the cleft between opaque lobes distinguish the
+    // downloaded raster from a square QR styled with a CSS heart around it.
+    expect([alpha(0, 0), alpha(1023, 0), alpha(0, 1023), alpha(1023, 1023), alpha(512, 90)]).toEqual([0, 0, 0, 0, 0]);
+    expect([alpha(250, 120), alpha(774, 120), alpha(512, 950)]).toEqual([255, 255, 255]);
   });
 });

@@ -36,11 +36,11 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
   return <div className="event-options-editor">
     <div className="editor-section-heading"><span className="editor-eyebrow">06 / LITTLE DETAILS</span><h2>작은 디테일까지, 두 분답게.</h2><p>음악과 사진, 하객분들께 전할 안내를 편하게 조정해요.<br />변경한 내용은 아래에서 초안 저장 후 공개 반영해 주세요.</p></div>
 
-    <Card icon={<DoorOpen size={19} />} title="문을 열며 시작하는 초대" description="초록빛 정원의 첫 장면에서 문을 열면 두 분의 초대장이 펼쳐져요.">
+    <Card icon={<DoorOpen size={19} />} title="문을 열며 시작하는 초대" description="사이트에 들어오면 정원의 문이 자동으로 열리며 두 분의 초대장이 펼쳐져요.">
       <Toggle label="첫 방문에 문 열림 효과 사용" checked={features.opening.enabled} onChange={enabled => update('opening', { enabled })} />
       <button type="button" className="event-option-preview-button" onClick={() => setOpeningPreview(request => request + 1)}><Eye size={16} />문 열림 효과 미리보기</button>
       <InvitationOpening enabled groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} preview previewRequest={openingPreview} />
-      <p className="event-option-note">같은 방문 중에는 한 번만 보여 드려요. 하객은 언제든 건너뛸 수 있고, 움직임 줄이기를 사용하면 애니메이션 없이 열립니다.</p>
+      <p className="event-option-note">같은 방문 중에는 한 번만 보여 드려요. 기다리지 않고 바로 보고 싶을 때는 건너뛰기를 누르면 됩니다.</p>
     </Card>
 
     <Card icon={<Music2 size={19} />} title="가볍고 기분 좋은 배경음악" description={features.music.source === 'url' ? '미리 준비한 음악이 재생돼요. 하객이 음악 버튼을 누르면 시작됩니다.' : '서로 다른 분위기의 연주 다섯 곡 중에서 골라 보세요. 음악 버튼을 누르면 시작됩니다.'}>

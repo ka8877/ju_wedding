@@ -51,7 +51,10 @@ test('a denied Clipboard API falls back to selected text and restores the editin
 });
 
 test('a failed fallback cleans up and gives a useful error while preserving document selection', async ({ page }) => {
-  await page.goto('/');
+  // A deep link bypasses the entrance so the document selection is not inert
+  // behind the automatically opened modal while this clipboard test runs.
+  await page.goto('/#our-invitation');
+  await expect(page.locator('#wedding-title')).toBeVisible();
   const result = await page.evaluate(async () => {
     const modulePath = '/src/lib/utils.ts';
     const { copyText } = await import(modulePath);
