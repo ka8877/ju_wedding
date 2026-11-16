@@ -1,11 +1,15 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { defaultWedding } from '../../src/lib/defaults';
+import { confirmedVenueCoordinates, getVenueMapViewport, jeongjaStation } from '../../src/lib/venue-map';
 import type { Venue, WeddingData } from '../../src/lib/types';
 
 async function publishFixture(page: Page, data: WeddingData) {
+  data.guestFeatures.opening.enabled = false;
   await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<p>표시된 예식장 지도</p>' }));
   await page.goto('/');
+  const skipOpening = page.getByRole('button', { name: '건너뛰기', exact: true });
+  if (await skipOpening.isVisible()) await skipOpening.click();
   await page.evaluate(async wedding => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('jo-and-joo', 1);
@@ -33,10 +37,27 @@ test('an existing invitation without coordinates or a map key shows the venue ma
   const location = page.locator('[data-section="location"]');
   const map = location.locator('iframe');
   await expect(map).toBeVisible();
-  await expect(map).toHaveAttribute('src', /^https:\/\/www\.google\.com\/maps\/embed\?/);
+  const overview = new URL((await map.getAttribute('src'))!);
+  expect(overview.searchParams.get('z')).toBe('14');
+  expect(overview.searchParams.get('hl')).toBe('ko');
+  expect(overview.searchParams.get('ll')).toBe('37.3723033,127.10642395');
+  await expect(location.getByRole('button', { name: '주변 교통 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(location.locator('.venue-map-station')).toContainText('정자역');
+  await expect(location.locator('.venue-map-station')).toContainText('신분당선 · 수인분당선');
+  await expect(location.locator('.venue-map-station a')).toHaveAttribute('href', jeongjaStation.url);
+  const context = location.getByRole('figure', { name: '예식장과 정자역의 주변 위치 안내' });
+  await expect(context).toBeVisible();
+  await expect(context).toContainText('분당수서로 477');
+  await expect(context).toContainText('위치 관계 안내 · 실제 경로는 네이버 지도에서 확인');
   await expect(page.frameLocator('[data-section="location"] iframe').getByText('표시된 예식장 지도')).toBeVisible();
   await expect(location.getByRole('link', { name: '네이버 지도 열기', exact: true })).toHaveAttribute('href', 'https://m.place.naver.com/place/1156613092/location');
   await expect(location.getByRole('link', { name: '네이버 지도 열기', exact: true })).toHaveClass(/primary/);
+  expect((await location.locator('.venue-map-frame').boundingBox())!.height).toBeGreaterThanOrEqual(340);
+  await location.getByRole('button', { name: '예식장 자세히', exact: true }).click();
+  await expect(map).toHaveAttribute('src', /^https:\/\/www\.google\.com\/maps\/embed\?/);
+  await expect(location.getByRole('button', { name: '예식장 자세히', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await location.getByRole('button', { name: '주변 교통 보기', exact: true }).click();
+  expect(new URL((await map.getAttribute('src'))!).searchParams.get('z')).toBe('14');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
@@ -51,6 +72,8 @@ test('a customized address uses its own map and Naver search instead of the orig
   const naverUrl = await location.getByRole('link', { name: '네이버 지도 열기', exact: true }).getAttribute('href');
   expect(decodeURIComponent(naverUrl!)).toContain(data.venue.address);
   expect(naverUrl).not.toContain('1156613092');
+  await expect(location.locator('.venue-map-station')).toHaveCount(0);
+  await expect(location.locator('.venue-map-context')).toHaveCount(0);
 });
 
 test('a configured Naver key displays the interactive Naver canvas and a marker at the verified coordinates', async ({ page }) => {
@@ -59,30 +82,39 @@ test('a configured Naver key displays the interactive Naver canvas and a marker 
   let sdkRequests = 0;
   await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => {
     sdkRequests++;
-    return route.fulfill({ contentType: 'application/javascript', body: `
-      window.naver = { maps: {
-        LatLng: class { constructor(lat, lng) { this.lat = lat; this.lng = lng; } },
-        Map: class { constructor(element, options) { this.element = element; element.dataset.center = options.center.lat + ',' + options.center.lng; } destroy() {} },
-        Marker: class { constructor(options) { const pin = document.createElement('span'); pin.textContent = options.title; options.map.element.append(pin); } setMap() {} },
-        Event: { addListenerOnce(map, event, listener) { return setTimeout(listener, 20); }, removeListener(handle) { clearTimeout(handle); }, clearInstanceListeners() {} }
-      } };
-    ` });
+    return route.fulfill({ contentType: 'application/javascript', body: naverSdkMock });
   });
   const data = structuredClone(defaultWedding);
   data.venue.naverMapClientId = 'test-public-client-id';
   await publishFixture(page, data);
   const location = page.locator('[data-section="location"]');
   await expect(location.locator('.venue-map')).toHaveAttribute('data-map-provider', 'naver');
+  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
   const map = location.getByRole('region', { name: 'HD현대글로벌R&D센터 위치 지도 · 네이버 지도', exact: true });
   await expect(map).toBeVisible();
+  const viewport = getVenueMapViewport(data.venue, 'area')!;
+  await expect(map).toHaveAttribute('data-center', `${viewport.center.lat},${viewport.center.lng}`);
+  await expect(map).toHaveAttribute('data-zoom', '14');
+  expect(JSON.parse((await map.getAttribute('data-bounds'))!)).toEqual({
+    southwest: { lat: jeongjaStation.lat, lng: confirmedVenueCoordinates.lng },
+    northeast: { lat: confirmedVenueCoordinates.lat, lng: jeongjaStation.lng },
+  });
+  await expect(map.locator('[data-marker-title="HD현대글로벌R&D센터"]')).toHaveAttribute('data-position', '37.3768838,127.1043929');
+  await expect(map.locator('[data-marker-title="정자역"]')).toHaveAttribute('data-position', '37.3677228,127.108455');
+  await location.getByRole('button', { name: '예식장 자세히', exact: true }).click();
+  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
   await expect(map).toHaveAttribute('data-center', '37.3768838,127.1043929');
-  await expect(map).toHaveText('HD현대글로벌R&D센터');
+  await expect(map).toHaveAttribute('data-zoom', '17');
+  await expect(map.locator('[data-marker-title="정자역"]')).toHaveCount(0);
+  await location.getByRole('button', { name: '주변 교통 보기', exact: true }).click();
+  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
+  await expect(map.locator('[data-marker-title="정자역"]')).toHaveCount(1);
   await expect(location.locator('iframe')).toHaveCount(0);
   expect(sdkRequests).toBe(1);
   expect(errors).toEqual([]);
 });
 
-test('a rejected Naver key leaves the embedded map and default Naver venue link available', async ({ page }) => {
+test('a rejected Naver key shows an honest retry without switching the configured map to Google', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   let rejected = false;
@@ -95,10 +127,12 @@ test('a rejected Naver key leaves the embedded map and default Naver venue link 
   await publishFixture(page, data);
   await expect.poll(() => rejected).toBe(true);
   const location = page.locator('[data-section="location"]');
-  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-provider', 'google');
-  await expect(location.locator('iframe')).toBeVisible();
-  await expect(page.frameLocator('[data-section="location"] iframe').getByText('표시된 예식장 지도')).toBeVisible();
-  await expect(location.getByRole('link', { name: '네이버 지도 열기', exact: true })).toHaveAttribute('href', 'https://m.place.naver.com/place/1156613092/location');
+  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-provider', 'naver');
+  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'error');
+  await expect(location.locator('iframe')).toHaveCount(0);
+  await expect(location.locator('.venue-map-status')).toContainText('지도를 불러오지 못했어요.');
+  await expect(location.getByRole('button', { name: '다시 시도', exact: true })).toBeVisible();
+  await expect(location.locator('.venue-map-status').getByRole('link', { name: '네이버 지도 열기', exact: true })).toHaveAttribute('href', 'https://m.place.naver.com/place/1156613092/location');
   expect(errors).toEqual([]);
 });
 
@@ -121,4 +155,113 @@ test('editors can update the venue by address without configuring map credential
   await page.getByRole('button', { name: '예식 장소', exact: true }).click();
   await expect(page.getByLabel('주소', { exact: true })).toHaveValue('서울특별시 중구 세종대로 110');
   await expect(page.getByLabel(/Client ID|위도|경도/)).toHaveCount(0);
+});
+
+const naverSdkMock = `
+  window.naver = { maps: {
+    LatLng: class { constructor(lat, lng) { this.lat = lat; this.lng = lng; } },
+    Point: class { constructor(x, y) { this.x = x; this.y = y; } },
+    LatLngBounds: class { constructor(southwest, northeast) { this.southwest = southwest; this.northeast = northeast; } },
+    Map: class {
+      constructor(element, options) { this.element = element; element.dataset.center = options.center.lat + ',' + options.center.lng; element.dataset.zoom = options.zoom; delete element.dataset.bounds; }
+      fitBounds(bounds) { this.element.dataset.bounds = JSON.stringify(bounds); }
+      destroy() {}
+    },
+    Marker: class {
+      constructor(options) { const pin = document.createElement('span'); pin.dataset.markerTitle = options.title; pin.dataset.position = options.position.lat + ',' + options.position.lng; if (options.icon?.content) pin.append(options.icon.content); else pin.textContent = options.title; options.map.element.append(pin); }
+      setMap() {}
+    },
+    Event: { addListenerOnce(map, event, listener) { return setTimeout(listener, 20); }, removeListener(handle) { clearTimeout(handle); }, clearInstanceListeners() {} },
+    Service: { Status: { OK: 200 }, geocode(options, callback) { window.weddingGeocodeQueries = [...(window.weddingGeocodeQueries || []), options.query]; setTimeout(() => callback(200, { v2: { addresses: [{ x: '126.9780', y: '37.5665' }] } }), 20); } }
+  } };
+`;
+
+test('a configured Naver map loads without mounting or requesting a Google fallback', async ({ page }) => {
+  let releaseSdk!: () => void;
+  const sdkGate = new Promise<void>(resolve => { releaseSdk = resolve; });
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', async route => {
+    await sdkGate;
+    await route.fulfill({ contentType: 'application/javascript', body: naverSdkMock });
+  });
+  const data = structuredClone(defaultWedding);
+  data.venue.naverMapClientId = 'test-public-client-id';
+  await publishFixture(page, data);
+  let googleRequests = 0;
+  page.on('request', request => { if (/^https:\/\/(?:maps|www)\.google\.com\//.test(request.url())) googleRequests++; });
+  const map = page.locator('[data-section="location"] .venue-map');
+  await expect(map).toHaveAttribute('data-map-state', 'loading');
+  await expect(map.getByRole('status')).toContainText('네이버 지도를 불러오고 있어요.');
+  await expect(map.locator('iframe')).toHaveCount(0);
+  releaseSdk();
+  await expect(map).toHaveAttribute('data-map-state', 'ready');
+  await expect(map.locator('iframe')).toHaveCount(0);
+  expect(googleRequests).toBe(0);
+});
+
+test('a custom address is resolved by the official Naver geocoder without editor coordinate input', async ({ page }) => {
+  let sdkUrl = '';
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => {
+    sdkUrl = route.request().url();
+    return route.fulfill({ contentType: 'application/javascript', body: naverSdkMock });
+  });
+  const data = structuredClone(defaultWedding);
+  data.venue = { ...data.venue, naverMapClientId: 'test-public-client-id', name: '우리의 새로운 예식장', address: '서울특별시 중구 세종대로 110', lat: null, lng: null };
+  await publishFixture(page, data);
+  const location = page.locator('[data-section="location"]');
+  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
+  await expect(location.getByRole('region', { name: '우리의 새로운 예식장 위치 지도 · 네이버 지도', exact: true })).toHaveAttribute('data-center', '37.5665,126.978');
+  expect(new URL(sdkUrl).searchParams.get('submodules')).toBe('geocoder');
+  expect(await page.evaluate(() => (window as Window & { weddingGeocodeQueries?: string[] }).weddingGeocodeQueries)).toEqual([data.venue.address]);
+  await expect(location.locator('[data-marker-title="정자역"]')).toHaveCount(0);
+  await expect(location.locator('.venue-map-station')).toHaveCount(0);
+  await expect(location.locator('iframe')).toHaveCount(0);
+});
+
+test('a custom address waits for the Naver geocoder submodule after the core SDK loads', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
+    contentType: 'application/javascript',
+    body: `${naverSdkMock}
+      const geocoder = window.naver.maps.Service;
+      delete window.naver.maps.Service;
+      window.naver.maps.onJSContentLoaded = () => { window.weddingPreviousSdkCallbackCalled = true; };
+      window.weddingFinishGeocoder = () => {
+        window.naver.maps.Service = geocoder;
+        window.naver.maps.onJSContentLoaded?.();
+      };
+    `,
+  }));
+  const data = structuredClone(defaultWedding);
+  data.venue = { ...data.venue, naverMapClientId: 'test-public-client-id', name: '새 주소 예식장', address: '서울특별시 중구 세종대로 110', lat: null, lng: null };
+  await publishFixture(page, data);
+  const map = page.locator('[data-section="location"] .venue-map');
+  await expect.poll(() => page.evaluate(() => typeof (window as Window & { weddingFinishGeocoder?: () => void }).weddingFinishGeocoder)).toBe('function');
+  await expect(map).toHaveAttribute('data-map-state', 'loading');
+  await page.evaluate(() => (window as Window & { weddingFinishGeocoder?: () => void }).weddingFinishGeocoder?.());
+  await expect(map).toHaveAttribute('data-map-state', 'ready');
+  await expect(map.getByRole('region')).toHaveAttribute('data-center', '37.5665,126.978');
+  expect(await page.evaluate(() => (window as Window & { weddingGeocodeQueries?: string[] }).weddingGeocodeQueries)).toEqual([data.venue.address]);
+  expect(await page.evaluate(() => (window as Window & { weddingPreviousSdkCallbackCalled?: boolean }).weddingPreviousSdkCallbackCalled)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('a late Naver authentication error removes the old canvas and can retry the Naver connection', async ({ page }) => {
+  let sdkRequests = 0;
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => {
+    sdkRequests++;
+    return route.fulfill({ contentType: 'application/javascript', body: naverSdkMock });
+  });
+  const data = structuredClone(defaultWedding);
+  data.venue.naverMapClientId = 'test-public-client-id';
+  await publishFixture(page, data);
+  const map = page.locator('[data-section="location"] .venue-map');
+  await expect(map).toHaveAttribute('data-map-state', 'ready');
+  await page.evaluate(() => (window as Window & { navermap_authFailure?: () => void }).navermap_authFailure?.());
+  await expect(map).toHaveAttribute('data-map-state', 'error');
+  await expect(map.getByRole('region')).toHaveCount(0);
+  await expect(map.locator('iframe')).toHaveCount(0);
+  await map.getByRole('button', { name: '다시 시도', exact: true }).click();
+  await expect(map).toHaveAttribute('data-map-state', 'ready');
+  expect(sdkRequests).toBe(2);
 });

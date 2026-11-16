@@ -1,0 +1,72 @@
+.invite-opening {
+  --opening-ink: #4d5b43;
+  --opening-cream: #f3f0e4;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--opening-ink);
+  font-family: 'Noto Serif KR', 'Batang', Georgia, serif;
+  perspective: 1600px;
+  -webkit-tap-highlight-color: transparent;
+}
+.invite-opening::backdrop { background: #e9e7dd; transition: background 1.45s ease; }
+.invite-opening--opening::backdrop { background: transparent; }
+.invite-opening-stage { position: relative; width: min(100%, 520px); height: 100%; margin: 0 auto; perspective: 1600px; }
+.invite-opening-doors { position: absolute; inset: 0; perspective: 1600px; }
+.invite-opening-door { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; background: radial-gradient(ellipse at 10% 10%, #cad2b5 0, transparent 50%), linear-gradient(150deg, #e8e8d6, var(--opening-cream) 60%, #e3e5d2); backface-visibility: hidden; transition: transform 1.45s cubic-bezier(.35,.02,.16,1), opacity 1.4s ease; will-change: transform; }
+.invite-opening-door--left { left: 0; transform-origin: left center; border-right: 1px solid #69795b42; }
+.invite-opening-door--right { right: 0; transform-origin: right center; border-left: 1px solid #ffffff7d; }
+.invite-opening-art { position: absolute; top: 0; width: 200%; max-width: none; height: 100%; object-fit: cover; }
+.invite-opening-door--left .invite-opening-art { left: 0; }
+.invite-opening-door--right .invite-opening-art { right: 0; }
+.invite-opening-door-wash { position: absolute; inset: 0; background: linear-gradient(to bottom, #f9f7ed00 0, #f4f2e38a 14%, #f3f1e6b3 35%, #f4f1e148 55%, #f6f3e21f 80%, #eee9dc85); }
+.invite-opening-door-frame { position: absolute; top: 24px; bottom: 24px; width: calc(100% - 23px); border: 1px solid #f8f8e8a6; box-shadow: 0 0 0 5px #f8f8e81c; }
+.invite-opening-door--left .invite-opening-door-frame { left: 23px; border-radius: 160px 0 0 0; border-right: 0; }
+.invite-opening-door--right .invite-opening-door-frame { right: 23px; border-radius: 0 160px 0 0; border-left: 0; }
+.invite-opening-door-handle { position: absolute; top: 56%; width: 5px; height: 30px; border-radius: 5px; background: linear-gradient(90deg, #c2aa78, #e7d3a8, #b39864); box-shadow: 0 2px 4px #5d5b3e27; opacity: .7; }
+.invite-opening-door--left .invite-opening-door-handle { right: 10px; }
+.invite-opening-door--right .invite-opening-door-handle { left: 10px; }
+.invite-opening-copy { position: absolute; top: clamp(72px, 15dvh, 180px); left: 28px; right: 28px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: opacity .45s ease, transform .7s ease; text-shadow: 0 1px 18px #faf9f0; }
+.invite-opening-eyebrow { margin: 0; color: #566348; font: 8px/1.6 'Noto Sans KR', sans-serif; letter-spacing: .22em; }
+.invite-opening-heart { margin-top: 24px; color: #7d8b68; }
+.invite-opening-copy h2 { display: flex; flex-direction: column; align-items: center; gap: 13px; margin: 21px 0 0; font-size: clamp(27px, 8vw, 37px); line-height: 1.45; letter-spacing: .15em; font-weight: 400; word-break: keep-all; }
+.invite-opening-copy h2 span { max-width: 100%; overflow-wrap: anywhere; }
+.invite-opening-copy h2 small { font-size: 12px; line-height: 1.4; letter-spacing: .2em; color: #6e7b60; }
+.invite-opening-message { margin: 22px 0 0; font-size: 11px; line-height: 2; letter-spacing: .07em; color: #526047; }
+.invite-opening-enter { position: absolute; bottom: max(96px, calc(env(safe-area-inset-bottom) + 72px)); left: 50%; transform: translateX(-50%); min-height: 46px; width: max-content; max-width: calc(100% - 80px); display: inline-flex; align-items: center; justify-content: center; gap: 21px; padding: 13px 23px; border: 1px solid #72846270; border-radius: 2px; background: #f9f7efad; color: #4d6040; font: 11px/1.7 'Noto Sans KR', sans-serif; letter-spacing: .035em; cursor: pointer; backdrop-filter: blur(5px); box-shadow: 0 3px 14px #52614207; transition: opacity .35s ease; }
+.invite-opening-enter:hover { background: #fcfaf3df; border-color: #667956; }
+.invite-opening-enter:disabled { cursor: default; }
+.invite-opening-enter:focus-visible, .invite-opening-skip:focus-visible { outline: 2px solid #4f6540; outline-offset: 5px; }
+.invite-opening-skip { position: absolute; z-index: 2; bottom: max(24px, env(safe-area-inset-bottom)); right: 25px; min-height: 44px; padding: 10px 13px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #72846242; border-radius: 24px; background: #faf8efc9; color: #435637; font: 11px/1.5 'Noto Sans KR', sans-serif; cursor: pointer; backdrop-filter: blur(4px); }
+.invite-opening-progress { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.invite-opening--opening .invite-opening-door--left { transform: rotateY(-105deg); opacity: .15; }
+.invite-opening--opening .invite-opening-door--right { transform: rotateY(105deg); opacity: .15; }
+.invite-opening--opening .invite-opening-copy { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+.invite-opening--opening .invite-opening-enter { opacity: 0; pointer-events: none; }
+@media (max-height: 650px) {
+  .invite-opening-copy { top: 55px; }
+  .invite-opening-heart { margin-top: 15px; }
+  .invite-opening-copy h2 { gap: 9px; margin-top: 14px; font-size: 26px; }
+  .invite-opening-message { margin-top: 15px; }
+}
+@media (max-height: 470px) {
+  .invite-opening-copy { top: 30px; }
+  .invite-opening-heart { display: none; }
+  .invite-opening-copy h2 { flex-direction: row; gap: 13px; margin-top: 18px; font-size: 26px; }
+  .invite-opening-copy h2 small { font-size: 10px; }
+  .invite-opening-message { margin-top: 15px; font-size: 10px; }
+  .invite-opening-enter { top: 170px; bottom: auto; }
+  .invite-opening-skip { bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invite-opening::backdrop, .invite-opening-door, .invite-opening-copy, .invite-opening-enter { transition: none; }
+}

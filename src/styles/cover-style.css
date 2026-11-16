@@ -1,0 +1,17 @@
+.cover-style-picker { margin-bottom: 26px; }
+.cover-style-picker > p { color: #8a957c; font-size: 11px; line-height: 1.9; margin: 9px 0 15px; }
+.cover-style-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cover-style-options button { padding: 7px 7px 13px; min-width: 0; border: 1px solid #e0e5d6; background: #fffef9; border-radius: 7px; color: #6b795e; text-align: left; }
+.cover-style-options button[aria-pressed='true'] { border-color: #80966c; box-shadow: 0 0 0 1px #80966c; background: #f7f9f0; }
+.cover-style-options button > img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: center 62%; border-radius: 3px; }
+.cover-style-options button > span { display: flex; align-items: center; gap: 6px; margin: 12px 3px 5px; }
+.cover-style-options strong { font-size: 11px; font-weight: 500; flex: 1; }
+.cover-style-options small { display: block; margin: 0 3px; font-size: 9px; line-height: 1.7; color: #939e85; }
+.cover-style-options button:focus-visible { outline: 2px solid #657e51; outline-offset: 4px; }
+.cover-style-picker .cover-style-preserved { font-size: 10px; margin-bottom: 0; }
+.invite-cover--garden .invite-cover-image { aspect-ratio: 2 / 3; max-height: none; object-fit: cover; }
+.invite-illustration-names { position: absolute; top: 25%; left: 8%; right: 8%; display: flex; flex-direction: column; align-items: center; gap: 13px; color: #59614b; text-align: center; font-family: 'Gowun Batang', 'Noto Serif KR', serif; pointer-events: none; }
+.invite-illustration-names > span { font-size: clamp(22px, 7cqw, 34px); font-weight: 400; letter-spacing: .16em; padding-left: .16em; line-height: 1.5; }
+.invite-illustration-names > em { font-size: clamp(11px, 3.4cqw, 15px); font-style: normal; letter-spacing: .14em; opacity: .8; }
+.invite-template--photo .invite-illustration-names { display: none; }
+@media(max-width: 380px) { .cover-style-options strong { font-size: 10px; }.cover-style-options button > span { gap: 4px; }.cover-style-options small { font-size: 8px; } }

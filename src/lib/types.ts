@@ -1,3 +1,5 @@
+import type { BuiltinMusicTrackId } from './music';
+
 export interface Person {
   name: string;
   englishName: string;
@@ -28,7 +30,8 @@ export type FontId = 'serif' | 'sans' | 'romantic' | 'myeongjo' | 'handwriting';
 export type BackgroundId = 'plain' | 'paper' | 'linen' | 'watercolor' | 'petals' | 'starlight';
 export type SectionId = 'invitation' | 'verse' | 'calendar' | 'gallery' | 'rsvp' | 'snap' | 'location' | 'shuttle' | 'accounts' | 'blessing';
 export interface WeddingGuestFeatures {
-  music: { enabled: boolean; source: 'builtin' | 'url'; url: string; volume: number; };
+  music: { enabled: boolean; source: 'builtin' | 'url'; trackId: BuiltinMusicTrackId; url: string; volume: number; };
+  opening: { enabled: boolean; };
   gallery: { collapsedRows: number; };
   rsvp: { enabled: boolean; title: string; groomMessage: string; brideMessage: string; note: string; };
   snap: { enabled: boolean; title: string; openDate: string; message: string; };
@@ -45,6 +48,7 @@ export interface WeddingDesign {
   heroSubtitle: string;
   closingTitle: string;
   photoShape: 'arch' | 'rectangle' | 'oval';
+  coverStyle: 'auto' | 'garden';
   photoPosition: number;
   galleryLayout: 'mosaic' | 'grid' | 'film';
   showDecoration: boolean;

@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './helpers';
 
 test('mobile invitation shows the confirmed couple information and has no horizontal overflow', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
