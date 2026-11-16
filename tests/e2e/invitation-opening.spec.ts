@@ -38,9 +38,30 @@ test('the first visit opens an illustrated entrance and doors reveal the invitat
   await expect(entrance.getByRole('heading')).toContainText(defaultWedding.bride.name);
   await expect(entrance.getByRole('button', { name: '초대장 열기', exact: true })).toBeFocused();
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden');
+  const doors = entrance.locator('.invite-opening-door');
+  const before = await doors.evaluateAll(elements => elements.map(element => {
+    const matrix = new DOMMatrix(getComputedStyle(element).transform);
+    return { width: matrix.m11, rotation: matrix.m13 };
+  }));
+  expect(before).toEqual([{ width: 1, rotation: 0 }, { width: 1, rotation: 0 }]);
   await entrance.getByRole('button', { name: '초대장 열기', exact: true }).click();
   await expect(entrance).toHaveAttribute('data-opening-state', 'opening');
   await expect(entrance.getByRole('button', { name: '건너뛰기', exact: true })).toBeEnabled();
+  // Read actual compositor transforms: a timer/state flag alone does not prove
+  // that the door effect is visible, especially under global motion overrides.
+  await expect.poll(() => doors.first().evaluate(element => new DOMMatrix(getComputedStyle(element).transform).m11)).toBeLessThan(.94);
+  const halfway = await doors.evaluateAll(elements => elements.map(element => {
+    const style = getComputedStyle(element);
+    const matrix = new DOMMatrix(style.transform);
+    return { width: matrix.m11, rotation: matrix.m13, opacity: Number(style.opacity) };
+  }));
+  expect(halfway[0].width).toBeGreaterThan(.1);
+  expect(halfway[0].rotation).toBeGreaterThan(0);
+  expect(halfway[1].rotation).toBeLessThan(0);
+  expect(halfway.every(door => door.opacity > .9)).toBe(true);
+  await expect(entrance).toBeVisible();
+  await expect.poll(() => doors.first().evaluate(element => new DOMMatrix(getComputedStyle(element).transform).m11)).toBeLessThan(halfway[0].width - .15);
+  await expect(entrance).toBeVisible();
   await expect(entrance).toHaveCount(0);
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
@@ -82,8 +103,25 @@ test('reduced-motion visitors can enter without waiting for the door animation',
   await page.goto('/');
   const entrance = page.locator('.invite-opening');
   await expect(entrance).toBeVisible();
+  await expect(entrance).toContainText('기기의 움직임 줄이기 설정에 따라');
+  await expect(entrance.getByRole('button', { name: '문 열림 효과 보기', exact: true })).toBeVisible();
   await entrance.getByRole('button', { name: '초대장 열기', exact: true }).click();
   await expect(entrance).toHaveCount(0, { timeout: 500 });
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
+});
+
+test('a reduced-motion visitor can explicitly preview the real door effect once', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const entrance = page.locator('.invite-opening');
+  await expect(entrance).toHaveAttribute('data-motion', 'reduced');
+  await entrance.getByRole('button', { name: '문 열림 효과 보기', exact: true }).click();
+  await expect(entrance).toHaveAttribute('data-motion', 'full');
+  const door = entrance.locator('.invite-opening-door').first();
+  await expect.poll(() => door.evaluate(element => new DOMMatrix(getComputedStyle(element).transform).m11)).toBeLessThan(.9);
+  await expect(entrance).toBeVisible();
+  expect(await door.evaluate(element => Number(getComputedStyle(element).opacity))).toBeGreaterThan(.9);
+  await expect(entrance).toHaveCount(0);
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
 });
 
@@ -103,4 +141,30 @@ test('the editor preview never blocks editing behind an entrance dialog', async 
   await page.goto('/#/admin');
   await expect(page.locator('.admin-app')).toBeVisible();
   await expect(page.locator('.invite-opening')).toHaveCount(0);
+});
+
+test('the editor can replay the door effect repeatedly without changing guest session history', async ({ page }) => {
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '추가 기능', exact: true }).click();
+  const preview = page.getByRole('button', { name: '문 열림 효과 미리보기', exact: true });
+  const entrance = page.locator('.invite-opening');
+  await preview.click();
+  await expect(entrance).toHaveAttribute('data-opening-preview', 'true');
+  await expect(entrance).toContainText('입장 효과 미리보기');
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
+  await expect(entrance).toHaveCount(0);
+  await expect(preview).toBeFocused();
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
+
+  await page.evaluate(key => sessionStorage.setItem(key, 'opened'), openingKey);
+  await page.getByRole('checkbox', { name: '첫 방문에 문 열림 효과 사용', exact: true }).uncheck();
+  await preview.click();
+  await expect(entrance).toBeVisible();
+  await entrance.getByRole('button', { name: '초대장 열기', exact: true }).click();
+  await expect.poll(() => entrance.locator('.invite-opening-door').first().evaluate(element => new DOMMatrix(getComputedStyle(element).transform).m11)).toBeLessThan(.9);
+  await expect(entrance).toBeVisible();
+  await expect(entrance).toHaveCount(0);
+  await expect(preview).toBeFocused();
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
 });

@@ -56,18 +56,17 @@ export function getVenueMapViewport(venue: Venue, view: VenueMapView, coordinate
   };
 }
 
-// The same-address headquarters publicly supplies this embed on its official
-// directions page: https://hdhydrogen.com/kr/company/location/contents .
-const confirmedGoogleEmbed = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3170.5546707026347!2d127.104857!3d37.3767129!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x357b5838ae90c2d7%3A0x7893974895b74610!2z6rK96riw64-EIOyEseuCqOyLnCDrtoTri7nqtawg67aE64u57IiY7ISc66GcIDQ3Nw!5e0!3m2!1sko!2skr!4v1739779592251!5m2!1sko!2skr';
-
-export function getGoogleVenueMapUrl(venue: Venue, view: VenueMapView = 'area'): string {
+/** Optional external Google Maps search; never mounted inside the invitation. */
+export function getGoogleVenueUrl(venue: Venue): string {
   const coordinates = getVenueCoordinates(venue);
-  if (view === 'venue' && getVenueStation(venue)) return confirmedGoogleEmbed;
-  const viewport = getVenueMapViewport(venue, view);
-  const query = getVenueStation(venue)
-    ? `${venue.name} ${venue.address}`.trim()
-    : coordinates ? `${coordinates.lat},${coordinates.lng}` : `${venue.name} ${venue.address}`.trim();
-  const params = new URLSearchParams({ q: query, z: String(viewport?.zoom ?? (view === 'area' ? 14 : 17)), output: 'embed', hl: 'ko', t: 'm' });
-  if (viewport) params.set('ll', `${viewport.center.lat},${viewport.center.lng}`);
-  return `https://maps.google.com/maps?${params}`;
+  const query = coordinates ? `${coordinates.lat},${coordinates.lng}` : `${venue.name} ${venue.address}`.trim();
+  return `https://www.google.com/maps/search/?${new URLSearchParams({ api: '1', query })}`;
+}
+
+/** Optional external Kakao map, preserving the venue pin where available. */
+export function getKakaoVenueUrl(venue: Venue): string {
+  const coordinates = getVenueCoordinates(venue);
+  return coordinates
+    ? `https://map.kakao.com/link/map/${encodeURIComponent(venue.name || '예식장')},${coordinates.lat},${coordinates.lng}`
+    : `https://map.kakao.com/?${new URLSearchParams({ q: `${venue.name} ${venue.address}`.trim() })}`;
 }

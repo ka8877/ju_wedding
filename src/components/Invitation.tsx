@@ -12,7 +12,7 @@ import GuestSnap from './GuestSnap';
 import VenueMap from './VenueMap';
 import InvitationOpening from './InvitationOpening';
 import '../styles/cover-style.css';
-import { getNaverVenueUrl, getVenueCoordinates } from '../lib/venue-map';
+import { getGoogleVenueUrl, getNaverVenueUrl, getVenueCoordinates } from '../lib/venue-map';
 import '../styles/invitation.css';
 
 interface InvitationProps { data: WeddingData; preview?: boolean }
@@ -190,7 +190,10 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           {data.venue.address && <div className="invite-address"><span>{data.venue.address}</span><button aria-label="주소 복사" onClick={() => copy(data.venue.address, '주소를 복사했어요')}><Copy size={14} /></button></div>}
           {!data.venue.address && <p className="invite-pending-info">정확한 주소는 추후 안내드릴게요.</p>}
           <VenueMap venue={data.venue} className="invite-venue-map" />
-          <div className="invite-map-links"><a className="invite-map-link--primary" href={naverVenueUrl} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--naver" aria-hidden="true">N</span>네이버 지도 열기<ArrowUpRight size={14} /></a><a href={coordinates ? `https://map.kakao.com/link/to/${encodeURIComponent(data.venue.name || '예식장')},${coordinates.lat},${coordinates.lng}` : `https://map.kakao.com/link/search/${venueQuery}`} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--kakao" aria-hidden="true">K</span>카카오맵 길찾기<ArrowUpRight size={13} /></a></div>
+          <div className="invite-map-actions">
+            <a className="invite-map-primary" aria-label="네이버 지도 열기" href={naverVenueUrl} target="_blank" rel="noreferrer"><span className="invite-map-icon invite-map-icon--naver" aria-hidden="true">N</span><span>네이버 지도 열기<small>예식장 위치와 길찾기</small></span><ArrowUpRight size={17} /></a>
+            <details className="invite-other-maps"><summary>다른 지도로 보기<ChevronDown size={14} /></summary><div><a href={getGoogleVenueUrl(data.venue)} target="_blank" rel="noreferrer">Google 지도 열기<ArrowUpRight size={13} /></a><a href={coordinates ? `https://map.kakao.com/link/to/${encodeURIComponent(data.venue.name || '예식장')},${coordinates.lat},${coordinates.lng}` : `https://map.kakao.com/link/search/${venueQuery}`} target="_blank" rel="noreferrer">카카오맵 열기<ArrowUpRight size={13} /></a></div></details>
+          </div>
           {data.venue.address && <p className="invite-map-help">티맵 이용 시 위 주소를 복사해 목적지를 검색해 주세요.</p>}
           {(data.venue.subway || data.venue.bus || data.venue.car || data.venue.transport || data.venue.parking) && <div className="invite-directions">{data.venue.subway && <div><h4>지하철</h4><p className="invite-preserve">{data.venue.subway}</p></div>}{data.venue.bus && <div><h4>버스</h4><p className="invite-preserve">{data.venue.bus}</p></div>}{data.venue.car && <div><h4>자가용</h4><p className="invite-preserve">{data.venue.car}</p></div>}{data.venue.transport && <div><h4>대중교통 안내</h4><p className="invite-preserve">{data.venue.transport}</p></div>}{data.venue.parking && <div><h4>주차 안내</h4><p className="invite-preserve">{data.venue.parking}</p></div>}</div>}
         </> : <div className="invite-venue-pending"><MapPin size={25} strokeWidth={1} /><p>소중한 분들을 모실 공간을<br />정성껏 준비하고 있어요.</p><span>장소가 정해지면 이곳에서 안내드릴게요.</span></div>}

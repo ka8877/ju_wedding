@@ -44,7 +44,8 @@ test('known wedding facts, family order, transport and shuttle guidance appear i
   await expect(page.locator('.invite-family-row').nth(1).locator('strong')).toHaveText('주영');
   expect(await page.locator('.invite-content-section').evaluateAll(elements => elements.map(element => element.getAttribute('data-section')))).toEqual(['invitation', 'calendar', 'gallery', 'rsvp', 'snap', 'location', 'shuttle', 'accounts']);
   for (const title of ['지하철', '버스', '자가용']) await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: '카카오맵 길찾기' })).toHaveAttribute('href', /map\.kakao\.com\/link\/to\/.*37\.3768838,127\.1043929/);
+  await page.locator('.invite-other-maps summary').click();
+  await expect(page.getByRole('link', { name: '카카오맵 열기' })).toHaveAttribute('href', /map\.kakao\.com\/link\/to\/.*37\.3768838,127\.1043929/);
   const daejeon = page.locator('.invite-shuttle-group').first();
   await expect(daejeon.locator('p')).not.toBeVisible();
   await daejeon.locator('summary').click();
