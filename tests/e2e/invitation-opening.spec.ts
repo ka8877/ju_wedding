@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { defaultWedding } from '../../src/lib/defaults';
 import type { WeddingData } from '../../src/lib/types';
 
-const openingKey = `wedding-opening:v1:${defaultWedding.groom.name}:${defaultWedding.bride.name}:${defaultWedding.date}`;
+const openingKey = `wedding-opening:v2:${defaultWedding.groom.name}:${defaultWedding.bride.name}:${defaultWedding.date}`;
 
 test.beforeEach(async ({ page }) => {
   await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }));
@@ -28,6 +28,7 @@ async function publishFixture(page: Page, data: WeddingData) {
 }
 
 test('the first visit opens an illustrated entrance and doors reveal the invitation only once per session', async ({ page }) => {
+  await page.addInitScript(key => sessionStorage.setItem(key.replace('wedding-opening:v2:', 'wedding-opening:v1:'), 'opened'), openingKey);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');

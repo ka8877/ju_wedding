@@ -51,7 +51,8 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   onOpenedRef.current = onOpened;
   const titleId = useId();
   const descriptionId = useId();
-  const storageKey = `wedding-opening:v1:${sessionKey}`;
+  // Show the redesigned reveal once even when the old entrance was completed.
+  const storageKey = `wedding-opening:v2:${sessionKey}`;
   const replay = previewRequest > 0;
   const openingIdentity = replay ? `${storageKey}:preview:${previewRequest}` : storageKey;
   const visible = phase !== 'closed';
