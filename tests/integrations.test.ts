@@ -3,6 +3,7 @@ import { kakaoJavascriptKey, naverMapClientId, publicIntegrationConfig } from '.
 
 const original = { ...publicIntegrationConfig };
 beforeEach(() => {
+  vi.stubEnv('DEV', false);
   publicIntegrationConfig.naverMapClientId = '';
   publicIntegrationConfig.kakaoJavascriptKey = '';
   vi.stubEnv('VITE_NAVER_MAP_CLIENT_ID', '');
@@ -14,6 +15,25 @@ afterEach(() => {
 });
 
 describe('developer-owned public service integrations', () => {
+  it('uses the registered browser-public Maps ID only as the production fallback', () => {
+    publicIntegrationConfig.naverMapClientId = original.naverMapClientId;
+    expect(naverMapClientId()).toBe('xx9ha7ubry');
+    expect(kakaoJavascriptKey()).toBe('');
+  });
+
+  it('keeps development previews off the production quota while honoring explicit fixture IDs', () => {
+    vi.stubEnv('DEV', true);
+    publicIntegrationConfig.naverMapClientId = original.naverMapClientId;
+    expect(naverMapClientId()).toBe('');
+    expect(naverMapClientId('legacy-fixture-id')).toBe('legacy-fixture-id');
+  });
+
+  it.each([false, true])('honors an explicit Naver deployment ID when DEV=%s', development => {
+    vi.stubEnv('DEV', development);
+    publicIntegrationConfig.naverMapClientId = original.naverMapClientId;
+    vi.stubEnv('VITE_NAVER_MAP_CLIENT_ID', ' explicit-app-id ');
+    expect(naverMapClientId('legacy-fixture-id')).toBe('explicit-app-id');
+  });
   it('uses deployment configuration ahead of developer defaults and saved legacy content', () => {
     publicIntegrationConfig.naverMapClientId = 'developer-naver-id';
     publicIntegrationConfig.kakaoJavascriptKey = 'a'.repeat(32);

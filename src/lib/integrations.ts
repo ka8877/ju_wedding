@@ -1,7 +1,7 @@
 // Developer-owned, browser-public service identifiers. Invitation editors never
 // need to supply these. Do not place client secrets or account passwords here.
 export const publicIntegrationConfig = {
-  naverMapClientId: '',
+  naverMapClientId: 'xx9ha7ubry',
   kakaoJavascriptKey: '',
 };
 
@@ -12,11 +12,16 @@ function configuredValue(values: unknown[], valid: (value: string) => boolean): 
   return '';
 }
 
-/** Saved public IDs are read only for compatibility with earlier invitations. */
+/**
+ * The registered Maps ID is a production-only fallback. Local development and
+ * automated browser tests use only explicit overrides or their saved fixtures,
+ * so opening a preview does not silently use the live application's quota.
+ * Saved public IDs remain readable for older invitations.
+ */
 export function naverMapClientId(legacyValue = ''): string {
   return configuredValue([
     import.meta.env.VITE_NAVER_MAP_CLIENT_ID,
-    publicIntegrationConfig.naverMapClientId,
+    import.meta.env.DEV ? '' : publicIntegrationConfig.naverMapClientId,
     legacyValue,
   ], value => /^[A-Za-z0-9_-]{1,100}$/.test(value));
 }

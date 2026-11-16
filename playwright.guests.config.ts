@@ -16,7 +16,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev -- --host 127.0.0.1 --port 5177 --strictPort',
     url: 'http://127.0.0.1:5177',
-    env: { VITE_LOCAL_PREVIEW: 'false', VITE_SUPABASE_URL: 'https://wedding-ui-tests.supabase.co', VITE_SUPABASE_ANON_KEY: 'sb_publishable_e2eOnly' },
+    env: { VITE_LOCAL_PREVIEW: 'false', VITE_SUPABASE_URL: 'https://wedding-ui-tests.supabase.co', VITE_SUPABASE_ANON_KEY: 'sb_publishable_e2eOnly', VITE_NAVER_MAP_CLIENT_ID: '', VITE_KAKAO_JAVASCRIPT_KEY: '' },
     reuseExistingServer: false,
   },
 });

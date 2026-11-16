@@ -71,7 +71,7 @@ QR과 공유 링크의 운영 주소는 `https://hyunbeom-juyoung.pages.dev/`입
 
 ## 지도와 카카오톡 공유 개발자 설정
 
-지도·공유 연결은 청첩장 콘텐츠와 분리해 개발자가 한 번 설정합니다. `src/lib/integrations.ts`의 `publicIntegrationConfig`에 **공개용** 식별자를 등록하거나, Cloudflare Pages의 빌드 환경 변수 `VITE_NAVER_MAP_CLIENT_ID`, `VITE_KAKAO_JAVASCRIPT_KEY`를 설정하고 배포합니다. 환경 변수 → 코드의 서비스 설정 → 예전 문서에 저장된 공개값 순서로 유효한 값을 사용합니다. Client Secret, REST API secret, 계정 비밀번호는 프런트엔드에 넣지 않습니다. 사용자는 이 값을 입력하거나 수정하지 않습니다.
+지도·공유 연결은 청첩장 콘텐츠와 분리해 개발자가 한 번 설정합니다. `src/lib/integrations.ts`의 `publicIntegrationConfig`에 **공개용** 식별자를 등록하거나, Cloudflare Pages의 빌드 환경 변수 `VITE_NAVER_MAP_CLIENT_ID`, `VITE_KAKAO_JAVASCRIPT_KEY`를 설정하고 배포합니다. 환경 변수 → 코드의 서비스 설정 → 예전 문서에 저장된 공개값 순서로 유효한 값을 사용합니다. 네이버의 코드 기본값은 운영 빌드에서만 사용하며, 개발 서버에서는 명시적인 환경 변수나 테스트용 저장값만 사용해 운영 한도를 소모하지 않습니다. Client Secret, REST API secret, 계정 비밀번호는 프런트엔드에 넣지 않습니다. 사용자는 이 값을 입력하거나 수정하지 않습니다.
 
 네이버 지도는 [네이버 클라우드 Maps 애플리케이션](https://guide.ncloud-docs.com/docs/application-maps-app-vpc)을 다음과 같이 등록합니다.
 
@@ -79,6 +79,15 @@ QR과 공유 링크의 운영 주소는 `https://hyunbeom-juyoung.pages.dev/`입
 - **선택 API:** Dynamic Map, Geocoding
 - **Web 서비스 URL:** `https://hyunbeom-juyoung.pages.dev` 하나만 등록
 - **공개용 Client ID:** `naverMapClientId` 또는 `VITE_NAVER_MAP_CLIENT_ID`에 등록
+
+운영 앱은 소유자가 대표 계정임을 확인하고 다음 사용 한도를 저장했습니다. 두 API 모두 **한도 초과 사용 → 허용안함**을 사용합니다.
+
+| API | 일별 한도 | 월별 한도 |
+| --- | ---: | ---: |
+| Dynamic Map | 1,000 | 10,000 |
+| Geocoding | 100 | 1,000 |
+
+무료량은 대표 계정의 모든 앱 사용량을 합산해 적용합니다. 다른 앱을 추가하거나 대표 계정을 변경할 때는 무료 적용과 한도를 다시 확인합니다. 이 설정은 Maps API의 사용 한도이며 계정 전체의 결제를 차단하는 기능은 아닙니다. [공식 무료 이용 안내](https://www.ncloud.com/support/faq/all/2828)
 
 본문에는 네이버 지도만 표시하며, Google·카카오는 보조 메뉴에서 새 탭으로 엽니다. 키 미설정·인증·네트워크 오류 시에는 작은 안내와 네이버 외부 링크만 표시하며, 다른 지도로 자동 대체하지 않습니다. 실제 키와 운영 도메인의 인증을 확인해야 본문 지도 활성화가 완료됩니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다. 기존 문서의 좌표가 비어 있어도 같은 장소와 주소라면 이 위치를 사용합니다.
 
