@@ -5,6 +5,7 @@ dist/
 !.env.example
 test-results/
 test-results-guests/
+test-results-production/
 playwright-report/
 *.tsbuildinfo
 .DS_Store
