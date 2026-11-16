@@ -74,7 +74,7 @@ Cloudflare 운영 사이트에서 만든 QR과 공유 링크는 `https://hyunbeo
 
 지도·공유 연결은 청첩장 콘텐츠와 분리해 개발자가 한 번 설정합니다. `src/lib/integrations.ts`의 `publicIntegrationConfig`에 **공개용** 식별자를 등록하거나, 두 호스팅의 빌드 환경 변수 `VITE_NAVER_MAP_CLIENT_ID`, `VITE_KAKAO_JAVASCRIPT_KEY`를 설정하고 배포합니다. 환경 변수 → 코드의 서비스 설정 → 예전 문서에 저장된 공개값 순서로 유효한 값을 사용합니다. Client Secret, REST API secret, 계정 비밀번호는 프런트엔드에 넣지 않습니다. 사용자는 이 값을 입력하거나 수정하지 않습니다.
 
-네이버 지도는 [네이버 클라우드 Maps 애플리케이션](https://guide.ncloud-docs.com/docs/application-maps-app-vpc)의 **Web Dynamic Map**을 활성화하고 웹 서비스 URL에 `https://hyunbeom-juyoung.pages.dev`와 `https://ka8877.github.io`를 등록합니다. 발급된 공개용 Client ID는 `naverMapClientId` 또는 `VITE_NAVER_MAP_CLIENT_ID`에 등록합니다. 기본 버튼은 네이버 지도로 연결되며, 화면 지도는 인증키 없이도 Google 지도로 표시됩니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다. 기존 문서의 좌표가 비어 있어도 같은 장소와 주소라면 이 위치를 표시합니다. 인증·네트워크 오류가 나면 기본 지도를 유지합니다.
+네이버 지도는 [네이버 클라우드 Maps 애플리케이션](https://guide.ncloud-docs.com/docs/application-maps-app-vpc)의 **Dynamic Map**, **Geocoding**을 활성화하고 웹 서비스 URL에 `https://hyunbeom-juyoung.pages.dev`와 `https://ka8877.github.io`를 등록합니다. 발급된 공개용 Client ID는 `naverMapClientId` 또는 `VITE_NAVER_MAP_CLIENT_ID`에 등록합니다. 본문에는 네이버 지도만 표시하며, Google·카카오는 보조 메뉴에서 새 탭으로 엽니다. 키 미설정·인증·네트워크 오류 시에는 작은 안내와 네이버 외부 링크만 표시하며, 다른 지도로 자동 대체하지 않습니다. 실제 키와 운영 도메인의 인증을 확인해야 본문 지도 활성화가 완료됩니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다. 기존 문서의 좌표가 비어 있어도 같은 장소와 주소라면 이 위치를 사용합니다.
 
 카카오톡 직접 공유는 Kakao Developers 앱에 실제 공유할 두 사이트의 웹 도메인을 등록하고, **JavaScript 키**를 `kakaoJavascriptKey` 또는 `VITE_KAKAO_JAVASCRIPT_KEY`에 등록합니다. 카카오톡 공유 버튼은 연결 여부와 관계없이 표시합니다. 직접 공유를 사용할 수 없으면 기기 공유창에서 카카오톡을 선택하고, 기기 공유도 지원하지 않으면 링크를 복사해 대화창에 붙여넣도록 안내합니다. 복사만 한 상태를 전송 완료로 표시하지 않습니다.
 
@@ -159,3 +159,8 @@ npm run check:connection
 - **다른 기기에 수정 없음:** 미리보기 모드가 아닌지 확인하고 초안 저장 다음에 **공개**했는지 확인합니다. 공개 설정을 바꾼 뒤에는 배포가 한 번 필요합니다.
 - **장소 검색 없음:** 검색 서비스의 사용량·데이터 범위 차이일 수 있습니다. 정확한 주소와 위치를 직접 지정할 수 있습니다.
 - **무료 Pages 자체 설정이 필요한 새 저장소:** Pages의 Source를 GitHub Actions로 최초 활성화해야 합니다. 이 프로젝트의 기존 활성화된 저장소를 사용하면 다시 설정할 필요가 없습니다.
+
+
+## 입장 효과와 미리보기
+
+관리 화면의 **추가 기능 → 문 열림 효과 미리보기**에서 실제 입장 효과를 반복 확인할 수 있습니다. 미리보기는 하객의 첫 방문 기록이나 초안·공개 데이터를 변경하지 않습니다. 하객은 **초대장 열기**를 누르면 봉인이 풀린 뒤 두 문이 약 2.2초 동안 열리는 모습을 보며, **건너뛰기**와 Escape로 즉시 진입할 수 있습니다. 기기의 움직임 줄이기 설정을 사용하는 경우 즉시 진입을 기본으로 하고, **문 열림 효과 보기**를 선택했을 때만 애니메이션을 재생합니다.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultWedding } from '../src/lib/defaults';
-import { confirmedVenueCoordinates, getGoogleVenueMapUrl, getVenueMapViewport, getVenueStation, jeongjaStation } from '../src/lib/venue-map';
+import { confirmedVenueCoordinates, getGoogleVenueUrl, getKakaoVenueUrl, getVenueMapViewport, getVenueStation, jeongjaStation } from '../src/lib/venue-map';
 
 describe('venue and nearby transport map views', () => {
   it('frames the verified venue with Jeongja station and can return to a detailed venue view', () => {
@@ -23,18 +23,21 @@ describe('venue and nearby transport map views', () => {
       { ...defaultWedding.venue, lat: 37.5665, lng: 126.978 },
     ]) {
       expect(getVenueStation(venue)).toBeNull();
-      const url = new URL(getGoogleVenueMapUrl(venue));
-      expect(url.searchParams.get('ll')).not.toBe('37.3723033,127.10642395');
     }
   });
 
-  it('uses Korean road maps and a wider overview without requiring a provider key', () => {
-    const overview = new URL(getGoogleVenueMapUrl(defaultWedding.venue, 'area'));
-    expect(overview.searchParams.get('hl')).toBe('ko');
-    expect(overview.searchParams.get('t')).toBe('m');
-    expect(overview.searchParams.get('q')).toContain(defaultWedding.venue.name);
-    expect(overview.searchParams.get('z')).toBe('14');
-    expect(overview.searchParams.has('key')).toBe(false);
-    expect(getGoogleVenueMapUrl(defaultWedding.venue, 'venue')).not.toBe(overview.href);
+  it('creates optional external Google and Kakao links with the verified venue pin', () => {
+    const google = new URL(getGoogleVenueUrl(defaultWedding.venue));
+    expect(google.origin + google.pathname).toBe('https://www.google.com/maps/search/');
+    expect(google.searchParams.get('api')).toBe('1');
+    expect(google.searchParams.get('query')).toBe('37.3768838,127.1043929');
+    expect(google.searchParams.has('output')).toBe(false);
+    expect(decodeURIComponent(getKakaoVenueUrl(defaultWedding.venue))).toBe('https://map.kakao.com/link/map/HD현대글로벌R&D센터,37.3768838,127.1043929');
+  });
+
+  it('searches the edited venue address when coordinates are unknown', () => {
+    const venue = { ...defaultWedding.venue, name: '다른 예식장', address: '서울특별시 중구 세종대로 110', lat: null, lng: null };
+    expect(new URL(getGoogleVenueUrl(venue)).searchParams.get('query')).toBe('다른 예식장 서울특별시 중구 세종대로 110');
+    expect(new URL(getKakaoVenueUrl(venue)).searchParams.get('q')).toBe('다른 예식장 서울특별시 중구 세종대로 110');
   });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, LoaderCircle, MapPin, RefreshCw, TrainFront } from 'lucide-react';
 import type { Venue } from '../lib/types';
-import { getGoogleVenueMapUrl, getNaverVenueUrl, getVenueCoordinates, getVenueMapViewport, getVenueStation } from '../lib/venue-map';
+import { getNaverVenueUrl, getVenueCoordinates, getVenueMapViewport, getVenueStation } from '../lib/venue-map';
 import type { VenueMapView } from '../lib/venue-map';
 import { naverMapClientId } from '../lib/integrations';
 import '../styles/venue-map.css';
@@ -222,29 +222,22 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
     };
   }, [clientId, lat, lng, address, venue.name, attempt, requestKey, view, station]);
 
-  return <div className={`venue-map ${className}`} data-map-provider={configured ? 'naver' : 'google'} data-map-state={configured ? status : 'ready'} data-map-view={view}>
-    {station && <figure className="venue-map-context" aria-label="예식장과 정자역의 주변 위치 안내">
-      <figcaption>주변 위치 안내</figcaption>
-      <div className="venue-map-context-diagram">
-        <span className="venue-map-context-north" aria-label="위쪽이 북쪽">↑<small>북</small></span>
-        <div className="venue-map-context-venue"><MapPin size={20} strokeWidth={1.5} /><div><strong>{venue.name}</strong><span>분당수서로 477</span></div></div>
-        <div className="venue-map-context-station"><TrainFront size={20} strokeWidth={1.5} /><div><strong>{station.name}</strong><span>{station.lines}</span></div></div>
-      </div>
-      <p>위치 관계 안내 · 실제 경로는 네이버 지도에서 확인</p>
-    </figure>}
-    <div className="venue-map-views" role="group" aria-label="지도 범위">
+  return <div className={`venue-map ${className}`} data-map-provider="naver" data-map-state={configured ? status : 'unconfigured'} data-map-view={view}>
+    {naverReady && <div className="venue-map-views" role="group" aria-label="지도 범위">
       <button type="button" aria-pressed={view === 'area'} onClick={() => setView('area')}><TrainFront size={14} />주변 교통 보기</button>
       <button type="button" aria-pressed={view === 'venue'} onClick={() => setView('venue')}><MapPin size={14} />예식장 자세히</button>
-    </div>
-    <div className="venue-map-frame">
-      {!configured && <iframe title={mapTitle} src={getGoogleVenueMapUrl(venue, view)} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />}
-      {configured && !naverReady && <div className="venue-map-status" role={status === 'error' ? 'alert' : 'status'}>
-        <span className="venue-map-brand">NAVER MAP</span>
-        {status === 'error' ? <><MapPin size={25} strokeWidth={1.3} /><p>지도를 불러오지 못했어요.<br />다시 시도하거나 네이버 지도에서 확인해 주세요.</p><div><button type="button" onClick={() => setAttempt(value => value + 1)}><RefreshCw size={13} />다시 시도</button><a href={getNaverVenueUrl(venue)} target="_blank" rel="noreferrer">네이버 지도 열기<ArrowUpRight size={13} /></a></div></> : <><LoaderCircle className="venue-map-loading" size={24} strokeWidth={1.5} /><p>네이버 지도를 불러오고 있어요.</p></>}
-      </div>}
+    </div>}
+    {!naverReady && <div className="venue-map-status" role={configured ? status === 'error' ? 'alert' : 'status' : 'note'}>
+      {configured && status === 'loading' ? <><LoaderCircle className="venue-map-loading" size={20} strokeWidth={1.5} /><p>네이버 지도를 불러오고 있어요.</p></> : <><MapPin size={20} strokeWidth={1.3} /><p>{configured ? '네이버 지도를 불러오지 못했어요.' : '네이버 지도에서 예식장 위치를 확인해 주세요.'}</p></>}
+      <div>
+        {configured && status === 'error' && <button type="button" onClick={() => setAttempt(value => value + 1)}><RefreshCw size={13} />다시 시도</button>}
+        <a href={getNaverVenueUrl(venue)} target="_blank" rel="noreferrer">네이버 지도에서 보기<ArrowUpRight size={13} /></a>
+      </div>
+    </div>}
+    {configured && <div className={`venue-map-frame${naverReady ? ' is-ready' : ' is-pending'}`} aria-hidden={!naverReady}>
       <div className={`venue-map-naver${naverReady ? ' is-ready' : ''}`} ref={canvas} role="region" aria-label={`${mapTitle} · 네이버 지도`} aria-hidden={!naverReady} />
-    </div>
+    </div>}
     {station && <div className="venue-map-station"><TrainFront size={17} strokeWidth={1.5} /><div><strong>{station.name}</strong><span>{station.lines}</span></div><a href={station.url} target="_blank" rel="noreferrer">역 정보<ArrowUpRight size={13} /></a></div>}
-    <p className="venue-map-caption"><span>{configured ? '네이버 지도' : 'Google 지도'}</span><span>{venue.name || '예식장'}{venue.hall ? ` · ${venue.hall}` : ''}</span></p>
+    {naverReady && <p className="venue-map-caption"><span>네이버 지도</span><span>{venue.name || '예식장'}{venue.hall ? ` · ${venue.hall}` : ''}</span></p>}
   </div>;
 }

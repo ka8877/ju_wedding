@@ -48,7 +48,9 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.getByRole('button', { name: '검색', exact: true }).click();
   await page.getByRole('button', { name: /테스트 예식장 서울특별시/ }).click();
   await expect(page.getByLabel('주소', { exact: true })).toHaveValue('서울특별시 중구 테스트로 1');
-  await expect(page.getByTitle('선택한 예식장 지도')).toHaveAttribute('src', /37.5665/);
+  await expect(page.locator('.editor-venue-map')).toHaveAttribute('data-map-provider', 'naver');
+  await expect(page.locator('.editor-venue-map iframe')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: '네이버 지도에서 위치 확인하기 ↗' })).toHaveAttribute('href', /map\.naver\.com/);
   await page.getByRole('button', { name: '마음 전하실 곳', exact: true }).click();
   await page.getByRole('button', { name: '계좌 추가하기' }).click();
   await page.getByLabel('계좌 1 은행').fill('테스트은행');

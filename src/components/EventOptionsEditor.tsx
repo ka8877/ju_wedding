@@ -1,8 +1,9 @@
-import { cloneElement, isValidElement, useId } from 'react';
+import { cloneElement, isValidElement, useId, useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
-import { Bus, Camera, ClipboardCheck, DoorOpen, Images, Music2 } from 'lucide-react';
+import { Bus, Camera, ClipboardCheck, DoorOpen, Eye, Images, Music2 } from 'lucide-react';
 import type { WeddingData, WeddingGuestFeatures } from '../lib/types';
 import MusicLibraryPicker from './MusicLibraryPicker';
+import InvitationOpening from './InvitationOpening';
 
 interface Props { data: WeddingData; onChange: (data: WeddingData) => void; }
 
@@ -25,6 +26,7 @@ function Card({ icon, title, description, children }: { icon: ReactNode; title: 
 export default function EventOptionsEditor({ data, onChange }: Props) {
   const features = data.guestFeatures;
   const volumeId = useId();
+  const [openingPreview, setOpeningPreview] = useState(0);
   const update = <K extends keyof WeddingGuestFeatures>(group: K, patch: Partial<WeddingGuestFeatures[K]>) => {
     const next = { ...features, [group]: { ...features[group], ...patch } };
     const section = group === 'rsvp' || group === 'snap' || group === 'shuttle' ? group : null;
@@ -36,6 +38,8 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
 
     <Card icon={<DoorOpen size={19} />} title="문을 열며 시작하는 초대" description="초록빛 정원의 첫 장면에서 문을 열면 두 분의 초대장이 펼쳐져요.">
       <Toggle label="첫 방문에 문 열림 효과 사용" checked={features.opening.enabled} onChange={enabled => update('opening', { enabled })} />
+      <button type="button" className="event-option-preview-button" onClick={() => setOpeningPreview(request => request + 1)}><Eye size={16} />문 열림 효과 미리보기</button>
+      <InvitationOpening enabled groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} preview previewRequest={openingPreview} />
       <p className="event-option-note">같은 방문 중에는 한 번만 보여 드려요. 하객은 언제든 건너뛸 수 있고, 움직임 줄이기를 사용하면 애니메이션 없이 열립니다.</p>
     </Card>
 
