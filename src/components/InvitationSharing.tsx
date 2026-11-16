@@ -33,7 +33,7 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     dialog.current?.showModal();
-    setQrError(false);
+    setQr(''); setQrError(false);
     void invitationQr(url).then(image => { if (active) setQr(image); }).catch(() => { if (active) setQrError(true); });
     return () => {
       active = false;
@@ -105,9 +105,9 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
         <button type="button" className="wedding-share-close" aria-label="QR 코드 닫기" onClick={() => setOpen(false)} autoFocus><X size={21} /></button>
         <span className="wedding-share-eyebrow">A LITTLE INVITATION, WITH LOVE</span>
         <h2 id={titleId}>마음을 담은 초대</h2>
-        <p id={descriptionId}>휴대폰 카메라로 QR을 비추면<br />청첩장을 바로 열 수 있어요.</p>
-        <div className="wedding-qr-frame">
-          {qr ? <img src={qr} width={212} height={212} alt="공개 청첩장으로 연결되는 QR 코드" />
+        <p id={descriptionId}>하트 속 QR을 휴대폰 카메라로 비추면<br />청첩장을 바로 열 수 있어요.</p>
+        <div className="wedding-qr-frame" data-qr-shape="heart">
+          {qr ? <img src={qr} width={1024} height={1024} alt="공개 청첩장으로 연결되는 QR 코드" />
             : qrError ? <p role="alert">QR을 만들지 못했어요.<br />링크 복사로 전해 주세요.</p>
               : <span role="status"><LoaderCircle className="app-spin" size={24} />QR을 준비하고 있어요</span>}
         </div>
@@ -118,7 +118,7 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
           <button type="button" className="wedding-share-button" onClick={() => void copy()}><Copy size={15} />링크 복사</button>
           {typeof navigator.share === 'function' && <button type="button" className="wedding-share-button wedding-share-button--wide" onClick={() => void share()}><Share2 size={15} />휴대폰으로 공유</button>}
         </div>
-        <p className="wedding-share-note">공개한 청첩장으로 연결됩니다.<br />저장한 QR은 인쇄하거나 메시지에 첨부할 수 있어요.</p>
+        <p className="wedding-share-note">공개한 청첩장으로 연결됩니다.<br />하트 모양 QR을 저장해 인쇄하거나 메시지에 첨부해 보세요.</p>
         {message && open && <p className="wedding-share-feedback" role="status">{message}</p>}
       </div>
     </dialog>, document.body)}

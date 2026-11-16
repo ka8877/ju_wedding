@@ -37,7 +37,8 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   });
   expect(pixels.width).toBe(1024);
   expect(jsQR(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height)?.data).toBe(publicUrl);
-  expect(pixels.data.slice(0, 4)).toEqual([255, 255, 255, 255]);
+  expect(pixels.data.slice(0, 4)).toEqual([0, 0, 0, 0]);
+  await expect(dialog.locator('.wedding-qr-frame')).toHaveAttribute('data-qr-shape', 'heart');
   await dialog.getByRole('button', { name: '링크 복사', exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(publicUrl);
   await expect(dialog.getByRole('status')).toContainText('링크를 복사했어요');
@@ -48,6 +49,13 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   const file = await readFile((await download.path())!);
   expect(file.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
   expect(file.readUInt32BE(16)).toBe(1024);
+  const savedPixels = await page.evaluate(async png => {
+    const saved = new Image(); saved.src = `data:image/png;base64,${png}`; await saved.decode();
+    const canvas = document.createElement('canvas'); canvas.width = saved.naturalWidth; canvas.height = saved.naturalHeight;
+    const ctx = canvas.getContext('2d')!; ctx.drawImage(saved, 0, 0);
+    return { data: Array.from(ctx.getImageData(0, 0, canvas.width, canvas.height).data), width: canvas.width, height: canvas.height };
+  }, file.toString('base64'));
+  expect(jsQR(new Uint8ClampedArray(savedPixels.data), savedPixels.width, savedPixels.height)?.data).toBe(publicUrl);
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
@@ -101,4 +109,40 @@ test('Kakao sharing copies the link with an honest paste instruction when device
   await expect(page.locator('.wedding-share-feedback')).toHaveText('링크를 복사했어요. 카카오톡 대화창에 붙여넣어 전해 주세요.');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(publicUrl);
   await expect(page.locator('.wedding-share-feedback')).not.toContainText(/전달되었습니다|전송 완료|공유 완료/);
+});
+
+
+test('the heart PNG scans at its actual displayed size on a 320px phone', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'QR 코드 보기', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '마음을 담은 초대' });
+  const image = dialog.getByRole('img', { name: '공개 청첩장으로 연결되는 QR 코드' });
+  await expect(image).toBeVisible();
+  const displayed = await image.evaluate(async (element: HTMLImageElement) => {
+    await element.decode();
+    const bounds = element.getBoundingClientRect();
+    const canvas = document.createElement('canvas'); canvas.width = Math.round(bounds.width); canvas.height = Math.round(bounds.height);
+    const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fffef9'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(element, 0, 0, canvas.width, canvas.height);
+    return { data: Array.from(ctx.getImageData(0, 0, canvas.width, canvas.height).data), width: canvas.width, height: canvas.height };
+  });
+  expect(displayed.width).toBeLessThanOrEqual(280);
+  expect(displayed.width).toBeGreaterThanOrEqual(235);
+  expect(jsQR(new Uint8ClampedArray(displayed.data), displayed.width, displayed.height)?.data).toBe(publicUrl);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('both live-host links and a longer invitation path remain scannable when the heart is displayed small', async ({ page }) => {
+  await page.goto('/#/admin');
+  for (const url of ['https://hyunbeom-juyoung.pages.dev/', 'https://ka8877.github.io/ju_wedding/', `https://wedding.example/${'our-love-story/'.repeat(10)}`]) {
+    const raster = await page.evaluate(async value => {
+      const modulePath = '/src/lib/sharing.ts';
+      const { invitationQr } = await import(modulePath);
+      const image = new Image(); image.src = await invitationQr(value); await image.decode();
+      const canvas = document.createElement('canvas'); canvas.width = 252; canvas.height = 252;
+      const context = canvas.getContext('2d')!; context.fillStyle = '#fffef9'; context.fillRect(0, 0, 252, 252); context.drawImage(image, 0, 0, 252, 252);
+      return Array.from(context.getImageData(0, 0, 252, 252).data);
+    }, url);
+    expect(jsQR(new Uint8ClampedArray(raster), 252, 252)?.data).toBe(url);
+  }
 });
