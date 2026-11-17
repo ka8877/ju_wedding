@@ -6,6 +6,7 @@ export const sectionLabels: Record<SectionId, string> = {
 export const sectionIds: SectionId[] = ['invitation', 'verse', 'calendar', 'gallery', 'rsvp', 'snap', 'location', 'shuttle', 'accounts', 'blessing'];
 export const defaultDesign: WeddingDesign = {
   template: 'garden', font: 'serif', background: 'plain', fontSize: 'normal', accentColor: '',
+  lineSpacing: 'normal', letterSpacing: 'normal', sectionSpacing: 'normal', bodyAlignment: 'center', buttonShape: 'soft', galleryGap: 'normal',
   heroTitle: 'With you,\nalways.', heroSubtitle: '함께여서, 더 아름다운 날', closingTitle: 'Forever begins with us.',
   photoShape: 'arch', coverStyle: 'auto', photoPosition: 50, galleryLayout: 'mosaic', showDecoration: true,
   sectionOrder: [...sectionIds], hiddenSections: [],
@@ -46,6 +47,35 @@ export const backgrounds: { id: BackgroundId; name: string; description: string 
   { id: 'watercolor', name: '은은한 수채화', description: '빛이 번지듯 부드러운 물감' },
   { id: 'petals', name: '흩날리는 꽃잎', description: '작은 꽃잎으로 더하는 설렘' },
   { id: 'starlight', name: '작은 별빛', description: '소중한 약속을 비추는 잔잔한 별' },
+];
+export const lineSpacings: { id: WeddingDesign['lineSpacing']; name: string; description: string }[] = [
+  { id: 'compact', name: '촘촘하게', description: '문장을 조금 더 가까이' },
+  { id: 'normal', name: '기본 간격', description: '편안하게 읽는 기본 줄 간격' },
+  { id: 'relaxed', name: '여유롭게', description: '한 줄씩 천천히 읽는 넉넉한 간격' },
+];
+export const letterSpacings: { id: WeddingDesign['letterSpacing']; name: string; description: string }[] = [
+  { id: 'tight', name: '오밀조밀', description: '글자 사이를 살짝 좁게' },
+  { id: 'normal', name: '기본 간격', description: '글꼴에 어울리는 기본 자간' },
+  { id: 'wide', name: '넉넉하게', description: '글자 사이에 여유를 더해요' },
+];
+export const sectionSpacings: { id: WeddingDesign['sectionSpacing']; name: string; description: string }[] = [
+  { id: 'compact', name: '간결하게', description: '섹션 사이 여백을 줄여요' },
+  { id: 'normal', name: '기본 여백', description: '사진과 글의 균형을 맞춘 간격' },
+  { id: 'relaxed', name: '여유롭게', description: '이야기마다 넉넉한 여백' },
+];
+export const bodyAlignments: { id: WeddingDesign['bodyAlignment']; name: string; description: string }[] = [
+  { id: 'center', name: '가운데 정렬', description: '초대 문구를 정갈하게' },
+  { id: 'left', name: '왼쪽 정렬', description: '긴 문장을 편안하게 읽도록' },
+];
+export const buttonShapes: { id: WeddingDesign['buttonShape']; name: string; description: string }[] = [
+  { id: 'square', name: '반듯한 모서리', description: '단정하고 간결한 버튼' },
+  { id: 'soft', name: '살짝 둥글게', description: '부드러운 기본 모양' },
+  { id: 'pill', name: '동그랗게', description: '양끝이 둥근 다정한 모양' },
+];
+export const galleryGaps: { id: WeddingDesign['galleryGap']; name: string; description: string }[] = [
+  { id: 'narrow', name: '가깝게', description: '사진이 이어지는 듯한 좁은 간격' },
+  { id: 'normal', name: '기본 간격', description: '사진마다 적당한 여백' },
+  { id: 'wide', name: '넓게', description: '한 장씩 돋보이는 넉넉한 간격' },
 ];
 export interface StylePack {
   id: string; name: string; description: string; tag: string;
@@ -105,7 +135,14 @@ export function getDesign(data: Pick<WeddingData, 'design'>): WeddingDesign {
     if (index >= 0) order.splice(index + 1, 0, id);
     else order.push(id);
   }
-  return { ...structuredClone(defaultDesign), ...saved, sectionTitles: { ...defaultDesign.sectionTitles, ...saved?.sectionTitles }, sectionOrder: order, hiddenSections: [...(saved?.hiddenSections ?? [])] };
+  return { ...structuredClone(defaultDesign), ...saved,
+    lineSpacing: saved?.lineSpacing === undefined ? defaultDesign.lineSpacing : saved.lineSpacing,
+    letterSpacing: saved?.letterSpacing === undefined ? defaultDesign.letterSpacing : saved.letterSpacing,
+    sectionSpacing: saved?.sectionSpacing === undefined ? defaultDesign.sectionSpacing : saved.sectionSpacing,
+    bodyAlignment: saved?.bodyAlignment === undefined ? saved?.template === 'editorial' ? 'left' : defaultDesign.bodyAlignment : saved.bodyAlignment,
+    buttonShape: saved?.buttonShape === undefined ? defaultDesign.buttonShape : saved.buttonShape,
+    galleryGap: saved?.galleryGap === undefined ? defaultDesign.galleryGap : saved.galleryGap,
+    sectionTitles: { ...defaultDesign.sectionTitles, ...saved?.sectionTitles }, sectionOrder: order, hiddenSections: [...(saved?.hiddenSections ?? [])] };
 }
 export function applyTemplate(data: WeddingData, id: TemplateId): WeddingData {
   const preset = templates.find(t => t.id === id)!;

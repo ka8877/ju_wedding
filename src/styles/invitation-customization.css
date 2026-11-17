@@ -1,0 +1,24 @@
+/* These are independent choices: switching a template keeps the couple's
+   spacing preferences. Default spacing retains the existing composition. */
+.invitation[data-line-spacing='compact'] { --invite-reading-line: 1.85; }
+.invitation[data-line-spacing='relaxed'] { --invite-reading-line: 2.8; }
+.invitation[data-line-spacing]:not([data-line-spacing='normal']) :is(.invite-letter-copy, .invite-verse p, .invite-blessing-copy, .invite-closing > .invite-preserve, .invite-directions p, .guest-intro) { line-height: var(--invite-reading-line); }
+.invitation[data-letter-spacing='tight'] { --invite-reading-spacing: -.045em; }
+.invitation[data-letter-spacing='normal'] { --invite-reading-spacing: 0em; }
+.invitation[data-letter-spacing='wide'] { --invite-reading-spacing: .08em; }
+.invitation[data-letter-spacing] :is(.invite-letter-copy, .invite-verse p, .invite-blessing-copy, .invite-closing > .invite-preserve, .invite-directions p, .guest-intro, .guest-footnote, .guest-status, .invite-subtitle) { letter-spacing: var(--invite-reading-spacing); }
+.invitation[data-body-alignment='left'] :is(.invite-letter-copy, .invite-verse p, .invite-blessing-copy, .invite-closing > .invite-preserve, .guest-intro) { text-align: left; }
+.invitation[data-body-alignment='center'] :is(.invite-letter-copy, .invite-verse p, .invite-blessing-copy, .invite-closing > .invite-preserve, .guest-intro) { text-align: center; }
+.invitation[data-section-spacing='compact'] .invite-section { padding-top: 44px; padding-bottom: 44px; }
+.invitation[data-section-spacing='relaxed'] .invite-section { padding-top: 96px; padding-bottom: 96px; }
+.invitation[data-section-spacing='compact'] .invite-verse { padding-top: 36px; padding-bottom: 36px; }
+.invitation[data-section-spacing='relaxed'] .invite-verse { padding-top: 78px; padding-bottom: 78px; }
+.invitation[data-section-spacing='compact'] .invite-closing { padding-top: 44px; }
+.invitation[data-section-spacing='relaxed'] .invite-closing { padding-top: 96px; }
+[data-button-shape='square'] { --invite-button-radius: 0px; }
+[data-button-shape='soft'] { --invite-button-radius: 6px; }
+[data-button-shape='pill'] { --invite-button-radius: 999px; }
+[data-button-shape] :is(.invite-outline-button, .invite-map-primary, .guest-action, .guest-side-options button, .wedding-share-button, .invite-account > button) { border-radius: var(--invite-button-radius); }
+.invitation[data-gallery-gap='narrow'] .invite-gallery { gap: 2px; }
+.invitation[data-gallery-gap='normal'] .invite-gallery { gap: 6px; }
+.invitation[data-gallery-gap='wide'] .invite-gallery { gap: 14px; }

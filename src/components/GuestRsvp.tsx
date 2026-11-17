@@ -28,6 +28,10 @@ export default function GuestRsvp({ data, preview = false }: { data: WeddingData
   const formId = useId();
   const requestToken = useRef<string | null>(null);
   const ready = capabilities?.status === 'ready' && capabilities.rsvpEnabled;
+  const shuttleCities = (['daejeon', 'gyeongju'] as const).filter(city => data.guestFeatures.shuttle.enabled && data.guestFeatures.shuttle[city].trim());
+  // The published routes can change while this form is open. Never submit an
+  // old selection for a route that the couple no longer offers.
+  const selectedShuttle = shuttleCities.some(city => city === shuttle) ? shuttle : 'none';
   const intro = side === 'groom' ? options.groomMessage : side === 'bride' ? options.brideMessage : '신랑측 또는 신부측을 먼저 선택해 주세요.';
   function close() {
     if (busy) return;
@@ -37,7 +41,7 @@ export default function GuestRsvp({ data, preview = false }: { data: WeddingData
     event.preventDefault();
     if (busy || preview || !side) return;
     if (!ready) { setError('지금은 응답을 전달할 수 없어요. 조금 뒤 다시 확인해 주세요.'); return; }
-    const record: RsvpInput = { side, attending, name: name.trim(), phone: phone.trim(), guests: attending ? guests : 0, meal: attending ? meal : 'undecided', shuttle: attending ? shuttle : 'none', message: message.trim(), consent };
+    const record: RsvpInput = { side, attending, name: name.trim(), phone: phone.trim(), guests: attending ? guests : 0, meal: attending ? meal : 'undecided', shuttle: attending ? selectedShuttle : 'none', message: message.trim(), consent };
     setBusy(true); setError('');
     try { const confirmation = await submitRsvp(record, requestToken.current ??= crypto.randomUUID()); setReceipt({ record, confirmation }); }
     catch (e) { setError(e instanceof Error ? e.message : '응답을 전달하지 못했어요. 잠시 후 다시 시도해 주세요.'); }
@@ -74,7 +78,7 @@ export default function GuestRsvp({ data, preview = false }: { data: WeddingData
           <div className="guest-field"><label htmlFor={`${formId}-name`}>성함</label><input id={`${formId}-name`} name="name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} maxLength={60} required placeholder="성함을 입력해 주세요" /></div>
           <div className="guest-field"><span>참석 여부</span><div className="guest-radio-options"><label><input type="radio" name={`${formId}-attending`} checked={attending} onChange={() => setAttending(true)} />참석합니다</label><label><input type="radio" name={`${formId}-attending`} checked={!attending} onChange={() => setAttending(false)} />참석이 어려워요</label></div></div>
           {attending && <><div className="guest-form-grid"><div className="guest-field"><label htmlFor={`${formId}-guests`}>참석 인원 · 본인 포함</label><select id={`${formId}-guests`} value={guests} onChange={e => setGuests(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}명</option>)}</select></div><div className="guest-field"><label htmlFor={`${formId}-meal`}>식사 여부</label><select id={`${formId}-meal`} value={meal} onChange={e => setMeal(e.target.value as RsvpInput['meal'])}><option value="undecided">미정</option><option value="yes">식사 예정</option><option value="no">식사 안 함</option></select></div></div>
-          {data.guestFeatures.shuttle.enabled && <div className="guest-field"><label htmlFor={`${formId}-shuttle`}>대절버스 이용 의사</label><select id={`${formId}-shuttle`} value={shuttle} onChange={e => setShuttle(e.target.value as RsvpInput['shuttle'])}><option value="none">이용하지 않아요</option><option value="daejeon">대전 출발</option><option value="gyeongju">경주 출발</option></select><small>탑승 장소와 시간은 대절버스 안내를 확인해 주세요.</small></div>}</>}
+          {shuttleCities.length > 0 && <div className="guest-field"><label htmlFor={`${formId}-shuttle`}>대절버스 이용 의사</label><select id={`${formId}-shuttle`} value={selectedShuttle} onChange={e => setShuttle(e.target.value as RsvpInput['shuttle'])}><option value="none">이용하지 않아요</option>{shuttleCities.map(city => <option key={city} value={city}>{shuttles[city]} 출발</option>)}</select><small>탑승 장소와 시간은 대절버스 안내를 확인해 주세요.</small></div>}</>}
           <div className="guest-field"><label htmlFor={`${formId}-phone`}>연락처 <small>선택</small></label><input id={`${formId}-phone`} type="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} maxLength={30} placeholder="010-0000-0000" /><small>참석 확인 연락을 받으실 번호를 남겨 주세요.</small></div>
           <div className="guest-field"><label htmlFor={`${formId}-message`}>함께 오시는 분 · 전하실 말씀 <small>선택</small></label><textarea id={`${formId}-message`} value={message} onChange={e => setMessage(e.target.value)} rows={3} maxLength={500} placeholder="동행하시는 분이나 전하고 싶은 이야기를 남겨 주세요" /></div>
           <p className="guest-privacy-note">이름과 연락처 등 응답 내용은 신랑·신부만 확인하며, 예식 준비와 참석 확인에 사용됩니다.</p>

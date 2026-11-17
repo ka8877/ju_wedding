@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { LoaderCircle, Music2, Pause, Play } from 'lucide-react';
 import type { WeddingData } from '../lib/types';
 import { getBuiltinMusicTrack, startBuiltinMusic } from '../lib/music';
+import { useInvitationFont } from './InvitationFont';
 import '../styles/music.css';
 
 type MusicSettings = WeddingData['guestFeatures']['music'];
 
 export default function MusicPlayer({ settings, preview = false }: { settings: MusicSettings; preview?: boolean }) {
+  const invitationFont = useInvitationFont();
   const playerId = useId();
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,7 +78,7 @@ export default function MusicPlayer({ settings, preview = false }: { settings: M
   }
 
   if (!settings.enabled || settings.source === 'url' && !settings.url.trim()) return null;
-  const control = <div className={`invite-music-player${preview ? ' invite-music-player--preview' : ''}`} data-music-track={settings.source === 'builtin' ? track.id : 'custom'}>
+  const control = <div className={`invite-music-player${preview ? ' invite-music-player--preview' : ''}`} data-invitation-font={invitationFont} data-music-track={settings.source === 'builtin' ? track.id : 'custom'}>
     <button type="button" className="invite-music-toggle" onClick={() => void toggle()} aria-label={playing ? '배경음악 일시정지' : '배경음악 재생'} aria-pressed={playing} disabled={busy} title={settings.source === 'builtin' ? `${track.title} · ${track.mood}` : '버튼을 누르면 음악이 재생됩니다'}>
       {busy ? <LoaderCircle size={15} className="app-spin" /> : playing ? <Pause size={14} /> : <Play size={14} />}
       <span>{preview ? playing ? '미리듣기 멈추기' : '미리듣기' : 'BGM'}</span>

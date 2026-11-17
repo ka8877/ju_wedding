@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowRight } from 'lucide-react';
+import type { FontId } from '../lib/types';
+import { useInvitationFont } from './InvitationFont';
 import '../styles/invitation-opening.css';
 
 interface InvitationOpeningProps {
@@ -12,6 +14,7 @@ interface InvitationOpeningProps {
   preview?: boolean;
   previewRequest?: number;
   onOpened?: () => void;
+  font?: FontId;
 }
 
 type OpeningPhase = 'closed' | 'ready' | 'holding' | 'opening' | 'leaving';
@@ -36,7 +39,8 @@ function isSectionLink() {
 }
 
 /** A muted garden film, with a bounded still-image alternative and immediate skip. */
-export default function InvitationOpening({ enabled, groomName, brideName, imageUrl, sessionKey, preview = false, previewRequest = 0, onOpened }: InvitationOpeningProps) {
+export default function InvitationOpening({ enabled, groomName, brideName, imageUrl, sessionKey, preview = false, previewRequest = 0, onOpened, font }: InvitationOpeningProps) {
+  const invitationFont = useInvitationFont();
   const [phase, setPhase] = useState<OpeningPhase>('closed');
   const [motion, setMotion] = useState<'full' | 'reduced'>(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
   const [fallback, setFallback] = useState(false);
@@ -150,6 +154,7 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
 
   return createPortal(<dialog
     className={`invite-opening invite-opening--${phase}`}
+    data-invitation-font={font || invitationFont}
     data-opening-state={phase} data-motion={motion}
     data-opening-media={still ? motion === 'reduced' ? 'reduced' : 'fallback' : 'video'}
     data-names-visible={still || elapsed >= 7.4 || phase === 'leaving'}

@@ -1,0 +1,12 @@
+.design-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px 20px; margin: 24px 0; }
+.design-detail-choice { margin: 0; padding: 0; border: 0; min-width: 0; }
+.design-detail-choice legend { padding: 0; color: #657b52; font-size: 12px; font-weight: 500; }
+.design-detail-choice > p { margin: 7px 0 12px; color: #89977d; font-size: 10px; line-height: 1.9; }
+.design-detail-choice > div { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; }
+.design-detail-choice button { min-width: 0; min-height: 44px; padding: 8px 4px; border: 1px solid #dce4d1; border-radius: 5px; background: #fffef8; color: #7d8e6c; font: 10px/1.6 'Noto Sans KR', sans-serif; word-break: keep-all; overflow-wrap: normal; }
+.design-detail-choice button[aria-pressed='true'] { background: #edf3e5; border-color: #91a67b; box-shadow: inset 0 0 0 1px #91a67b; color: #536c40; }
+.design-detail-reset { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 13px; min-height: 44px; color: #788d63; background: transparent; border: 1px solid #dce4d1; border-radius: 5px; font: 10px/1.6 'Noto Sans KR', sans-serif; }
+.design-editor .design-font-card.font-romantic > span,
+.design-editor .design-preview-font-romantic .design-thumb-title { font-family: 'Gowun Batang', 'Batang', serif; }
+.design-editor .design-preview-font-serif .design-thumb-title { font-family: 'Noto Serif KR', 'Batang', serif; }
+@media (max-width: 650px) { .design-detail-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; } .design-detail-choice button { padding: 9px 7px; font-size: 11px; } }

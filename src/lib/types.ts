@@ -43,6 +43,12 @@ export interface WeddingDesign {
   font: FontId;
   background: BackgroundId;
   fontSize: 'small' | 'normal' | 'large';
+  lineSpacing: 'compact' | 'normal' | 'relaxed';
+  letterSpacing: 'tight' | 'normal' | 'wide';
+  sectionSpacing: 'compact' | 'normal' | 'relaxed';
+  bodyAlignment: 'center' | 'left';
+  buttonShape: 'square' | 'soft' | 'pill';
+  galleryGap: 'narrow' | 'normal' | 'wide';
   accentColor: string;
   heroTitle: string;
   heroSubtitle: string;

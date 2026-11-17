@@ -218,7 +218,7 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
           {tab === 'options' && <div className="editor-panel"><EventOptionsEditor data={data} onChange={onChange} /></div>}
           {tab === 'guests' && <GuestManagement />}
           </fieldset>
-          <InvitationSharing names={`${data.groom.name} · ${data.bride.name}`} variant="admin" localPreview={mode === 'local'} />
+          <InvitationSharing names={`${data.groom.name} · ${data.bride.name}`} variant="admin" localPreview={mode === 'local'} font={data.design.font} buttonShape={data.design.buttonShape} />
           <div className="editor-bottom-navigation">{tab !== 'basic' ? <button className="editor-text-button" onClick={() => setTab(tabs[tabs.findIndex(item => item.id === tab) - 1].id)}><ArrowLeft size={15} />이전</button> : <span />}{tab !== tabs[tabs.length - 1].id && <button className="editor-text-button" onClick={() => setTab(tabs[tabs.findIndex(item => item.id === tab) + 1].id)}>다음 단계<ArrowRight size={15} /></button>}</div>
         </main>
         <aside ref={previewRef} role={showPreview ? 'dialog' : undefined} aria-modal={showPreview ? true : undefined} className={`editor-preview${showPreview ? ' editor-preview-open' : ''}`} aria-label="청첩장 실시간 미리보기"><div className="editor-preview-heading"><span><Smartphone size={16} />실시간 미리보기</span><button className="editor-preview-close" onClick={() => setShowPreview(false)} aria-label="미리보기 닫기"><X size={20} /></button></div><div className="editor-phone-frame"><div className="editor-phone-notch" /><div className="editor-phone-content">{preview}</div></div><p>수정한 내용이 바로 보여요.<br />하객에게 공개하려면 아래 버튼을 눌러 주세요.</p></aside>

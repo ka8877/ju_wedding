@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useInvitationButtonShape, useInvitationFont } from './InvitationFont';
 import { getGuestCapabilities } from '../lib/guest-storage';
 import type { GuestCapabilities } from '../lib/guest-types';
 import '../styles/guests.css';
@@ -46,6 +47,8 @@ export function guestTimestamp(value: string) {
 }
 
 export function GuestDialog({ open, onClose, title, busy = false, children }: { open: boolean; onClose: () => void; title: string; busy?: boolean; children: ReactNode }) {
+  const invitationFont = useInvitationFont();
+  const buttonShape = useInvitationButtonShape();
   const dialog = useRef<HTMLDialogElement>(null);
   const closeRef = useRef(onClose); closeRef.current = onClose;
   const titleId = useId();
@@ -58,7 +61,7 @@ export function GuestDialog({ open, onClose, title, busy = false, children }: { 
     return () => { dialog.current?.close(); document.body.style.overflow = previousOverflow; previousFocus?.focus({ preventScroll: true }); };
   }, [open]);
   useEffect(() => { if (open && dialog.current) dialog.current.scrollTop = 0; }, [open, title]);
-  return createPortal(<dialog className="guest-dialog" ref={dialog} aria-labelledby={titleId}
+  return createPortal(<dialog className="guest-dialog" data-invitation-font={invitationFont} data-button-shape={buttonShape} ref={dialog} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); if (!busy) closeRef.current(); }}
     onClick={event => { if (event.target === event.currentTarget && !busy) closeRef.current(); }}
     onKeyDown={event => { if (event.key === 'Escape') event.stopPropagation(); }}>

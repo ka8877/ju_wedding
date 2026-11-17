@@ -1,5 +1,5 @@
 import type { Person, WeddingData, WeddingGuestFeatures } from './types';
-import { backgrounds, defaultDesign, fonts, getDesign, palettes, sectionIds, templates } from './design.ts';
+import { backgrounds, bodyAlignments, buttonShapes, defaultDesign, fonts, galleryGaps, getDesign, letterSpacings, lineSpacings, palettes, sectionIds, sectionSpacings, templates } from './design.ts';
 import { defaultGuestFeatures, defaultWedding } from './defaults.ts';
 import { isBuiltinMusicTrackId } from './music';
 
@@ -68,6 +68,9 @@ function isValidDesign(value: unknown): boolean {
   const designText = (v: unknown, max = 1000) => text(v, max);
   const sections = (v: unknown, full = false) => Array.isArray(v) && v.every(id => sectionIds.includes(id)) && new Set(v).size === v.length && (!full || v.length === sectionIds.length);
   return templates.some(t => t.id === d.template) && fonts.some(f => f.id === d.font) && backgrounds.some(b => b.id === d.background) && ['small','normal','large'].includes(d.fontSize)
+    && lineSpacings.some(option => option.id === d.lineSpacing) && letterSpacings.some(option => option.id === d.letterSpacing)
+    && sectionSpacings.some(option => option.id === d.sectionSpacing) && bodyAlignments.some(option => option.id === d.bodyAlignment)
+    && buttonShapes.some(option => option.id === d.buttonShape) && galleryGaps.some(option => option.id === d.galleryGap)
     && typeof d.accentColor === 'string' && (d.accentColor === '' || /^#[0-9a-fA-F]{6}$/.test(d.accentColor))
     && designText(d.heroTitle, 100) && designText(d.heroSubtitle, 150) && designText(d.closingTitle, 150)
     && ['arch','rectangle','oval'].includes(d.photoShape) && ['auto','garden'].includes(d.coverStyle) && Number.isFinite(d.photoPosition) && d.photoPosition >= 0 && d.photoPosition <= 100

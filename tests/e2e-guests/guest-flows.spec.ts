@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test } from '../e2e/helpers';
 import type { Page } from '@playwright/test';
 import { defaultWedding } from '../../src/lib/defaults';
+import type { WeddingData } from '../../src/lib/types';
 
 const project = 'https://wedding-ui-tests.supabase.co';
 const timestamp = '2027-02-20T03:30:00Z';
@@ -11,10 +12,12 @@ const data = () => {
   wedding.guestFeatures.music.enabled = false;
   wedding.guestFeatures.rsvp.groomMessage = '신랑측 안내입니다. 현범에게 함께할 마음을 전해 주세요.';
   wedding.guestFeatures.rsvp.brideMessage = '신부측 안내입니다. 주영에게 함께할 마음을 전해 주세요.';
+  wedding.guestFeatures.shuttle.daejeon = '대전역 오전 9시 출발';
+  wedding.guestFeatures.shuttle.gyeongju = '경주역 오전 8시 출발';
   return wedding;
 };
 
-interface ServerOptions { unavailable?: boolean; snapOpen?: boolean; rejectRsvp?: boolean; failFirstRsvp?: boolean; failSecondPhoto?: boolean }
+interface ServerOptions { unavailable?: boolean; snapOpen?: boolean; rejectRsvp?: boolean; failFirstRsvp?: boolean; failSecondPhoto?: boolean; wedding?: WeddingData }
 async function mockServer(page: Page, options: ServerOptions = {}) {
   const requests: { path: string; method: string; payload: Record<string, unknown> | null }[] = [];
   let reservation = 0;
@@ -25,7 +28,7 @@ async function mockServer(page: Page, options: ServerOptions = {}) {
     const path = new URL(request.url()).pathname;
     const payload = request.headers()['content-type']?.includes('application/json') ? request.postDataJSON() as Record<string, unknown> : null;
     requests.push({ path, method: request.method(), payload });
-    if (path.endsWith('/rpc/get_published_wedding')) return route.fulfill({ json: [{ data: data(), updated_at: timestamp }] });
+    if (path.endsWith('/rpc/get_published_wedding')) return route.fulfill({ json: [{ data: options.wedding ?? data(), updated_at: timestamp }] });
     if (path.endsWith('/rpc/get_wedding_guest_capabilities')) return options.unavailable
       ? route.fulfill({ status: 404, json: { code: 'PGRST202', message: 'function not found' } })
       : route.fulfill({ json: { rsvp_enabled: true, snap_enabled: true, snap_open: Boolean(options.snapOpen), snap_open_date: '2027-02-20' } });
@@ -109,6 +112,43 @@ test('missing storage setup never accepts a fake RSVP or photograph', async ({ p
   await expect(page.getByRole('button', { name: '현장 사진 올리기', exact: true })).toBeDisabled();
   expect(requests.some(request => /submit_wedding_rsvp|reserve_wedding_guest_photo/.test(request.path))).toBe(false);
   await expect(page.getByText('전달되었습니다', { exact: true })).toHaveCount(0);
+});
+
+test('unconfigured shuttle routes are omitted from the invitation and RSVP choices', async ({ page }) => {
+  const wedding = data();
+  wedding.guestFeatures.shuttle.daejeon = '  ';
+  wedding.guestFeatures.shuttle.gyeongju = '';
+  const requests = await mockServer(page, { wedding });
+  const dialog = await openRsvp(page);
+  await expect(page.locator('[data-section="shuttle"]')).toHaveCount(0);
+  await expect(dialog.getByLabel('대절버스 이용 의사')).toHaveCount(0);
+  await dialog.getByRole('button', { name: '신랑측', exact: true }).click();
+  await dialog.getByRole('textbox', { name: '성함', exact: true }).fill('버스 없는 하객');
+  await dialog.getByRole('checkbox', { name: /응답 내용을 전달하는 데 동의/ }).check();
+  await dialog.getByRole('button', { name: '전달하기', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '전달되었습니다', exact: true })).toBeVisible();
+  const submission = requests.find(request => request.path.endsWith('/rpc/submit_wedding_rsvp'));
+  expect(submission?.payload?.p_payload).toMatchObject({ shuttle: 'none', attending: true });
+});
+
+test('only published shuttle routes are offered and a removed route cannot remain in an open RSVP', async ({ page }) => {
+  const wedding = data();
+  wedding.guestFeatures.shuttle.gyeongju = '';
+  const requests = await mockServer(page, { wedding });
+  const dialog = await openRsvp(page);
+  const shuttle = dialog.getByLabel('대절버스 이용 의사');
+  await expect(shuttle.getByRole('option')).toHaveText(['이용하지 않아요', '대전 출발']);
+  await shuttle.selectOption('daejeon');
+  await dialog.getByRole('button', { name: '신랑측', exact: true }).click();
+  await dialog.getByRole('textbox', { name: '성함', exact: true }).fill('변경 안내 하객');
+  await dialog.getByRole('checkbox', { name: /응답 내용을 전달하는 데 동의/ }).check();
+  wedding.guestFeatures.shuttle.enabled = false;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(shuttle).toHaveCount(0);
+  await dialog.getByRole('button', { name: '전달하기', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '전달되었습니다', exact: true })).toBeVisible();
+  const submission = requests.find(request => request.path.endsWith('/rpc/submit_wedding_rsvp'));
+  expect(submission?.payload?.p_payload).toMatchObject({ shuttle: 'none' });
 });
 
 test('a server-rejected RSVP remains editable and never shows a successful receipt', async ({ page }) => {

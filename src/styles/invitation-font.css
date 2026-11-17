@@ -1,0 +1,53 @@
+/* The invitation's font choice is a complete text style. This explicit scope
+   also travels with dialogs and floating controls rendered outside <main>.
+   Override only the family: template sizing, emphasis and spacing still apply. */
+[data-invitation-font] {
+  --invite-body-font: 'Noto Serif KR', 'Batang', serif;
+  --invite-heading-font: var(--invite-body-font) !important;
+  --invite-hero-font: var(--invite-body-font) !important;
+  font-family: var(--invite-body-font) !important;
+}
+[data-invitation-font='sans'] {
+  --invite-body-font: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+[data-invitation-font='romantic'] {
+  --invite-body-font: 'Gowun Batang', 'Batang', serif;
+}
+[data-invitation-font='myeongjo'] {
+  --invite-body-font: 'Nanum Myeongjo', 'Batang', serif;
+}
+[data-invitation-font='handwriting'] {
+  --invite-body-font: 'Nanum Pen Script', 'Gowun Batang', cursive;
+}
+
+/* Existing sections use font shorthands for their sizes and line heights.
+   A scoped family override prevents those shorthands from reintroducing a
+   different font after the guest chooses a single invitation-wide typeface.
+   Naver owns its map controls/attribution, and SVG icons contain no body copy. */
+[data-invitation-font] :where(*):not(:where(svg, svg *, .venue-map-naver, .venue-map-naver *)) {
+  font-family: var(--invite-body-font) !important;
+}
+
+/* These labels are our own markers, even though Naver places them in its map. */
+[data-invitation-font] :is(.venue-map-pin, .venue-map-pin *) {
+  font-family: var(--invite-body-font) !important;
+}
+
+[data-invitation-font] :is(.invite-calendar-grid, .invite-countdown, .invite-account, .invite-hero-date) {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* This face has a smaller apparent size. Keep the useful small-print and
+   controls readable while retaining the template's existing large headings. */
+[data-invitation-font='handwriting'] :is(.invite-subtitle, .invite-hero-date, .invite-hero-venue, .invite-relation, .invite-address, .invite-countdown-note, .invite-directions p, .guest-intro, .guest-footnote, .guest-status, .wedding-share-feedback) {
+  font-size: calc(15px * var(--invite-copy-scale, 1));
+}
+[data-invitation-font='handwriting'] :is(.invite-english-names, .invite-calendar-grid > span, .invite-account strong, .invite-account > div > span, .wedding-share-dialog-content > p:not([class]), .guest-field > input, .guest-field > select, .guest-field > textarea) {
+  font-size: calc(16px * var(--invite-copy-scale, 1));
+}
+[data-invitation-font='handwriting'] :is(.invite-outline-button, .invite-account > button, .guest-action, .guest-side-options button, .wedding-share-button, .invite-opening-skip) {
+  font-size: 15px !important;
+}
+[data-invitation-font='handwriting'] :is(.invite-section-index, .invite-countdown span, .invite-closing-names, .invite-music-toggle > span, .wedding-share-url) {
+  font-size: 12px;
+}

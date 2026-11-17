@@ -11,10 +11,13 @@ import GuestRsvp from './GuestRsvp';
 import GuestSnap from './GuestSnap';
 import VenueMap from './VenueMap';
 import InvitationOpening from './InvitationOpening';
+import { InvitationFontProvider } from './InvitationFont';
 import '../styles/cover-style.css';
 import { getGoogleVenueUrl, getNaverVenueUrl, getVenueCoordinates } from '../lib/venue-map';
 import '../styles/invitation.css';
 import '../styles/invitation-refinements.css';
+import '../styles/invitation-font.css';
+import '../styles/invitation-customization.css';
 
 interface InvitationProps { data: WeddingData; preview?: boolean }
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -209,7 +212,8 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
     blessing: (<section data-section="blessing" className="invite-section invite-blessing invite-reveal invite-content-section"><div className="invite-section-index"><span>{sectionNumber('blessing')}</span><i /><span>A PRAYER FOR US</span></div>{cross}<h2>{design.blessingTitle}</h2><p className="invite-preserve invite-blessing-copy">{design.blessing}</p><span className="invite-blessing-amen">Amen.</span></section>),
   };
   return (
-    <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-background={design.background} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} style={style} ref={root}>
+    <InvitationFontProvider font={design.font} buttonShape={design.buttonShape}>
+    <main className={`invitation invite-template--${design.template}${preview ? ' invitation--preview' : ''}`} data-theme={data.theme} data-template={design.template} data-font={design.font} data-invitation-font={design.font} data-background={design.background} data-font-size={design.fontSize} data-photo-shape={design.photoShape} data-decoration={design.showDecoration} data-line-spacing={design.lineSpacing} data-letter-spacing={design.letterSpacing} data-section-spacing={design.sectionSpacing} data-body-alignment={design.bodyAlignment} data-button-shape={design.buttonShape} data-gallery-gap={design.galleryGap} style={style} ref={root}>
       <InvitationOpening enabled={features.opening.enabled} groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} preview={preview} />
       <MusicPlayer settings={features.music} preview={preview} />
       <section className="invite-hero" aria-labelledby="wedding-title">{heroLayouts[design.template]}</section>
@@ -220,5 +224,6 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
       <dialog className="invite-lightbox" ref={galleryDialog} onCancel={() => setLightbox(null)} onClick={event => { if (event.target === event.currentTarget) setLightbox(null); }} onKeyDown={event => { if (lightbox === null) return; if (event.key === 'ArrowRight') setLightbox((lightbox + 1) % data.photos.length); if (event.key === 'ArrowLeft') setLightbox((lightbox - 1 + data.photos.length) % data.photos.length); }} aria-label="웨딩 사진 크게 보기"><button className="invite-dialog-close" aria-label="사진 닫기" onClick={() => setLightbox(null)}><X size={24} /></button>{lightbox !== null && data.photos[lightbox] && <><img src={data.photos[lightbox].url} alt={data.photos[lightbox].alt || '웨딩 사진'} /><div className="invite-lightbox-controls"><button aria-label="이전 사진" onClick={() => setLightbox((lightbox - 1 + data.photos.length) % data.photos.length)}><ChevronLeft size={23} /></button><span>{lightbox + 1} / {data.photos.length}</span><button aria-label="다음 사진" onClick={() => setLightbox((lightbox + 1) % data.photos.length)}><ChevronRight size={23} /></button></div></>}</dialog>
       <dialog className="invite-contact-dialog" ref={contactDialog} onCancel={() => setContactOpen(false)} onClick={event => { if (event.target === event.currentTarget) setContactOpen(false); }} aria-labelledby="contact-title"><button className="invite-contact-close" aria-label="연락처 닫기" onClick={() => setContactOpen(false)}><X size={20} /></button><p className="invite-kicker">WITH YOUR BLESSING</p><h2 id="contact-title">축하의 마음 전하기</h2>{personRows.map((person, i) => person.phone && <div className="invite-contact-row" key={i}><span>{i === 0 ? '신랑' : '신부'}<strong>{person.name}</strong></span><div><a href={`tel:${person.phone.replace(/[^\d+]/g, '')}`} aria-label={`${person.name}에게 전화하기`}><Phone size={18} /></a><a href={`sms:${person.phone.replace(/[^\d+]/g, '')}`} aria-label={`${person.name}에게 문자 보내기`}><MessageCircle size={18} /></a></div></div>)}</dialog>
     </main>
+    </InvitationFontProvider>
   );
 }

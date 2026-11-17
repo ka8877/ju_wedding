@@ -39,7 +39,7 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
     <Card icon={<DoorOpen size={19} />} title="정원으로 이어지는 초대" description="리본 표지가 열리고 꽃이 핀 정원을 지나 두 분에게 다가가는 영상이 재생돼요.">
       <Toggle label="첫 방문에 문 열림 효과 사용" checked={features.opening.enabled} onChange={enabled => update('opening', { enabled })} />
       <button type="button" className="event-option-preview-button" onClick={() => setOpeningPreview(request => request + 1)}><Eye size={16} />문 열림 효과 미리보기</button>
-      <InvitationOpening enabled groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} preview previewRequest={openingPreview} />
+      <InvitationOpening enabled groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} font={data.design.font} preview previewRequest={openingPreview} />
       <p className="event-option-note">같은 방문 중에는 한 번만 보여 드려요. 기다리지 않고 바로 보고 싶을 때는 건너뛰기를 누르면 됩니다.</p>
     </Card>
 

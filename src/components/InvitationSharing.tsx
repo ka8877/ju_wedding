@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import type { FontId, WeddingDesign } from '../lib/types';
+import { useInvitationButtonShape, useInvitationFont } from './InvitationFont';
 import { Check, Copy, Download, ExternalLink, Heart, LoaderCircle, MessageCircle, QrCode, Share2, X } from 'lucide-react';
 import { invitationQr, invitationUrl } from '../lib/sharing';
 import { copyText } from '../lib/utils';
@@ -7,9 +9,11 @@ import { loadKakaoSdk, shareKakaoInvitation } from '../lib/kakao-sharing';
 import { kakaoJavascriptKey as configuredKakaoJavascriptKey } from '../lib/integrations';
 import '../styles/sharing.css';
 
-interface SharingProps { names: string; variant?: 'guest' | 'admin'; localPreview?: boolean; kakaoJavascriptKey?: string }
+interface SharingProps { names: string; variant?: 'guest' | 'admin'; localPreview?: boolean; kakaoJavascriptKey?: string; font?: FontId; buttonShape?: WeddingDesign['buttonShape'] }
 
-export default function InvitationSharing({ names, variant = 'guest', localPreview = false, kakaoJavascriptKey: legacyKakaoKey = '' }: SharingProps) {
+export default function InvitationSharing({ names, variant = 'guest', localPreview = false, kakaoJavascriptKey: legacyKakaoKey = '', font, buttonShape }: SharingProps) {
+  const invitationFont = useInvitationFont();
+  const invitationButtonShape = useInvitationButtonShape();
   const [open, setOpen] = useState(false);
   const [qr, setQr] = useState('');
   const [qrError, setQrError] = useState(false);
@@ -100,7 +104,7 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
       {variant === 'admin' && <p className="wedding-share-note">{publicationNote}</p>}
       {message && !open && <p className="wedding-share-feedback" role="status"><Check size={13} />{message}</p>}
     </div>
-    {createPortal(<dialog className="wedding-share-dialog" ref={dialog} aria-labelledby={titleId} aria-describedby={descriptionId}
+    {createPortal(<dialog className="wedding-share-dialog" data-invitation-font={font || invitationFont} data-button-shape={buttonShape || invitationButtonShape} ref={dialog} aria-labelledby={titleId} aria-describedby={descriptionId}
       onCancel={event => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)}
       onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
       <div className="wedding-share-dialog-content">

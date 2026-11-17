@@ -72,6 +72,15 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
     expect(proof!.filmEnded).toBe(true);
     expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
     console.log('Production entrance proof:', JSON.stringify(proof));
+    const fontFamilies: Record<string, string> = { serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang', myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script' };
+    const selectedFont = (await page.locator('.invitation').getAttribute('data-font'))!;
+    const expectedFamily = fontFamilies[selectedFont];
+    expect(expectedFamily).toBeTruthy();
+    for (const selector of ['#wedding-title', '.invite-korean-names', '.invite-hero-date', '.invite-letter-copy', '.invite-calendar-grid > span', '.invite-outline-button', '.invite-footer-mark strong', '.invite-music-toggle']) {
+      const text = page.locator(selector).first();
+      if (await text.count()) expect(await text.evaluate(element => getComputedStyle(element).fontFamily)).toContain(expectedFamily);
+    }
+    console.log('Production typography proof:', JSON.stringify({ selectedFont, family: expectedFamily, titleBodyDateButtons: true }));
     await page.screenshot({ path: testInfo.outputPath('invitation-mobile.png') });
     await page.locator('[data-section="location"]').scrollIntoViewIfNeeded();
     await expect(map).toHaveAttribute('data-map-provider', 'naver');
@@ -85,6 +94,8 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
     await page.locator('[data-section="location"]').screenshot({ path: testInfo.outputPath('naver-map.png') });
     await page.getByRole('button', { name: 'QR 코드 보기', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: '마음을 담은 초대' });
+    expect(await dialog.getByRole('heading').evaluate(element => getComputedStyle(element).fontFamily)).toContain(expectedFamily);
+    expect(await dialog.getByRole('button', { name: 'QR 이미지 저장', exact: true }).evaluate(element => getComputedStyle(element).fontFamily)).toContain(expectedFamily);
     const image = dialog.getByRole('img', { name: '공개 청첩장으로 연결되는 QR 코드' });
     await expect(image).toBeVisible();
     const pngBytes = Buffer.from((await image.getAttribute('src'))!.split(',')[1], 'base64');
