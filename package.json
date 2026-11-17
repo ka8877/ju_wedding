@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/gaegu": "5.3.0",
     "@fontsource/gowun-batang": "^5.3.0",
     "@fontsource/nanum-myeongjo": "^5.3.0",
     "@fontsource/nanum-pen-script": "^5.3.0",

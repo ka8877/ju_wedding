@@ -47,7 +47,7 @@ test('advanced typography and background controls are optional and reflect in th
   await page.goto('/#/admin');
   await page.getByRole('button', { name: '디자인', exact: true }).click();
   await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
-  await expect(page.getByRole('group', { name: '글꼴 선택', exact: true }).getByRole('button')).toHaveCount(5);
+  await expect(page.getByRole('group', { name: '글꼴 선택', exact: true }).getByRole('button')).toHaveCount(6);
   await page.getByRole('button', { name: '클래식 명조', exact: true }).click();
   await page.getByRole('button', { name: '작은 별빛 배경', exact: true }).click();
   await page.getByRole('button', { name: '미드나잇 블루', exact: true }).click();

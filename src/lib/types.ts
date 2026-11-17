@@ -26,7 +26,7 @@ export interface Venue {
 }
 export type ThemeId = 'olive' | 'rose' | 'sand' | 'ivory' | 'sage' | 'lavender' | 'midnight' | 'peach' | 'sky';
 export type TemplateId = 'garden' | 'editorial' | 'photo' | 'classic' | 'chapel' | 'letter';
-export type FontId = 'serif' | 'sans' | 'romantic' | 'myeongjo' | 'handwriting';
+export type FontId = 'serif' | 'sans' | 'romantic' | 'myeongjo' | 'handwriting' | 'clear-handwriting';
 export type BackgroundId = 'plain' | 'paper' | 'linen' | 'watercolor' | 'petals' | 'starlight';
 export type SectionId = 'invitation' | 'verse' | 'calendar' | 'gallery' | 'rsvp' | 'snap' | 'location' | 'shuttle' | 'accounts' | 'blessing';
 export interface WeddingGuestFeatures {

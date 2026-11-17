@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { defaultWedding } from '../src/lib/defaults';
-import { applyTemplate, defaultDesign, getDesign, palettes, templates } from '../src/lib/design';
+import { applyTemplate, defaultDesign, fonts, getDesign, palettes, templates } from '../src/lib/design';
 import { isWeddingData, normalizeWedding } from '../src/lib/validation';
 
 describe('saved invitation compatibility', () => {
+  it.each(fonts)('round-trips the $name font without replacing existing invitation content', font => {
+    const data = structuredClone(defaultWedding);
+    data.design.font = font.id;
+    data.invitation = '두 사람이 직접 쓴 초대';
+    expect(normalizeWedding(JSON.parse(JSON.stringify(data)))).toEqual(data);
+    expect(isWeddingData(data)).toBe(true);
+  });
   it('upgrades existing invitations without changing names, photos or accounts', () => {
     const saved = structuredClone(defaultWedding);
     saved.invitation = '주영님이 직접 쓴 문구';

@@ -9,4 +9,7 @@
 .design-editor .design-font-card.font-romantic > span,
 .design-editor .design-preview-font-romantic .design-thumb-title { font-family: 'Gowun Batang', 'Batang', serif; }
 .design-editor .design-preview-font-serif .design-thumb-title { font-family: 'Noto Serif KR', 'Batang', serif; }
+.design-editor .design-font-card.font-clear-handwriting > span,
+.design-editor .design-preview-font-clear-handwriting .design-thumb-title { font-family: 'Gaegu', 'Gowun Batang', cursive; font-size: 23px !important; letter-spacing: 0; }
+.design-editor .design-font-card:last-child { grid-column: auto; }
 @media (max-width: 650px) { .design-detail-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; } .design-detail-choice button { padding: 9px 7px; font-size: 11px; } }

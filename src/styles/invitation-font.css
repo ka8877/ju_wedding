@@ -1,6 +1,6 @@
 /* The invitation's font choice is a complete text style. This explicit scope
    also travels with dialogs and floating controls rendered outside <main>.
-   Override only the family: template sizing, emphasis and spacing still apply. */
+   Templates keep their layout; small handwritten text gets readable minimums. */
 [data-invitation-font] {
   --invite-body-font: 'Noto Serif KR', 'Batang', serif;
   --invite-heading-font: var(--invite-body-font) !important;
@@ -18,6 +18,25 @@
 }
 [data-invitation-font='handwriting'] {
   --invite-body-font: 'Nanum Pen Script', 'Gowun Batang', cursive;
+  --invite-hand-text-size: 18px;
+  --invite-hand-control-size: 18px;
+  --invite-hand-map-size: 19px;
+  --invite-hand-hint-size: 15px;
+  --invite-hand-marker-size: 16px;
+  --invite-hand-heading-size: 30px;
+  --invite-hand-name-size: 30px;
+  --invite-hand-closing-size: 33px;
+}
+[data-invitation-font='clear-handwriting'] {
+  --invite-body-font: 'Gaegu', cursive;
+  --invite-hand-text-size: 17px;
+  --invite-hand-control-size: 16px;
+  --invite-hand-map-size: 17px;
+  --invite-hand-hint-size: 14px;
+  --invite-hand-marker-size: 15px;
+  --invite-hand-heading-size: 28px;
+  --invite-hand-name-size: 28px;
+  --invite-hand-closing-size: 31px;
 }
 
 /* Existing sections use font shorthands for their sizes and line heights.
@@ -37,17 +56,103 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-/* This face has a smaller apparent size. Keep the useful small-print and
-   controls readable while retaining the template's existing large headings. */
-[data-invitation-font='handwriting'] :is(.invite-subtitle, .invite-hero-date, .invite-hero-venue, .invite-relation, .invite-address, .invite-countdown-note, .invite-directions p, .guest-intro, .guest-footnote, .guest-status, .wedding-share-feedback) {
-  font-size: calc(15px * var(--invite-copy-scale, 1));
+/* Both handwritten faces have a smaller apparent size than the print faces.
+   Minimums survive the small-copy option; the large option still enlarges them.
+   Reading copy deliberately keeps the guest's line and letter spacing choices. */
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) {
+  --invite-hand-helper-ink: color-mix(in srgb, var(--invite-ink, #333b2d) 85%, var(--invite-bg, #fffdfa));
 }
-[data-invitation-font='handwriting'] :is(.invite-english-names, .invite-calendar-grid > span, .invite-account strong, .invite-account > div > span, .wedding-share-dialog-content > p:not([class]), .guest-field > input, .guest-field > select, .guest-field > textarea) {
-  font-size: calc(16px * var(--invite-copy-scale, 1));
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-letter-copy, .invite-verse p, .invite-blessing-copy, .invite-venue-pending > p, .invite-closing > .invite-preserve, .invite-gallery-empty > p, .guest-intro) {
+  font-size: max(18px, calc(18px * var(--invite-copy-scale, 1))) !important;
 }
-[data-invitation-font='handwriting'] :is(.invite-outline-button, .invite-account > button, .guest-action, .guest-side-options button, .wedding-share-button, .invite-opening-skip) {
-  font-size: 15px !important;
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-subtitle, .invite-hero-date, .invite-hero-venue, .invite-venue-hall, .invite-relation, .invite-parents, .invite-family-row, .invite-address, .invite-countdown-note, .invite-directions p, .invite-english-names, .invite-calendar-grid > span, .invite-account strong, .invite-account > div > span, .invite-contact-row, .invite-contact-row strong, .invite-closing-names, .guest-field > input, .guest-field > select, .guest-field > textarea, .guest-field > label, .guest-field > span, .guest-form legend, .guest-radio-options > label, .guest-consent, .guest-file-picker strong, .guest-receipt-details > div, .wedding-share-names) {
+  font-size: max(var(--invite-hand-text-size), calc(var(--invite-hand-text-size) * var(--invite-copy-scale, 1))) !important;
 }
-[data-invitation-font='handwriting'] :is(.invite-section-index, .invite-countdown span, .invite-closing-names, .invite-music-toggle > span, .wedding-share-url) {
-  font-size: 12px;
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-outline-button, .invite-account > button, .invite-share, .invite-map-links a, .invite-other-maps > summary, .invite-other-maps a, .invite-shuttle-group summary, .invite-account-group summary, .invite-directions h4, .venue-map-station a, .venue-map-status button, .venue-map-status a, .guest-action, .guest-side-options button, .guest-retry, .wedding-share-button, .invite-opening-skip) {
+  font-size: max(var(--invite-hand-control-size), calc(var(--invite-hand-control-size) * var(--invite-copy-scale, 1))) !important;
+  font-weight: 700;
+  font-synthesis: weight;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+/* Nanum Pen Script supplies one weight. Enable a little synthetic emphasis only
+   where a guest must identify an action or a form label; Gaegu has a real 700. */
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-account strong, .invite-contact-row strong, .guest-field > label, .guest-field > span, .guest-form legend, .guest-radio-options > label, .guest-consent, .guest-file-picker strong, .venue-map-station strong) {
+  font-weight: 700;
+  font-synthesis: weight;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-section-index, .invite-calendar-weekdays, .invite-countdown span, .invite-music-toggle > span, .invite-verse small, .invite-map-help, .invite-pending-info, .invite-shuttle-group > p, .invite-venue-pending > span, .venue-map-station span, .venue-map-caption, .venue-map-status p, .guest-footnote, .guest-status, .guest-side-message, .guest-form-description, .guest-field > small, .guest-field > label > small, .guest-privacy-note, .guest-preview-note, .guest-form-error, .guest-receipt > p, .guest-progress, .guest-partial-note, .guest-file-picker span, .guest-file-list > li, .wedding-share-feedback, .wedding-share-note, .wedding-share-url, .wedding-share-card-heading p, .wedding-share-dialog-content > p:not([class]), .wedding-qr-frame > p, .wedding-qr-frame > span) {
+  font-size: max(var(--invite-hand-hint-size), calc(var(--invite-hand-hint-size) * var(--invite-copy-scale, 1))) !important;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-subtitle, .invite-relation, .invite-address, .invite-countdown-note, .invite-directions p, .invite-map-help, .invite-pending-info, .invite-shuttle-group > p, .invite-venue-pending > span, .invite-account > div > span, .invite-calendar-weekdays, .invite-verse small, .venue-map-caption, .venue-map-station span, .guest-footnote, .guest-status, .guest-side-message, .guest-form-description, .guest-field > small, .guest-field > label > small, .guest-privacy-note, .guest-consent, .guest-preview-note, .guest-receipt > p, .guest-receipt-details dt, .guest-progress, .guest-partial-note, .guest-file-picker span, .guest-file-list > li, .wedding-share-feedback, .wedding-share-note, .wedding-share-url, .wedding-share-card-heading p, .wedding-share-dialog-content > p:not([class]), .wedding-qr-frame > span) {
+  color: var(--invite-hand-helper-ink);
+}
+/* Guest and share dialogs use their own pale paper, independently of the theme. */
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']):is(.guest-dialog, .wedding-share-dialog),
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.guest-dialog, .wedding-share-dialog) {
+  --invite-hand-helper-ink: #4c5c3f;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.guest-field > input, .guest-field > textarea)::placeholder {
+  font-size: max(var(--invite-hand-hint-size), calc(var(--invite-hand-hint-size) * var(--invite-copy-scale, 1)));
+  color: #59664d;
+  opacity: 1;
+}
+
+/* Target the text column, not the N logo or the arrow. Its children previously
+   stayed at 12px/10px even after the surrounding button was enlarged. */
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-map-primary > span:nth-child(2) {
+  min-width: 0;
+  font-size: max(var(--invite-hand-map-size), calc(var(--invite-hand-map-size) * var(--invite-copy-scale, 1)));
+  font-weight: 700;
+  font-synthesis: weight;
+  line-height: 1.4;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-map-primary small {
+  font-size: max(var(--invite-hand-hint-size), calc(var(--invite-hand-hint-size) * var(--invite-copy-scale, 1)));
+  color: #4c6646;
+  font-weight: 400;
+  line-height: 1.5;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .venue-map-status p {
+  color: #4c6646;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .venue-map-status :is(button, a) {
+  color: #354f2f;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .venue-map-station strong {
+  font-size: max(var(--invite-hand-text-size), calc(var(--invite-hand-text-size) * var(--invite-copy-scale, 1)));
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .venue-map-pin > span:first-child {
+  max-width: 190px;
+  box-sizing: border-box;
+  font-size: max(var(--invite-hand-marker-size), calc(var(--invite-hand-marker-size) * var(--invite-copy-scale, 1)));
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: normal;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .venue-map-caption {
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 2px;
+}
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-contact-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Keep names and section titles in proportion to the larger reading copy. */
+.invitation:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) h2 {
+  font-size: max(var(--invite-hand-heading-size), calc(var(--invite-hand-heading-size) * var(--invite-copy-scale, 1)));
+}
+.invitation:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-korean-names {
+  font-size: max(var(--invite-hand-name-size), calc(var(--invite-hand-name-size) * var(--invite-copy-scale, 1)));
+}
+.invitation:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-family-row strong {
+  font-size: max(21px, calc(21px * var(--invite-copy-scale, 1)));
+}
+.invitation:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-closing-script {
+  font-size: max(var(--invite-hand-closing-size), calc(var(--invite-hand-closing-size) * var(--invite-copy-scale, 1)));
+  font-style: normal;
 }

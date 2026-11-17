@@ -72,7 +72,7 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
     expect(proof!.filmEnded).toBe(true);
     expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
     console.log('Production entrance proof:', JSON.stringify(proof));
-    const fontFamilies: Record<string, string> = { serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang', myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script' };
+    const fontFamilies: Record<string, string> = { serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang', myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script', 'clear-handwriting': 'Gaegu' };
     const selectedFont = (await page.locator('.invitation').getAttribute('data-font'))!;
     const expectedFamily = fontFamilies[selectedFont];
     expect(expectedFamily).toBeTruthy();
@@ -91,6 +91,14 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
         && /(?:naver\.com|pstatic\.net)/.test(image.src) && !/logo|marker|control/i.test(image.src);
     })), { timeout: 15_000, message: 'At least one real Naver tile must load; an empty ready container is insufficient.' }).toBe(true);
     await expect(map.locator('.venue-map-pin--venue')).toContainText('HD현대글로벌R&D센터');
+    if (selectedFont === 'handwriting' || selectedFont === 'clear-handwriting') {
+      const action = page.getByRole('link', { name: '네이버 지도 열기', exact: true });
+      const label = action.locator('> span:nth-child(2)');
+      expect(await label.evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(selectedFont === 'handwriting' ? 19 : 17);
+      expect(await action.locator('small').evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(14);
+      expect(await label.evaluate(element => getComputedStyle(element).fontFamily)).toContain(expectedFamily);
+      console.log('Production map-label readability proof: selected handwritten family and readable label sizes.');
+    }
     await page.locator('[data-section="location"]').screenshot({ path: testInfo.outputPath('naver-map.png') });
     await page.getByRole('button', { name: 'QR 코드 보기', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: '마음을 담은 초대' });

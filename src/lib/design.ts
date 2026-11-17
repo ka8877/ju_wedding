@@ -39,6 +39,7 @@ export const fonts: { id: FontId; name: string; sample: string; description: str
   { id: 'romantic', name: '로맨틱 레터', sample: 'Love, always.', description: '편지처럼 서정적인 문장' },
   { id: 'myeongjo', name: '클래식 명조', sample: '오래도록, 다정하게', description: '품격 있게 오래 남는 글씨' },
   { id: 'handwriting', name: '다정한 손글씨', sample: '당신이라 참 좋아요', description: '진심을 꾹꾹 눌러 담은 손편지' },
+  { id: 'clear-handwriting', name: '또박또박 손글씨', sample: '오늘, 우리 함께해요', description: '또렷한 획으로 다정하게 읽는 글씨' },
 ];
 export const backgrounds: { id: BackgroundId; name: string; description: string }[] = [
   { id: 'plain', name: '깔끔한 단색', description: '사진과 문구가 가장 돋보이는 기본' },

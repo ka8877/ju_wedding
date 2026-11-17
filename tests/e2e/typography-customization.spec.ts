@@ -9,7 +9,7 @@ test.setTimeout(60_000);
 const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4AWP4+vrOfwAJUQO8AaEsBQAAAABJRU5ErkJggg==';
 const typefaces: Record<FontId, string> = {
   serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang',
-  myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script',
+  myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script', 'clear-handwriting': 'Gaegu',
 };
 
 function fixture() {
@@ -84,7 +84,7 @@ test('every typeface reaches the whole invitation and its portaled guest control
       await expect(main).toHaveAttribute('data-invitation-font', choice.id);
       await page.evaluate(async () => { await document.fonts.ready; });
       // These were independently hard-coded families before global application.
-      const selectors = ['#wedding-title', '.invite-korean-names', '.invite-english-names', '.invite-hero-date', '.invite-letter-copy', '.invite-calendar-title', '.invite-calendar-grid > span:not(:empty)', '.invite-calendar-save', '.invite-account-group summary', '.invite-closing-script', '.wedding-share-actions button'];
+      const selectors = ['#wedding-title', '.invite-korean-names', '.invite-english-names', '.invite-hero-date', '.invite-letter-copy', '.invite-calendar-title', '.invite-calendar-grid > span:not(:empty)', '.invite-calendar-save', '.invite-account-group summary', '.invite-closing-script', '.wedding-share-actions button', '.invite-map-primary > span:nth-child(2)', '.invite-map-primary small', '.invite-other-maps summary'];
       for (const selector of selectors) await expectFont(main.locator(selector).first(), typefaces[choice.id]);
       await expectFont(page.locator('.invite-music-player:not(.invite-music-player--preview) .invite-music-toggle > span'), typefaces[choice.id]);
 
@@ -124,6 +124,75 @@ test('every typeface reaches the whole invitation and its portaled guest control
     }
     expect(errors).toEqual([]);
   } finally { await replayPage.close(); }
+});
+
+test('handwritten map actions stay legible at the smallest phone and copy setting', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  for (const font of ['handwriting', 'clear-handwriting'] as const) {
+    const data = fixture(); data.design.font = font; data.design.fontSize = 'small';
+    await storeFixture(page, data);
+    const action = page.getByRole('link', { name: '네이버 지도 열기', exact: true });
+    await action.scrollIntoViewIfNeeded();
+    await page.evaluate(async () => { await document.fonts.ready; });
+    await expect(action).toBeVisible();
+    await expect(action).toHaveAttribute('href', /https:\/\//);
+    const label = action.locator('> span:nth-child(2)');
+    await expectFont(label, typefaces[font]);
+    const appearance = await action.evaluate(element => {
+      const label = element.querySelector('span:nth-child(2)')!;
+      const hint = element.querySelector('small')!;
+      const style = getComputedStyle(label), hintStyle = getComputedStyle(hint);
+      const outer = element.getBoundingClientRect(), inner = label.getBoundingClientRect();
+      const rgb = (color: string) => (color.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+      const luminance = (color: number[]) => color.map(channel => channel / 255).map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4).reduce((sum, channel, index) => sum + channel * [.2126, .7152, .0722][index], 0);
+      const foreground = luminance(rgb(style.color)), background = luminance(rgb(getComputedStyle(element).backgroundColor));
+      return {
+        size: Number.parseFloat(style.fontSize), hintSize: Number.parseFloat(hintStyle.fontSize), weight: Number.parseFloat(style.fontWeight),
+        letterSpacing: style.letterSpacing === 'normal' ? 0 : Number.parseFloat(style.letterSpacing), lineHeight: Number.parseFloat(style.lineHeight),
+        stroke: Number.parseFloat(style.getPropertyValue('-webkit-text-stroke-width')) || 0,
+        canSynthesizeWeight: style.fontSynthesis.includes('weight') || style.getPropertyValue('font-synthesis-weight') === 'auto',
+        contrast: (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05),
+        noLabelClipping: label.scrollWidth <= label.clientWidth + 1 && inner.left >= outer.left && inner.right <= outer.right + 1,
+      };
+    });
+    expect(appearance.size).toBeGreaterThanOrEqual(font === 'handwriting' ? 19 : 17);
+    expect(appearance.hintSize).toBeGreaterThanOrEqual(14);
+    expect(appearance.letterSpacing).toBeGreaterThanOrEqual(0);
+    expect(appearance.lineHeight).toBeGreaterThanOrEqual(appearance.size * 1.2);
+    expect(appearance.stroke >= .15 || appearance.weight >= 600 && (font === 'clear-handwriting' || appearance.canSynthesizeWeight)).toBe(true);
+    expect(appearance.contrast).toBeGreaterThanOrEqual(4.5);
+    expect(appearance.noLabelClipping).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await action.screenshot({ path: testInfo.outputPath(`${font}-map-label.png`) });
+    expect((await stored(page, 'published')).data).toEqual(data);
+  }
+});
+
+test('the clearer handwritten choice saves and reloads without replacing the couple content', async ({ page }) => {
+  const data = fixture(); data.design.font = 'handwriting';
+  await storeFixture(page, data);
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
+  const choice = page.getByRole('button', { name: '또박또박 손글씨', exact: true });
+  await choice.click();
+  await expect(choice).toHaveAttribute('aria-pressed', 'true');
+  await expectFont(page.locator('.editor-preview .invite-letter-copy'), typefaces['clear-handwriting']);
+  expect((await stored(page, 'published')).data).toEqual(data);
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expect(page.locator('.editor-notice')).toContainText('이 기기에 초안을 저장했어요');
+  const expected = { ...data, design: { ...data.design, font: 'clear-handwriting' } };
+  expect((await stored(page, 'draft')).data).toEqual(expected);
+  await page.reload();
+  await page.getByRole('button', { name: '디자인', exact: true }).click();
+  await page.locator('summary[aria-label="직접 세부 꾸미기"]').click();
+  await expect(choice).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '미리보기에 적용', exact: true }).click();
+  await expect(page.locator('.editor-notice')).toContainText('이 기기의 미리보기에 반영했어요');
+  expect((await stored(page, 'published')).data).toEqual(expected);
+  await page.goto('/');
+  await expect(page.locator('.invitation')).toHaveAttribute('data-font', 'clear-handwriting');
+  await expectFont(page.locator('.invite-letter-copy'), typefaces['clear-handwriting']);
 });
 
 test('spacing and shape choices survive save and publication without replacing personal content', async ({ page }) => {

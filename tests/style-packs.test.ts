@@ -130,8 +130,8 @@ describe('saved design compatibility and visual option validation', () => {
     expect(sameWeddingContent(legacy as WeddingData, updated)).toBe(false);
   });
 
-  it('accepts all five fonts and six backgrounds in saved invitations', () => {
-    expect(fonts).toHaveLength(5); expect(backgrounds).toHaveLength(6);
+  it('accepts all six fonts and six backgrounds in saved invitations', () => {
+    expect(fonts).toHaveLength(6); expect(backgrounds).toHaveLength(6);
     for (const font of fonts) for (const background of backgrounds) {
       const data = personalInvitation(); data.design.font = font.id; data.design.background = background.id;
       expect(normalizeWedding(data)).toEqual(data);
