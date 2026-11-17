@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { expect, test } from './helpers';
+import type { Page } from '@playwright/test';
 import jsQR from 'jsqr';
 
 const publicUrl = 'https://hyunbeom-juyoung.pages.dev/';
@@ -15,6 +16,20 @@ function readPng(value: Buffer | string) {
 function scanPng(value: Buffer | string) {
   const png = readPng(value);
   return jsQR(new Uint8ClampedArray(png.data), png.width, png.height)?.data;
+}
+
+async function configureKakao(page: Page) {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    const defaultsPath = '/src/lib/defaults.ts';
+    const storagePath = '/src/lib/storage.ts';
+    const { defaultWedding } = await import(defaultsPath);
+    const { publishWedding } = await import(storagePath);
+    const data = structuredClone(defaultWedding);
+    data.guestFeatures.sharing.kakaoJavascriptKey = 'a'.repeat(32);
+    await publishWedding(data);
+  });
+  await page.reload();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -39,6 +54,8 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: '마음을 담은 초대' });
   await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.wedding-share-dialog-actions button')).toHaveCount(2);
+  await expect(dialog).not.toContainText(/공개 반영|이 기기의 미리보기|공개한 청첩장/);
   const image = dialog.getByRole('img', { name: '공개 청첩장으로 연결되는 QR 코드' });
   await expect(image).toBeVisible();
   const source = (await image.getAttribute('src'))!;
@@ -74,6 +91,9 @@ test('native sharing and the editor share the public page rather than a local dr
     Object.defineProperty(navigator, 'share', { configurable: true, value: async (data: ShareData) => { sessionStorage.setItem('wedding-test-share', JSON.stringify(data)); } });
   });
   await page.goto('/?tracking=private#/');
+  await expect(page.locator('.wedding-sharing--guest .wedding-share-actions button')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: '카카오톡으로 공유', exact: true })).toHaveCount(0);
+  await expect(page.locator('.wedding-sharing--guest .wedding-share-note')).toHaveCount(0);
   await page.getByRole('button', { name: '청첩장 공유하기', exact: true }).click();
   const shared = JSON.parse((await page.evaluate(() => sessionStorage.getItem('wedding-test-share')))!);
   expect(shared.url).toBe(publicUrl);
@@ -82,16 +102,37 @@ test('native sharing and the editor share the public page rather than a local dr
   await page.getByRole('button', { name: 'QR 코드 보기', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '마음을 담은 초대' });
   await expect(dialog.getByRole('link')).toHaveAttribute('href', publicUrl);
+  await expect(dialog).toContainText('이 기기의 미리보기 수정은 전달되지 않아요.');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 
-test('Kakao sharing opens the device share sheet without exposing service setup', async ({ page }) => {
-  await page.route('https://t1.kakaocdn.net/**', route => route.abort());
+test('configured Kakao sharing offers one direct share action beside the heart QR', async ({ page }) => {
+  await page.addInitScript(() => {
+    let initialized = false;
+    Object.defineProperty(window, 'Kakao', { configurable: true, value: {
+      init(key: string) { initialized = true; sessionStorage.setItem('wedding-test-kakao-key', key); },
+      isInitialized: () => initialized,
+      Share: { sendDefault: async (payload: unknown) => { sessionStorage.setItem('wedding-test-kakao-share', JSON.stringify(payload)); } },
+    } });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: async () => { sessionStorage.setItem('wedding-test-native-share', 'opened'); } });
+  });
+  await configureKakao(page);
+  await expect(page.locator('.wedding-sharing--guest .wedding-share-actions button')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: '청첩장 공유하기', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '카카오톡으로 공유', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-share'))).not.toBeNull();
+  const payload = JSON.parse((await page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-share')))!);
+  expect(payload.content.link).toEqual({ mobileWebUrl: publicUrl, webUrl: publicUrl });
+  expect(await page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-key'))).toBe('a'.repeat(32));
+  expect(await page.evaluate(() => sessionStorage.getItem('wedding-test-native-share'))).toBeNull();
+});
+
+test('an unavailable configured Kakao SDK falls back to the device share sheet', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: async (data: ShareData) => { sessionStorage.setItem('wedding-test-kakao-share', JSON.stringify(data)); } });
   });
-  await page.goto('/');
+  await configureKakao(page);
   await page.getByRole('button', { name: '카카오톡으로 공유', exact: true }).click();
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-share'))).not.toBeNull();
   const payload = JSON.parse((await page.evaluate(() => sessionStorage.getItem('wedding-test-kakao-share')))!);
@@ -100,15 +141,16 @@ test('Kakao sharing opens the device share sheet without exposing service setup'
   await expect(page.locator('.wedding-sharing')).not.toContainText(/API|JavaScript|개발자|Client ID/);
 });
 
-test('Kakao sharing copies the link with an honest paste instruction when device sharing is unavailable', async ({ page, context }) => {
+test('the primary share action copies the link when device sharing is unavailable', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.route('https://t1.kakaocdn.net/**', route => route.abort());
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: '카카오톡으로 공유', exact: true }).click();
-  await expect(page.locator('.wedding-share-feedback')).toHaveText('링크를 복사했어요. 카카오톡 대화창에 붙여넣어 전해 주세요.');
+  await expect(page.getByRole('button', { name: '카카오톡으로 공유', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '청첩장 공유하기', exact: true }).click();
+  await expect(page.locator('.wedding-share-feedback')).toHaveText('청첩장 링크를 복사했어요.');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(publicUrl);
   await expect(page.locator('.wedding-share-feedback')).not.toContainText(/전달되었습니다|전송 완료|공유 완료/);
 });

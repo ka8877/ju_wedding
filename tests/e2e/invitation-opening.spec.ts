@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { defaultWedding } from '../../src/lib/defaults';
 import type { WeddingData } from '../../src/lib/types';
 
-const openingKey = `wedding-opening:v4:${defaultWedding.groom.name}:${defaultWedding.bride.name}:${defaultWedding.date}`;
+const openingKey = `wedding-opening:v5:${defaultWedding.groom.name}:${defaultWedding.bride.name}:${defaultWedding.date}`;
 
 interface OpeningSample {
   time: number;
@@ -75,7 +75,7 @@ async function publishFixture(page: Page, data: WeddingData) {
 test('the first visit automatically opens real animated doors with only a skip action, once per session', async ({ page }) => {
   await observeOpening(page);
   await page.addInitScript(key => {
-    for (const version of ['v1', 'v2', 'v3']) sessionStorage.setItem(key.replace('wedding-opening:v4:', `wedding-opening:${version}:`), 'opened');
+    for (const version of ['v1', 'v2', 'v3', 'v4']) sessionStorage.setItem(key.replace('wedding-opening:v5:', `wedding-opening:${version}:`), 'opened');
   }, openingKey);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -228,3 +228,31 @@ test('the editor can replay the door effect repeatedly without changing guest se
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
 });
+
+for (const viewport of [{ width: 390, height: 664 }, { width: 390, height: 844 }, { width: 1365, height: 900 }, { width: 844, height: 390 }]) {
+  test(`paper doors keep names, seal, foliage and skip clear at ${viewport.width}×${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const entrance = page.locator('.invite-opening');
+    await expect(entrance).toHaveAttribute('data-opening-state', 'holding');
+    const layout = await entrance.evaluate(element => {
+      const box = (selector: string) => {
+        const rect = element.querySelector(selector)!.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
+      };
+      return { copy: box('.invite-opening-copy'), seal: box('.invite-opening-seal'), skip: box('.invite-opening-skip'), canopy: box('.invite-opening-canopy'), art: box('.invite-opening-art') };
+    });
+    expect(layout.copy.bottom + 16).toBeLessThanOrEqual(layout.seal.top);
+    expect(layout.seal.bottom + 16).toBeLessThanOrEqual(layout.skip.top);
+    expect(layout.copy.left).toBeGreaterThanOrEqual(0);
+    expect(layout.copy.right).toBeLessThanOrEqual(viewport.width);
+    expect(layout.skip.bottom).toBeLessThanOrEqual(viewport.height);
+    // The paper doors expose only the asset's upper botanical canopy. They
+    // preserve its proportion and crop before the couple below its midpoint.
+    expect(layout.canopy.height / layout.art.height).toBeLessThan(.46);
+    expect(layout.art.width / layout.art.height).toBeCloseTo(2 / 3, 2);
+    await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
+    await expect(entrance).toHaveCount(0, { timeout: 500 });
+    expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
+  });
+}

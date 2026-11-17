@@ -26,9 +26,11 @@ async function publishFixture(page: Page, data: WeddingData) {
 
 test('known wedding facts, family order, transport and shuttle guidance appear in the chosen section order', async ({ page }) => {
   const data = structuredClone(defaultWedding);
+  data.photos = [{ id: 'wedding-moment', alt: '함께한 날', url: image }];
   data.venue.lat = null; data.venue.lng = null;
   data.venue.subway = '지하철 안내 테스트'; data.venue.bus = '버스 안내 테스트'; data.venue.car = '자가용 안내 테스트';
   data.guestFeatures.shuttle.daejeon = '대전 탑승 안내 테스트';
+  data.guestFeatures.shuttle.gyeongju = ' \n ';
   data.accounts = [
     { id: 'groom-account', side: 'groom', bank: '테스트은행', number: '111-222', holder: '조현범' },
     { id: 'bride-account', side: 'bride', bank: '테스트은행', number: '333-444', holder: '권주영' },
@@ -50,11 +52,23 @@ test('known wedding facts, family order, transport and shuttle guidance appear i
   await expect(daejeon.locator('p')).not.toBeVisible();
   await daejeon.locator('summary').click();
   await expect(daejeon.locator('p')).toHaveText('대전 탑승 안내 테스트');
-  const gyeongju = page.locator('.invite-shuttle-group').nth(1);
-  await gyeongju.locator('summary').click();
-  await expect(gyeongju.locator('p')).toContainText('출발 시간과 탑승 장소는 정해지는 대로');
+  await expect(page.locator('.invite-gallery-item')).toHaveCount(1);
+  await expect(page.locator('.invite-shuttle-group')).toHaveCount(1);
+  await expect(page.locator('[data-section="shuttle"] summary').filter({ hasText: '경주 출발' })).toHaveCount(0);
   await expect(page.locator('.invite-account-group')).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('empty gallery and shuttle details do not add unfinished sections to the guest invitation', async ({ page }) => {
+  const data = structuredClone(defaultWedding);
+  data.guestFeatures.shuttle.daejeon = ' \n ';
+  await publishFixture(page, data);
+  await expect(page.locator('.invitation')).toBeVisible();
+  await expect(page.locator('[data-section="gallery"]')).toHaveCount(0);
+  await expect(page.locator('[data-section="shuttle"]')).toHaveCount(0);
+  await expect(page.locator('.invite-gallery-empty')).toHaveCount(0);
+  await expect(page.locator('.invite-shuttle-group')).toHaveCount(0);
+  await expect(page.locator('[data-section="location"]')).toHaveCount(1);
 });
 
 test('collage starts with three mixed two/three-photo rows and expands without losing album order', async ({ page }) => {

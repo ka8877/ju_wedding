@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, LoaderCircle, MapPin, RefreshCw, TrainFront } from 'lucide-react';
 import type { Venue } from '../lib/types';
 import { getNaverVenueUrl, getVenueCoordinates, getVenueMapViewport, getVenueStation } from '../lib/venue-map';
-import type { VenueMapView } from '../lib/venue-map';
 import { naverMapClientId } from '../lib/integrations';
 import '../styles/venue-map.css';
 
@@ -147,7 +146,6 @@ function markerLabel(name: string, kind: 'venue' | 'station') {
 
 export default function VenueMap({ venue, title, className = '' }: VenueMapProps) {
   const canvas = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<VenueMapView>('area');
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<{ key: string; status: MapStatus }>({ key: '', status: 'loading' });
   const coordinates = getVenueCoordinates(venue);
@@ -156,7 +154,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
   const clientId = naverMapClientId(venue.naverMapClientId);
   const address = venue.address.trim();
   const mapTitle = title || `${venue.name || '예식장'} 위치 지도`;
-  const requestKey = `${clientId}:${lat}:${lng}:${address}:${venue.name}:${attempt}:${view}`;
+  const requestKey = `${clientId}:${lat}:${lng}:${address}:${venue.name}:${attempt}`;
   const status = state.key === requestKey ? state.status : 'loading';
   const configured = Boolean(clientId);
   const naverReady = configured && status === 'ready';
@@ -205,7 +203,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
         if (cancelled || failed) return;
         stage = 'map-initialization';
         const position = new sdk.LatLng(pin.lat, pin.lng);
-        const viewport = getVenueMapViewport(venue, view, pin)!;
+        const viewport = getVenueMapViewport(venue, station ? 'area' : 'venue', pin)!;
         map = new sdk.Map(element, {
           center: new sdk.LatLng(viewport.center.lat, viewport.center.lng), zoom: viewport.zoom, zoomControl: true, mapDataControl: true,
           logoControl: true, scaleControl: true, scrollWheel: false,
@@ -230,7 +228,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
           }));
         };
         addMarker(venue.name || '예식장', position, 'venue');
-        if (view === 'area' && station) {
+        if (station) {
           addMarker(station.name, new sdk.LatLng(station.lat, station.lng), 'station');
           if (sdk.LatLngBounds && map.fitBounds) {
             map.fitBounds(new sdk.LatLngBounds(
@@ -246,13 +244,9 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
       cancelled = true; clearTimeout(debounce); clearTimeout(mapTimer);
       authenticationFailures.delete(fail); destroy();
     };
-  }, [clientId, lat, lng, address, venue.name, attempt, requestKey, view, station]);
+  }, [clientId, lat, lng, address, venue.name, attempt, requestKey, station]);
 
-  return <div className={`venue-map ${className}`} data-map-provider="naver" data-map-state={configured ? status : 'unconfigured'} data-map-view={view}>
-    {naverReady && <div className="venue-map-views" role="group" aria-label="지도 범위">
-      <button type="button" aria-pressed={view === 'area'} onClick={() => setView('area')}><TrainFront size={14} />주변 교통 보기</button>
-      <button type="button" aria-pressed={view === 'venue'} onClick={() => setView('venue')}><MapPin size={14} />예식장 자세히</button>
-    </div>}
+  return <div className={`venue-map ${className}`} data-map-provider="naver" data-map-state={configured ? status : 'unconfigured'}>
     {!naverReady && <div className="venue-map-status" role={configured ? status === 'error' ? 'alert' : 'status' : 'note'}>
       {configured && status === 'loading' ? <><LoaderCircle className="venue-map-loading" size={20} strokeWidth={1.5} /><p>네이버 지도를 불러오고 있어요.</p></> : <><MapPin size={20} strokeWidth={1.3} /><p>{configured ? '네이버 지도를 불러오지 못했어요.' : '네이버 지도에서 예식장 위치를 확인해 주세요.'}</p></>}
       <div>

@@ -70,7 +70,7 @@ test('a customized address links to its own Naver search without unrelated stati
   await expect(map.locator('iframe, .venue-map-station, .venue-map-context')).toHaveCount(0);
 });
 
-test('a configured Naver key displays the interactive Naver canvas and a marker at the verified coordinates', async ({ page }) => {
+test('one Naver map shows the venue and station together with native zoom and no redundant view buttons', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   let sdkRequests = 0;
@@ -95,14 +95,9 @@ test('a configured Naver key displays the interactive Naver canvas and a marker 
   });
   await expect(map.locator('[data-marker-title="HD현대글로벌R&D센터"]')).toHaveAttribute('data-position', '37.3768838,127.1043929');
   await expect(map.locator('[data-marker-title="정자역"]')).toHaveAttribute('data-position', '37.3677228,127.108455');
-  await location.getByRole('button', { name: '예식장 자세히', exact: true }).click();
-  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
-  await expect(map).toHaveAttribute('data-center', '37.3768838,127.1043929');
-  await expect(map).toHaveAttribute('data-zoom', '17');
-  await expect(map.locator('[data-marker-title="정자역"]')).toHaveCount(0);
-  await location.getByRole('button', { name: '주변 교통 보기', exact: true }).click();
-  await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
-  await expect(map.locator('[data-marker-title="정자역"]')).toHaveCount(1);
+  await expect(map).toHaveAttribute('data-zoom-control', 'true');
+  await expect(location.getByRole('button', { name: /예식장 자세히|주변 교통 보기/ })).toHaveCount(0);
+  await expect(location.getByRole('group', { name: '지도 범위' })).toHaveCount(0);
   await expect(location.locator('iframe')).toHaveCount(0);
   expect(sdkRequests).toBe(1);
   expect(errors).toEqual([]);
@@ -163,7 +158,7 @@ const naverSdkMock = `
         this.element = element; this.listeners = new Set(); this.isReady = window.weddingMapInitialization === 'constructor';
         // The real SDK sets a relative position on its map container.
         element.style.position = 'relative'; element.style.overflow = 'hidden';
-        element.dataset.center = options.center.lat + ',' + options.center.lng; element.dataset.zoom = options.zoom; element.dataset.initialWidth = element.clientWidth; element.dataset.initialHeight = element.clientHeight; delete element.dataset.bounds;
+        element.dataset.center = options.center.lat + ',' + options.center.lng; element.dataset.zoom = options.zoom; element.dataset.zoomControl = options.zoomControl; element.dataset.initialWidth = element.clientWidth; element.dataset.initialHeight = element.clientHeight; delete element.dataset.bounds;
         if (!window.weddingMapInitialization || window.weddingMapInitialization === 'init') this.initTimer = setTimeout(() => { this.isReady = true; this.emit('init'); }, 20);
       }
       emit(event) {
@@ -237,7 +232,7 @@ test('a map that never initializes still times out and exposes its reason only i
   expect(errors.some(message => message.includes('[VenueMap] map-initialization-timeout:'))).toBe(true);
 });
 
-test('a configured Naver map remains compact while loading and shows view controls only when ready', async ({ page }) => {
+test('a configured Naver map remains compact while loading and reveals only the map when ready', async ({ page }) => {
   let releaseSdk!: () => void;
   const sdkGate = new Promise<void>(resolve => { releaseSdk = resolve; });
   await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', async route => {
@@ -256,7 +251,8 @@ test('a configured Naver map remains compact while loading and shows view contro
   releaseSdk();
   await expect(map).toHaveAttribute('data-map-state', 'ready');
   await expect(map.locator('iframe')).toHaveCount(0);
-  await expect(map.getByRole('group', { name: '지도 범위' })).toBeVisible();
+  await expect(map.getByRole('group', { name: '지도 범위' })).toHaveCount(0);
+  await expect(map.getByRole('region')).toBeVisible();
   expect(Number(await map.getByRole('region').getAttribute('data-initial-width'))).toBeGreaterThan(0);
   expect(Number(await map.getByRole('region').getAttribute('data-initial-height'))).toBeGreaterThan(0);
 });
@@ -273,6 +269,7 @@ test('a custom address is resolved by the official Naver geocoder without editor
   const location = page.locator('[data-section="location"]');
   await expect(location.locator('.venue-map')).toHaveAttribute('data-map-state', 'ready');
   await expect(location.getByRole('region', { name: '우리의 새로운 예식장 위치 지도 · 네이버 지도', exact: true })).toHaveAttribute('data-center', '37.5665,126.978');
+  await expect(location.getByRole('region')).toHaveAttribute('data-zoom', '17');
   expect(new URL(sdkUrl).searchParams.get('submodules')).toBe('geocoder');
   expect(await page.evaluate(() => (window as Window & { weddingGeocodeQueries?: string[] }).weddingGeocodeQueries)).toEqual([data.venue.address]);
   await expect(location.locator('[data-marker-title="정자역"]')).toHaveCount(0);
