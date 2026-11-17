@@ -1,6 +1,8 @@
 .wedding-sharing { margin-top: 24px; }
 .wedding-share-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 9px; }
+.wedding-sharing--guest .wedding-share-actions { display: grid; grid-template-columns: 1.3fr 1fr; max-width: 330px; margin: 0 auto; }
 .wedding-share-button, .invitation .wedding-share-button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 44px; padding: 11px 15px; border: 1px solid #d6ddcb; border-radius: 4px; background: transparent; color: #647452; font-family: 'Noto Sans KR', sans-serif; font-size: 11px; line-height: 1.5; text-decoration: none; }
+.wedding-sharing--guest .wedding-share-button { padding-inline: 10px; white-space: nowrap; }
 .invitation .wedding-share-button { border-color: var(--invite-line); color: var(--invite-accent); }
 .wedding-share-button:hover { background: #edf2e6; }
 .invitation .wedding-share-button:hover { background: var(--invite-light); }
@@ -33,7 +35,8 @@
 .wedding-share-dialog-actions .wedding-share-button { padding: 12px 10px; font-size: 11px; }
 .wedding-share-button--primary { background: #71855c; border-color: #71855c; color: #fffdf7; }
 .wedding-share-button--primary:hover { background: #61754e; }
-.wedding-share-button--wide { grid-column: 1 / -1; }
+.invitation .wedding-share-button--primary { background: var(--invite-accent); border-color: var(--invite-accent); color: var(--invite-bg); }
+.invitation .wedding-share-button--primary:hover { background: var(--invite-accent); opacity: .85; }
 .wedding-share-button--kakao, .invitation .wedding-share-button--kakao { background: #fee500; border-color: #fee500; color: #302a22; }
 .wedding-share-button--kakao:hover, .invitation .wedding-share-button--kakao:hover { background: #f5dc00; }
 @media (max-width: 650px) { .wedding-sharing--admin { padding: 20px; margin-top: 17px; } .wedding-share-card-heading h2 { font-size: 14px; } }

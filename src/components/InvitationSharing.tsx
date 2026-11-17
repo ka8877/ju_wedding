@@ -20,6 +20,7 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
   const descriptionId = useId();
   const url = invitationUrl(window.location.href, import.meta.env.DEV || localPreview);
   const kakaoJavascriptKey = configuredKakaoJavascriptKey(legacyKakaoKey);
+  const publicationNote = localPreview ? 'QR은 실제 공개 사이트로 연결돼요. 이 기기의 미리보기 수정은 전달되지 않아요.' : 'QR은 공개 청첩장으로 연결돼요. 편집한 내용은 공개 반영 후 전달됩니다.';
 
   useEffect(() => {
     if (/^[a-f\d]{32}$/i.test(kakaoJavascriptKey)) void loadKakaoSdk().catch(() => { /* Keep native sharing available when the SDK is unavailable. */ });
@@ -89,13 +90,14 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
       {variant === 'admin' && <div className="wedding-share-card-heading"><span><Heart size={17} strokeWidth={1.3} /></span><div><h2>소중한 분께 전해요</h2><p>링크와 QR로 우리 청첩장을 전할 수 있어요.</p></div></div>}
       <div className="wedding-share-actions">
         {variant === 'guest'
-          ? <button type="button" className="wedding-share-button" onClick={() => void share()}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button>
+          ? kakaoJavascriptKey
+            ? <button type="button" className="wedding-share-button wedding-share-button--kakao" onClick={() => void shareKakao()}><MessageCircle size={16} />카카오톡으로 공유</button>
+            : <button type="button" className="wedding-share-button wedding-share-button--primary" onClick={() => void share()}><Share2 size={15} strokeWidth={1.4} />청첩장 공유하기</button>
           : <button type="button" className="wedding-share-button" onClick={() => void copy()}><Copy size={15} />링크 복사</button>}
         <button type="button" className="wedding-share-button wedding-share-button--qr" onClick={() => { setMessage(''); setOpen(true); }}><QrCode size={16} strokeWidth={1.4} />QR 코드 보기</button>
-        <button type="button" className="wedding-share-button wedding-share-button--kakao" onClick={() => void shareKakao()}><MessageCircle size={16} />카카오톡으로 공유</button>
+        {variant === 'admin' && kakaoJavascriptKey && <button type="button" className="wedding-share-button wedding-share-button--kakao" onClick={() => void shareKakao()}><MessageCircle size={16} />카카오톡으로 공유</button>}
       </div>
-      {variant === 'guest' && !kakaoJavascriptKey && <p className="wedding-share-note">공유창에서 카카오톡을 선택하거나, 복사한 링크를 대화창에 붙여넣어 주세요.</p>}
-      {variant === 'admin' && <p className="wedding-share-note">{localPreview ? 'QR은 실제 공개 사이트로 연결돼요. 이 기기의 미리보기 수정은 전달되지 않아요.' : 'QR은 공개 청첩장으로 연결돼요. 편집한 내용은 공개 반영 후 전달됩니다.'}</p>}
+      {variant === 'admin' && <p className="wedding-share-note">{publicationNote}</p>}
       {message && !open && <p className="wedding-share-feedback" role="status"><Check size={13} />{message}</p>}
     </div>
     {createPortal(<dialog className="wedding-share-dialog" ref={dialog} aria-labelledby={titleId} aria-describedby={descriptionId}
@@ -116,9 +118,8 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
         <div className="wedding-share-dialog-actions">
           <button type="button" className="wedding-share-button wedding-share-button--primary" onClick={download} disabled={!qr}><Download size={16} />QR 이미지 저장</button>
           <button type="button" className="wedding-share-button" onClick={() => void copy()}><Copy size={15} />링크 복사</button>
-          {typeof navigator.share === 'function' && <button type="button" className="wedding-share-button wedding-share-button--wide" onClick={() => void share()}><Share2 size={15} />휴대폰으로 공유</button>}
         </div>
-        <p className="wedding-share-note">공개한 청첩장으로 연결됩니다.<br />하트 모양 QR을 저장해 인쇄하거나 메시지에 첨부해 보세요.</p>
+        {variant === 'admin' && <p className="wedding-share-note">{publicationNote}</p>}
         {message && open && <p className="wedding-share-feedback" role="status">{message}</p>}
       </div>
     </dialog>, document.body)}

@@ -51,8 +51,8 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   onOpenedRef.current = onOpened;
   const titleId = useId();
   const descriptionId = useId();
-  // Show the slower reveal once even when an older entrance was completed.
-  const storageKey = `wedding-opening:v4:${sessionKey}`;
+  // Show the paper-door reveal once even when an older entrance was completed.
+  const storageKey = `wedding-opening:v5:${sessionKey}`;
   const replay = previewRequest > 0;
   const openingIdentity = replay ? `${storageKey}:preview:${previewRequest}` : storageKey;
   const visible = phase !== 'closed';
@@ -165,18 +165,20 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     <div className="invite-opening-stage">
       <div className="invite-opening-doors" aria-hidden="true">
         {(['left', 'right'] as const).map(side => <div className={`invite-opening-door invite-opening-door--${side}`} key={side}>
-          {!imageFailed && imageUrl && <img className="invite-opening-art" ref={side === 'left' ? artwork : undefined} src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" />}
+          {!imageFailed && imageUrl && <span className="invite-opening-canopy"><img className="invite-opening-art" ref={side === 'left' ? artwork : undefined} src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" /></span>}
           <span className="invite-opening-door-wash" />
           <span className="invite-opening-door-frame" />
           <span className="invite-opening-door-handle" />
         </div>)}
       </div>
-      <div className="invite-opening-seal" aria-hidden="true"><Heart size={19} strokeWidth={1.2} /><span>WITH LOVE</span></div>
-      <div className="invite-opening-copy">
-        <p className="invite-opening-eyebrow">{replay ? '입장 효과 미리보기' : 'A NEW CHAPTER OF OUR LOVE'}</p>
-        <Heart className="invite-opening-heart" size={17} strokeWidth={1.2} aria-hidden="true" />
-        <h2 id={titleId}><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></h2>
-        <p className="invite-opening-message" id={descriptionId}>우리의 시작에<br />소중한 당신을 초대합니다.</p>
+      <div className="invite-opening-intro">
+        <div className="invite-opening-copy">
+          <p className="invite-opening-eyebrow">{replay ? '입장 효과 미리보기' : 'A NEW CHAPTER OF OUR LOVE'}</p>
+          <Heart className="invite-opening-heart" size={17} strokeWidth={1.2} aria-hidden="true" />
+          <h2 id={titleId}><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></h2>
+          <p className="invite-opening-message" id={descriptionId}>우리의 시작에<br />소중한 당신을 초대합니다.</p>
+        </div>
+        <div className="invite-opening-seal" aria-hidden="true"><Heart size={19} strokeWidth={1.2} /><span>WITH LOVE</span></div>
       </div>
       <button className="invite-opening-skip" type="button" autoFocus onClick={complete}>건너뛰기<ArrowRight size={13} strokeWidth={1.3} aria-hidden="true" /></button>
       <span className="invite-opening-progress" role="status">{phase === 'opening' ? '초대장을 열고 있어요.' : ''}</span>
