@@ -10,6 +10,7 @@ interface OpeningSample {
   motion: string | null;
   phase: string | null;
   copyOpacity: number;
+  sceneOpacity: number;
   doors: { width: number; rotation: number; x: number; opacity: number }[];
   buttons: string[];
   text: string;
@@ -29,6 +30,7 @@ async function observeOpening(page: Page) {
         evidence.samples.push({
           time: performance.now(), motion: entrance.getAttribute('data-motion'), phase: entrance.getAttribute('data-opening-state'),
           copyOpacity: Number(getComputedStyle(entrance.querySelector('.invite-opening-copy')!).opacity),
+          sceneOpacity: Number(getComputedStyle(entrance.querySelector('.invite-opening-scene')!).opacity),
           doors: [...entrance.querySelectorAll('.invite-opening-door')].map(door => {
             const style = getComputedStyle(door), matrix = new DOMMatrix(style.transform);
             return { width: matrix.m11, rotation: matrix.m13, x: matrix.m41, opacity: Number(style.opacity) };
@@ -112,6 +114,10 @@ test('the first visit automatically opens real animated doors with only a skip a
   await expect(entrance).toHaveCount(0, { timeout: 7000 });
   const evidence = await page.evaluate(() => (window as EvidenceWindow).weddingOpeningEvidence!);
   expectReadableHold(evidence.samples);
+  // The doors reveal the illustration before it dissolves, rather than
+  // opening straight onto an unrelated saved template.
+  expect(evidence.samples.some(sample => sample.phase === 'opening' && sample.doors[0].width < .55 && sample.sceneOpacity > .8)).toBe(true);
+  expect(evidence.samples.at(-1)!.sceneOpacity).toBe(0);
   expect(evidence.finishedAt - evidence.samples[0].time).toBeGreaterThan(4900);
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
@@ -164,6 +170,7 @@ test('reduced-motion visitors receive a readable automatic entrance with gentle 
   expect(samples.some(sample => sample.phase === 'opening')).toBe(true);
   expect(samples.every(sample => sample.motion === 'reduced' && sample.doors.every(door => door.rotation === 0 && door.width === 1) && sample.buttons.length === 1 && sample.buttons[0] === '건너뛰기')).toBe(true);
   expect(samples.some(sample => sample.doors[0].x < -1 && sample.doors[1].x > 1 && sample.doors.every(door => door.opacity > .1 && door.opacity < .9))).toBe(true);
+  expect(samples.at(-1)!.sceneOpacity).toBe(0);
   expect(samples.every(sample => !sample.text.includes('기기의 움직임') && !sample.text.includes('문 열림 효과 보기') && !sample.text.includes('초대장 열기'))).toBe(true);
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');

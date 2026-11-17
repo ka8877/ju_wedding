@@ -163,6 +163,12 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     onCancel={event => { event.preventDefault(); complete(); }}
   >
     <div className="invite-opening-stage">
+      <div className="invite-opening-scene" aria-hidden="true">
+        {!imageFailed && imageUrl && <img className="invite-opening-scene-art" src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" />}
+        <span className="invite-opening-scene-light" />
+        <div className="invite-opening-scene-names"><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></div>
+        <span className="invite-opening-scene-note">OUR FOREVER BEGINS</span>
+      </div>
       <div className="invite-opening-doors" aria-hidden="true">
         {(['left', 'right'] as const).map(side => <div className={`invite-opening-door invite-opening-door--${side}`} key={side}>
           {!imageFailed && imageUrl && <span className="invite-opening-canopy"><img className="invite-opening-art" ref={side === 'left' ? artwork : undefined} src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" /></span>}

@@ -1,0 +1,63 @@
+/* Keep the saved template, palette, font and copy while giving the invitation
+   a quieter reading rhythm. Variables also keep the editor preview in sync. */
+.invitation .invite-section { padding-top: 72px; padding-bottom: 72px; }
+.invitation .invite-section-index { margin-bottom: 27px; font-size: 9px; letter-spacing: .17em; }
+.invitation .invite-section-index i { width: 30px; }
+.invitation .invite-letter-copy,
+.invitation .invite-blessing-copy { font-size: calc(13px * var(--invite-copy-scale)); line-height: 2.5; color: color-mix(in srgb, var(--invite-ink) 82%, var(--invite-accent)); }
+.invitation .invite-letter-copy { padding-top: 28px; }
+.invitation .invite-family { margin-top: 38px; margin-bottom: 30px; gap: 14px; }
+.invitation .invite-family-row { flex-wrap: wrap; }
+.invitation .invite-verse { padding-top: 56px; padding-bottom: 56px; }
+.invitation .invite-verse p { font-size: calc(12px * var(--invite-copy-scale)); line-height: 2.4; }
+.invitation .invite-subtitle,
+.invitation .invite-countdown-note,
+.invitation .invite-verse small,
+.invitation .invite-address,
+.invitation .invite-directions p,
+.invitation .guest-footnote,
+.invitation .guest-status { color: color-mix(in srgb, var(--invite-ink) 70%, var(--invite-bg)); }
+.invitation .invite-subtitle { font-size: calc(11px * var(--invite-copy-scale)); }
+.invitation .invite-calendar { padding-top: 22px; padding-bottom: 22px; margin-top: 32px; }
+.invitation .invite-calendar-grid > span { height: 40px; font-size: 13px; }
+.invitation .invite-calendar-heart { top: 2px; }
+.invitation .invite-countdown { margin-top: 32px; gap: 20px; }
+.invitation .invite-countdown strong { font-size: 32px; }
+.invitation .invite-countdown span { font-size: 8px; letter-spacing: .13em; }
+.invitation .invite-countdown-note { font-size: calc(11px * var(--invite-copy-scale)); }
+.invitation .invite-outline-button { min-height: 46px; font-size: 11px !important; border-radius: 6px; }
+.invitation .invite-gallery { gap: 6px; margin-top: 32px; }
+.invitation .invite-gallery-item { border-radius: 4px; }
+.invitation .guest-public-block { margin-top: 29px; gap: 19px; }
+.invitation .guest-intro { font-size: calc(12px * var(--invite-copy-scale)); line-height: 2.2; }
+.invitation .guest-footnote,
+.invitation .guest-status { font-size: calc(11px * var(--invite-copy-scale)); }
+.invitation .invite-rsvp-section .guest-action { background: var(--invite-accent); color: var(--invite-bg); border-color: var(--invite-accent); min-height: 48px; }
+.invitation .invite-venue-name { font-size: calc(18px * var(--invite-copy-scale)); }
+.invitation .invite-directions p { font-size: calc(12px * var(--invite-copy-scale)); }
+.invitation .invite-closing { padding-top: 70px; }
+.invitation .invite-closing > .invite-preserve { font-size: calc(13px * var(--invite-copy-scale)); }
+
+/* Put the couple, date and venue before the artwork in the letter cover, so a
+   guest can find the essential details on the first phone screen. */
+.invite-template--letter .invite-letter-heading { padding-top: 35px; text-align: center; }
+.invite-template--letter .invite-letter-to { font-size: 12px; padding-bottom: 9px; }
+.invite-template--letter .invite-hero-heading { padding: 24px 0 20px; }
+.invite-template--letter .invite-hero-heading h1 { padding: 17px 0 0; font-size: calc(clamp(38px, 12cqw, 63px) * var(--invite-copy-scale)); line-height: 1.13; letter-spacing: -.055em; overflow-wrap: anywhere; }
+.invite-template--letter .invite-hero-heading h1 em { padding-left: 0; }
+.invite-template--letter .invite-hero-details { padding: 4px 0 31px; }
+.invite-template--letter .invite-korean-names { font-size: calc(22px * var(--invite-copy-scale)); gap: 16px; }
+.invite-template--letter .invite-hero-date { margin-top: 14px !important; }
+.invite-template--letter .invite-hero-venue { margin-top: 3px !important; }
+.invite-template--letter .invite-envelope { padding: 10px; transform: rotate(-1.2deg); }
+.invite-template--letter .invite-letter-signoff { padding-top: 27px; }
+.invite-template--letter .invite-letter .invite-letter-copy { text-align: center; }
+.invite-template--letter .invite-letter .invite-section-index { justify-content: center; }
+
+@container invitation (max-width: 359px) {
+  .invitation .invite-section { padding-top: 60px; padding-bottom: 60px; }
+  .invitation .invite-countdown { gap: 15px; }
+  .invite-template--letter .invite-letter-heading { padding-top: 29px; }
+  .invite-template--letter .invite-hero-heading { padding-top: 20px; }
+  .invite-template--letter .invite-korean-names { gap: 11px; }
+}

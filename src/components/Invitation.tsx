@@ -14,6 +14,7 @@ import InvitationOpening from './InvitationOpening';
 import '../styles/cover-style.css';
 import { getGoogleVenueUrl, getNaverVenueUrl, getVenueCoordinates } from '../lib/venue-map';
 import '../styles/invitation.css';
+import '../styles/invitation-refinements.css';
 
 interface InvitationProps { data: WeddingData; preview?: boolean }
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -143,7 +144,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
     photo: <><div className="invite-cinematic-frame">{cover}<div className="invite-cinematic-shade" /><div className="invite-cinematic-content">{masthead}{heading}{details}<span className="invite-cinematic-caption">A LOVE STORY, OURS TO TELL</span></div></div>{scroll}</>,
     classic: <>{masthead}<div className="invite-classic-border">{design.showDecoration && <div className="invite-monogram" aria-hidden="true">{initials}</div>}{heading}{cover}{details}<span className="invite-classic-caption">REQUEST THE HONOUR OF YOUR PRESENCE</span></div>{scroll}</>,
     chapel: <>{masthead}<div className="invite-chapel-heading">{cross}<span>BY GRACE, THROUGH LOVE</span></div>{heading}<div className="invite-chapel-window">{cover}</div>{details}{scroll}</>,
-    letter: <>{masthead}<div className="invite-letter-heading"><span className="invite-letter-to">To. 소중한 당신에게</span>{heading}</div><div className="invite-envelope">{cover}{design.showDecoration && <span className="invite-wax-seal" aria-hidden="true"><Heart size={19} strokeWidth={1} /></span>}</div>{details}<div className="invite-letter-signoff"><span>with all our love,</span>{englishNames}</div>{scroll}</>,
+    letter: <>{masthead}<div className="invite-letter-heading"><span className="invite-letter-to">To. 소중한 당신에게</span>{heading}</div>{details}<div className="invite-envelope">{cover}{design.showDecoration && <span className="invite-wax-seal" aria-hidden="true"><Heart size={19} strokeWidth={1} /></span>}</div><div className="invite-letter-signoff"><span>with all our love,</span>{englishNames}</div>{scroll}</>,
   };
   const style = { ...(design.accentColor && /^#[0-9a-f]{6}$/i.test(design.accentColor) ? { '--invite-accent': design.accentColor } : {}) } as CSSProperties;
   const sections: Record<SectionId, ReactNode> = {

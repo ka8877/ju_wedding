@@ -65,6 +65,7 @@ test('the deployed invitation shows gradual doors, actual Naver tiles and a scan
     expect(proof!.holdEnded - proof!.holdStarted).toBeGreaterThanOrEqual(1200);
     expect(proof!.moved).toBe(true);
     console.log('Production entrance proof:', JSON.stringify({ elapsed: proof!.ended - proof!.started, held: proof!.holdEnded - proof!.holdStarted, movingDoors: proof!.moved }));
+    await page.screenshot({ path: testInfo.outputPath('invitation-mobile.png') });
     await page.locator('[data-section="location"]').scrollIntoViewIfNeeded();
     await expect(map).toHaveAttribute('data-map-provider', 'naver');
     await expect(map).toHaveAttribute('data-map-state', 'ready', { timeout: 25_000 });
