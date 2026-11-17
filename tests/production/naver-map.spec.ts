@@ -51,7 +51,9 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
             if (!proof.nameRevealTime && cover.dataset.namesVisible === 'true' && film.currentTime > 0) proof.nameRevealTime = film.currentTime;
           }
         } else if (proof.started && !proof.ended) proof.ended = performance.now();
-        if (!proof.ended && performance.now() < 30_000) requestAnimationFrame(sample);
+        // Navigation and public-data loading can precede the film by many
+        // seconds. Observe until actual dismissal; the test bounds its lifetime.
+        if (!proof.ended) requestAnimationFrame(sample);
       };
       requestAnimationFrame(sample);
     });
@@ -128,6 +130,7 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
       const node = document.querySelector('.venue-map');
       const sdk = (window as Window & { naver?: { maps?: { Map?: unknown; Service?: { geocode?: unknown }; jsContentLoaded?: boolean } } }).naver?.maps;
       return {
+        openingProof: (window as Window & { invitationOpeningProof?: unknown }).invitationOpeningProof,
         mapState: node?.getAttribute('data-map-state'),
         sdk: { map: typeof sdk?.Map, geocode: typeof sdk?.Service?.geocode, jsContentLoaded: sdk?.jsContentLoaded },
         images: [...(node?.querySelectorAll('img') || [])].map(image => ({
