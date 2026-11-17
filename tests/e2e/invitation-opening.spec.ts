@@ -50,8 +50,7 @@ test.beforeEach(async ({ page }) => {
   await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, route => route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }));
 });
 
-async function publishFixture(page: Page, data: WeddingData) {
-  await page.goto('/');
+async function storePublishedFixture(page: Page, data: WeddingData) {
   await page.evaluate(async wedding => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('jo-and-joo', 1);
@@ -65,10 +64,15 @@ async function publishFixture(page: Page, data: WeddingData) {
     });
     db.close();
   }, data);
+}
+
+async function publishFixture(page: Page, data: WeddingData) {
+  await page.goto('/');
+  await storePublishedFixture(page, data);
   await page.reload();
 }
 
-test('the first visit plays the real garden entrance and reveals the names near its end, once per session', async ({ page }) => {
+test('a root visit plays the full garden entrance and a fresh reload plays it again', async ({ page }, testInfo) => {
   await observeOpening(page);
   await page.addInitScript(key => {
     for (const version of ['v1', 'v2', 'v3', 'v4', 'v5']) sessionStorage.setItem(key.replace('wedding-opening:v6:', `wedding-opening:${version}:`), 'opened');
@@ -95,6 +99,7 @@ test('the first visit plays the real garden entrance and reveals the names near 
   expect(await copy.evaluate(element => Number(getComputedStyle(element).opacity))).toBeLessThan(.1);
   await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 12000 }).toBeGreaterThan(7.5);
   await expect.poll(() => copy.evaluate(element => Number(getComputedStyle(element).opacity))).toBeGreaterThan(.5);
+  await page.screenshot({ path: testInfo.outputPath('garden-entrance-names.png') });
   await expect(entrance).toHaveCount(0, { timeout: 8000 });
 
   const evidence = await page.evaluate(() => (window as EvidenceWindow).weddingOpeningEvidence!);
@@ -103,13 +108,54 @@ test('the first visit plays the real garden entrance and reveals the names near 
   expect(evidence.samples.filter(sample => sample.filmTime > .8 && sample.filmTime < 6).every(sample => sample.copyOpacity < .1)).toBe(true);
   expect(evidence.samples.some(sample => sample.filmTime >= 7.4 && sample.copyOpacity > .8)).toBe(true);
   expect(evidence.finishedAt - evidence.samples[0].time).toBeGreaterThan(10_000);
-  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
   await expect(page.locator('#wedding-title')).toBeFocused();
   await page.reload();
-  await expect(page.locator('#wedding-title')).toBeVisible();
+  await expect(entrance).toBeVisible();
+  await expect(entrance).toHaveAttribute('data-opening-media', 'video');
+  await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 8000 }).toBeGreaterThan(.8);
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
   await expect(entrance).toHaveCount(0);
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
   expect(errors).toEqual([]);
+});
+
+test('legacy completion flags cannot skip a root visit or a return from the editor', async ({ page }) => {
+  await page.addInitScript(key => sessionStorage.setItem(key, 'opened'), openingKey);
+  await page.goto('/');
+  const entrance = page.locator('.invite-opening');
+  const film = entrance.locator('video.invite-opening-film');
+  await expect(entrance).toBeVisible();
+  await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 8000 }).toBeGreaterThan(.8);
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
+  await expect(entrance).toHaveCount(0);
+  await page.getByRole('link', { name: '우리 청첩장 관리' }).click();
+  await expect(page.locator('.admin-app')).toBeVisible();
+  await expect(entrance).toHaveCount(0);
+  await page.getByRole('link', { name: '공개 청첩장 보기', exact: true }).click();
+  await expect(entrance).toBeVisible();
+  await expect(entrance).toHaveAttribute('data-opening-media', 'video');
+  await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 8000 }).toBeGreaterThan(.8);
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
+  await expect(entrance).toHaveCount(0);
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
+});
+
+test('refreshing the mounted invitation updates its copy without reopening the entrance', async ({ page }) => {
+  await page.goto('/');
+  const entrance = page.locator('.invite-opening');
+  await expect(entrance).toBeVisible();
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
+  await expect(entrance).toHaveCount(0);
+  const data = structuredClone(defaultWedding);
+  data.invitation = '새로 불러온 초대 문구입니다.';
+  await storePublishedFixture(page, data);
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.locator('.invite-letter-copy')).toContainText(data.invitation);
+  await expect(entrance).toHaveCount(0);
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
 });
 
 test('keyboard skip dismisses immediately, restores scrolling, and leaves the invitation accessible', async ({ page }) => {
@@ -123,7 +169,7 @@ test('keyboard skip dismisses immediately, restores scrolling, and leaves the in
   await expect(page.locator('#wedding-title')).toBeFocused();
   await page.locator('.invite-scroll').click();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
 });
 
 test('Escape is available while the garden film is playing', async ({ page }) => {
@@ -151,7 +197,7 @@ test('reduced-motion visitors see a readable still without video playback', asyn
   expect(evidence.samples.some(sample => sample.copyOpacity > .8)).toBe(true);
   expect(evidence.samples.every(sample => sample.motion === 'reduced' && sample.filmTime < .05 && sample.filmPaused && sample.buttons.length === 1 && sample.buttons[0] === '건너뛰기')).toBe(true);
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
-  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
 });
 
 test('an explicit replay link plays the film despite reduced motion and an existing session', async ({ page }) => {
@@ -166,8 +212,11 @@ test('an explicit replay link plays the film despite reduced motion and an exist
   await expect(entrance).toHaveCount(0, { timeout: 500 });
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
   await page.goto('/');
-  await expect(page.locator('#wedding-title')).toBeVisible();
+  await expect(entrance).toBeVisible();
+  await expect(entrance).toHaveAttribute('data-motion', 'reduced');
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
   await expect(entrance).toHaveCount(0);
+  expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');
 });
 
 test('a failed garden film falls back to a readable still and never blocks arrival', async ({ page }) => {
@@ -194,6 +243,46 @@ test('autoplay rejection uses the still fallback instead of leaving a frozen gat
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
 });
 
+test('a four-second garden download delay still plays the video instead of the still fallback', async ({ page }) => {
+  await page.route('**/garden-entrance.mp4', async route => {
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    await route.continue();
+  });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const entrance = page.locator('.invite-opening');
+  const film = entrance.locator('video.invite-opening-film');
+  await expect(entrance).toBeVisible();
+  await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 12_000 }).toBeGreaterThan(.8);
+  await expect(entrance).toHaveAttribute('data-opening-media', 'video');
+  expect(await film.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
+  await expect(entrance).toHaveCount(0, { timeout: 500 });
+});
+
+test('five seconds of buffering does not truncate the full garden film', async ({ page }) => {
+  await observeOpening(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const entrance = page.locator('.invite-opening');
+  const film = entrance.locator('video.invite-opening-film');
+  await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 8000 }).toBeGreaterThan(.8);
+  const pausedAt = await film.evaluate(element => {
+    const video = element as HTMLVideoElement;
+    video.pause();
+    return video.currentTime;
+  });
+  // Freeze the actual media clock to simulate a buffered stream. The wall-clock
+  // duration now exceeds the old total-playback cutoff even though it recovers.
+  await page.waitForTimeout(5000);
+  await expect(entrance).toBeVisible();
+  expect(await film.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(pausedAt, 1);
+  await film.evaluate(element => (element as HTMLVideoElement).play());
+  await expect(entrance).toHaveCount(0, { timeout: 16_000 });
+  const evidence = await page.evaluate(() => (window as EvidenceWindow).weddingOpeningEvidence!);
+  expect(evidence.samples.some(sample => sample.filmEnded && sample.filmTime > 10)).toBe(true);
+  expect(evidence.finishedAt - evidence.samples[0].time).toBeGreaterThan(15_000);
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
+});
+
 test('a stalled garden download is bounded and skip remains available', async ({ page }) => {
   let release: () => void = () => {};
   const waiting = new Promise<void>(resolve => { release = resolve; });
@@ -203,7 +292,7 @@ test('a stalled garden download is bounded and skip remains available', async ({
   try {
     await expect(entrance).toBeVisible();
     await expect(entrance.getByRole('button', { name: '건너뛰기', exact: true })).toBeEnabled();
-    await expect(entrance).toHaveCount(0, { timeout: 20_000 });
+    await expect(entrance).toHaveCount(0, { timeout: 15_000 });
   } finally { release(); }
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
   await expect(page.locator('#wedding-title')).toBeFocused();
@@ -216,8 +305,6 @@ test('direct section links and disabled entrances bypass the film', async ({ pag
   const data = structuredClone(defaultWedding);
   data.guestFeatures.opening.enabled = false;
   await publishFixture(page, data);
-  await page.evaluate(key => sessionStorage.removeItem(key), openingKey);
-  await page.reload();
   await expect(page.locator('#wedding-title')).toBeVisible();
   await expect(page.locator('.invite-opening')).toHaveCount(0);
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
@@ -244,7 +331,7 @@ test('the editor can replay the garden film without changing guest session histo
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
 
   await page.evaluate(key => sessionStorage.setItem(key, 'opened'), openingKey);
-  await page.getByRole('checkbox', { name: /^첫 방문에 (?:입장 영상|입장 효과|문 열림 효과) 사용$/ }).uncheck();
+  await page.getByRole('checkbox', { name: /(?:입장 영상|입장 효과|문 열림 효과) 사용$/ }).uncheck();
   await preview.click();
   await expect(entrance).toBeVisible();
   await expect(entrance).toHaveAttribute('data-motion', 'full');

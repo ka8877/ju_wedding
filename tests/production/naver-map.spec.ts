@@ -13,6 +13,7 @@ function redact(value: string) {
 }
 
 test('the deployed invitation plays the garden film, actual Naver tiles and a scannable heart QR', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
   const events: { kind: string; message: string }[] = [];
   const isMapHost = (value: string) => {
     try { return /(?:^|\.)(?:naver\.com|pstatic\.net)$/.test(new URL(value).hostname); }
@@ -54,24 +55,29 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
       };
       requestAnimationFrame(sample);
     });
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#wedding-title')).toBeVisible();
-    await expect(page.locator('.invite-opening')).toBeVisible();
-    await expect(page.locator('.invite-opening-door, .invite-opening-seal')).toHaveCount(0);
-    await expect.poll(() => page.locator('video.invite-opening-film').evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 16_000 }).toBeGreaterThanOrEqual(8.2);
-    await page.screenshot({ path: testInfo.outputPath('entrance-garden.png') });
-    await expect(page.locator('.invite-opening')).toHaveCount(0, { timeout: 22_000 });
-    await expect.poll(() => page.evaluate(() => (window as Window & { invitationOpeningProof?: { ended: number } }).invitationOpeningProof?.ended || 0)).toBeGreaterThan(0);
-    const proof = await page.evaluate(() => (window as Window & { invitationOpeningProof?: { started: number; ended: number; maxVideoTime: number; duration: number; decodedFrame: boolean; filmEnded: boolean; nameRevealTime: number; media: string } }).invitationOpeningProof);
-    expect(proof).toBeDefined();
-    expect(proof!.ended - proof!.started).toBeGreaterThanOrEqual(10_000);
-    expect(proof!.media).toBe('video');
-    expect(proof!.duration).toBeGreaterThan(10);
-    expect(proof!.maxVideoTime).toBeGreaterThan(10);
-    expect(proof!.decodedFrame).toBe(true);
-    expect(proof!.filmEnded).toBe(true);
-    expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
-    console.log('Production entrance proof:', JSON.stringify(proof));
+    // Use the actual shared URL and then reload the same tab. A forced replay
+    // query would conceal a regression where remembered visits skip the film.
+    for (const visit of ['initial', 'reload'] as const) {
+      if (visit === 'initial') await page.goto('/', { waitUntil: 'domcontentloaded' });
+      else await page.reload({ waitUntil: 'domcontentloaded' });
+      await expect(page.locator('#wedding-title')).toBeVisible();
+      await expect(page.locator('.invite-opening')).toBeVisible();
+      await expect(page.locator('.invite-opening-door, .invite-opening-seal')).toHaveCount(0);
+      await expect.poll(() => page.locator('video.invite-opening-film').evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 16_000 }).toBeGreaterThanOrEqual(8.2);
+      await page.screenshot({ path: testInfo.outputPath(visit === 'initial' ? 'entrance-garden.png' : 'entrance-garden-reload.png') });
+      await expect(page.locator('.invite-opening')).toHaveCount(0, { timeout: 22_000 });
+      await expect.poll(() => page.evaluate(() => (window as Window & { invitationOpeningProof?: { ended: number } }).invitationOpeningProof?.ended || 0)).toBeGreaterThan(0);
+      const proof = await page.evaluate(() => (window as Window & { invitationOpeningProof?: { started: number; ended: number; maxVideoTime: number; duration: number; decodedFrame: boolean; filmEnded: boolean; nameRevealTime: number; media: string } }).invitationOpeningProof);
+      expect(proof).toBeDefined();
+      expect(proof!.ended - proof!.started).toBeGreaterThanOrEqual(10_000);
+      expect(proof!.media).toBe('video');
+      expect(proof!.duration).toBeGreaterThan(10);
+      expect(proof!.maxVideoTime).toBeGreaterThan(10);
+      expect(proof!.decodedFrame).toBe(true);
+      expect(proof!.filmEnded).toBe(true);
+      expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
+      console.log(`Production entrance proof (${visit}):`, JSON.stringify(proof));
+    }
     const fontFamilies: Record<string, string> = { serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang', myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script', 'clear-handwriting': 'Gaegu' };
     const selectedFont = (await page.locator('.invitation').getAttribute('data-font'))!;
     const expectedFamily = fontFamilies[selectedFont];

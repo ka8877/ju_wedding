@@ -18,21 +18,8 @@ interface InvitationOpeningProps {
 }
 
 type OpeningPhase = 'closed' | 'ready' | 'holding' | 'opening' | 'leaving';
-const completedInMemory = new Set<string>();
 const entranceFilm = `${import.meta.env.BASE_URL}garden-entrance.mp4`;
 const entrancePoster = `${import.meta.env.BASE_URL}garden-entrance-poster.jpg`;
-
-function hasOpened(key: string) {
-  if (completedInMemory.has(key)) return true;
-  try { return window.sessionStorage.getItem(key) === 'opened'; }
-  catch { return false; }
-}
-
-function rememberOpening(key: string) {
-  completedInMemory.add(key);
-  try { window.sessionStorage.setItem(key, 'opened'); }
-  catch { /* A blocked storage API must not prevent entering the invitation. */ }
-}
 
 function isSectionLink() {
   return Boolean(window.location.hash && !['#', '#/'].includes(window.location.hash));
@@ -53,19 +40,16 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   onOpenedRef.current = onOpened;
   const titleId = useId();
   const descriptionId = useId();
-  // A new entrance must also play for visitors who completed the old paper doors.
-  const storageKey = `wedding-opening:v6:${sessionKey}`;
   const replay = previewRequest > 0;
   const requestedFilm = !preview && new URLSearchParams(window.location.search).get('intro') === 'play';
   const explicitPlayback = replay || requestedFilm;
-  const openingIdentity = replay ? `${storageKey}:preview:${previewRequest}` : storageKey;
+  const openingIdentity = replay ? `${sessionKey}:preview:${previewRequest}` : sessionKey;
   const visible = phase !== 'closed';
   const still = fallback || motion === 'reduced';
 
   const complete = useCallback(() => {
     if (completedKey.current === openingIdentity) return;
     completedKey.current = openingIdentity;
-    if (!replay) rememberOpening(storageKey);
     film.current?.pause();
     dialog.current?.close();
     setPhase('closed');
@@ -79,14 +63,17 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
       heading.focus({ preventScroll: true });
       if (previousTabIndex === null) heading.addEventListener('blur', () => heading.removeAttribute('tabindex'), { once: true });
     });
-  }, [openingIdentity, replay, storageKey]);
+  }, [openingIdentity, replay]);
 
   useEffect(() => {
-    if (!replay && (!enabled || preview || isSectionLink() || (!requestedFilm && hasOpened(storageKey)))) { setPhase('closed'); return; }
+    if (!replay && (!enabled || preview || isSectionLink())) { setPhase('closed'); return; }
+    // Each fresh visit plays the entrance. Renders within this visit do not
+    // reopen it, and old once-per-tab flags must not silently skip the film.
+    completedKey.current = '';
     returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setMotion(explicitPlayback ? 'full' : window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
     setFallback(false); setElapsed(0); setPhase('ready');
-  }, [enabled, preview, replay, previewRequest, storageKey, requestedFilm, explicitPlayback]);
+  }, [enabled, preview, replay, previewRequest, sessionKey, explicitPlayback]);
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -119,7 +106,7 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     if (!video) return;
     const ready = () => setPhase('holding');
     const failed = () => { setFallback(true); setPhase('holding'); };
-    const timeout = window.setTimeout(failed, 2500);
+    const timeout = window.setTimeout(failed, 8000);
     video.addEventListener('loadeddata', ready, { once: true });
     video.addEventListener('error', failed, { once: true });
     if (video.readyState >= 2) ready();
@@ -139,9 +126,16 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     if (!video) return;
     let cancelled = false;
     void video.play().catch(() => { if (!cancelled) { setFallback(true); setPhase('holding'); } });
-    // A stalled stream must not trap the guest behind the invitation.
-    const watchdog = window.setTimeout(() => setPhase('leaving'), 14_000);
-    return () => { cancelled = true; clearTimeout(watchdog); video.pause(); };
+    // Brief buffering should not cut a 10-second film short. Bound a stream
+    // that makes no progress separately from the total time spent watching it.
+    let lastTime = video.currentTime;
+    let lastProgress = performance.now();
+    const watchdog = window.setInterval(() => {
+      if (video.currentTime > lastTime) { lastTime = video.currentTime; lastProgress = performance.now(); }
+      if (performance.now() - lastProgress >= 8000) { setFallback(true); setPhase('holding'); }
+    }, 500);
+    const ceiling = window.setTimeout(() => setPhase('leaving'), 30_000);
+    return () => { cancelled = true; clearInterval(watchdog); clearTimeout(ceiling); video.pause(); };
   }, [phase, still]);
 
   useEffect(() => {
