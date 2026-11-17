@@ -36,7 +36,7 @@ export default function EventOptionsEditor({ data, onChange }: Props) {
   return <div className="event-options-editor">
     <div className="editor-section-heading"><span className="editor-eyebrow">06 / LITTLE DETAILS</span><h2>작은 디테일까지, 두 분답게.</h2><p>음악과 사진, 하객분들께 전할 안내를 편하게 조정해요.<br />변경한 내용은 아래에서 초안 저장 후 공개 반영해 주세요.</p></div>
 
-    <Card icon={<DoorOpen size={19} />} title="문을 열며 시작하는 초대" description="사이트에 들어오면 정원의 문이 자동으로 열리며 두 분의 초대장이 펼쳐져요.">
+    <Card icon={<DoorOpen size={19} />} title="정원으로 이어지는 초대" description="리본 표지가 열리고 꽃이 핀 정원을 지나 두 분에게 다가가는 영상이 재생돼요.">
       <Toggle label="첫 방문에 문 열림 효과 사용" checked={features.opening.enabled} onChange={enabled => update('opening', { enabled })} />
       <button type="button" className="event-option-preview-button" onClick={() => setOpeningPreview(request => request + 1)}><Eye size={16} />문 열림 효과 미리보기</button>
       <InvitationOpening enabled groomName={data.groom.name} brideName={data.bride.name} imageUrl={`${import.meta.env.BASE_URL}garden-wedding.webp`} sessionKey={`${data.groom.name}:${data.bride.name}:${data.date}`} preview previewRequest={openingPreview} />

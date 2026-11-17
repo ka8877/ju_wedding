@@ -12,7 +12,7 @@ function redact(value: string) {
   return value.replace(/([?&](?:auth|token|clientId|ncpKeyId|key)=)[^&\s"']+/gi, '$1[redacted]');
 }
 
-test('the deployed invitation shows gradual doors, actual Naver tiles and a scannable heart QR', async ({ page }, testInfo) => {
+test('the deployed invitation plays the garden film, actual Naver tiles and a scannable heart QR', async ({ page }, testInfo) => {
   const events: { kind: string; message: string }[] = [];
   const isMapHost = (value: string) => {
     try { return /(?:^|\.)(?:naver\.com|pstatic\.net)$/.test(new URL(value).hostname); }
@@ -34,37 +34,44 @@ test('the deployed invitation shows gradual doors, actual Naver tiles and a scan
   const map = page.locator('[data-section="location"] .venue-map');
   try {
     await page.addInitScript(() => {
-      const proof = { started: 0, ended: 0, holdStarted: 0, holdEnded: 0, moved: false };
+      const proof = { started: 0, ended: 0, maxVideoTime: 0, duration: 0, decodedFrame: false, filmEnded: false, nameRevealTime: 0, media: '' };
       (window as Window & { invitationOpeningProof?: typeof proof }).invitationOpeningProof = proof;
       const sample = () => {
         const cover = document.querySelector<HTMLDialogElement>('.invite-opening');
         if (cover?.open) {
           if (!proof.started) proof.started = performance.now();
-          if (cover.dataset.openingState === 'holding') {
-            if (!proof.holdStarted) proof.holdStarted = performance.now();
-            proof.holdEnded = performance.now();
-          }
-          const door = cover.querySelector('.invite-opening-door');
-          if (door) {
-            const matrix = new DOMMatrix(getComputedStyle(door).transform);
-            if (Math.abs(matrix.m13) > .1 && Math.abs(matrix.m13) < .99) proof.moved = true;
+          proof.media = cover.dataset.openingMedia || '';
+          const film = cover.querySelector<HTMLVideoElement>('.invite-opening-film');
+          if (film) {
+            proof.maxVideoTime = Math.max(proof.maxVideoTime, film.currentTime);
+            if (Number.isFinite(film.duration)) proof.duration = film.duration;
+            proof.decodedFrame ||= film.readyState >= 2 && film.currentTime > 1;
+            proof.filmEnded ||= film.ended;
+            if (!proof.nameRevealTime && cover.dataset.namesVisible === 'true' && film.currentTime > 0) proof.nameRevealTime = film.currentTime;
           }
         } else if (proof.started && !proof.ended) proof.ended = performance.now();
-        if (!proof.ended && performance.now() < 20_000) requestAnimationFrame(sample);
+        if (!proof.ended && performance.now() < 30_000) requestAnimationFrame(sample);
       };
       requestAnimationFrame(sample);
     });
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#wedding-title')).toBeVisible();
     await expect(page.locator('.invite-opening')).toBeVisible();
-    await expect(page.locator('.invite-opening')).toHaveCount(0, { timeout: 12_000 });
+    await expect(page.locator('.invite-opening-door, .invite-opening-seal')).toHaveCount(0);
+    await expect.poll(() => page.locator('video.invite-opening-film').evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 16_000 }).toBeGreaterThanOrEqual(8.2);
+    await page.screenshot({ path: testInfo.outputPath('entrance-garden.png') });
+    await expect(page.locator('.invite-opening')).toHaveCount(0, { timeout: 22_000 });
     await expect.poll(() => page.evaluate(() => (window as Window & { invitationOpeningProof?: { ended: number } }).invitationOpeningProof?.ended || 0)).toBeGreaterThan(0);
-    const proof = await page.evaluate(() => (window as Window & { invitationOpeningProof?: { started: number; ended: number; holdStarted: number; holdEnded: number; moved: boolean } }).invitationOpeningProof);
+    const proof = await page.evaluate(() => (window as Window & { invitationOpeningProof?: { started: number; ended: number; maxVideoTime: number; duration: number; decodedFrame: boolean; filmEnded: boolean; nameRevealTime: number; media: string } }).invitationOpeningProof);
     expect(proof).toBeDefined();
-    expect(proof!.ended - proof!.started).toBeGreaterThanOrEqual(4900);
-    expect(proof!.holdEnded - proof!.holdStarted).toBeGreaterThanOrEqual(1200);
-    expect(proof!.moved).toBe(true);
-    console.log('Production entrance proof:', JSON.stringify({ elapsed: proof!.ended - proof!.started, held: proof!.holdEnded - proof!.holdStarted, movingDoors: proof!.moved }));
+    expect(proof!.ended - proof!.started).toBeGreaterThanOrEqual(10_000);
+    expect(proof!.media).toBe('video');
+    expect(proof!.duration).toBeGreaterThan(10);
+    expect(proof!.maxVideoTime).toBeGreaterThan(10);
+    expect(proof!.decodedFrame).toBe(true);
+    expect(proof!.filmEnded).toBe(true);
+    expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
+    console.log('Production entrance proof:', JSON.stringify(proof));
     await page.screenshot({ path: testInfo.outputPath('invitation-mobile.png') });
     await page.locator('[data-section="location"]').scrollIntoViewIfNeeded();
     await expect(map).toHaveAttribute('data-map-provider', 'naver');

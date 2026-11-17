@@ -1,142 +1,30 @@
 .invite-opening {
-  --opening-ink: #4d5b43;
-  --opening-cream: #f3f0e4;
-  --opening-full-duration: 3400ms;
-  --opening-reduced-duration: 1400ms;
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  height: 100dvh;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  background: transparent;
-  color: var(--opening-ink);
-  font-family: 'Noto Serif KR', 'Batang', Georgia, serif;
-  perspective: 1600px;
+  position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; height: 100dvh;
+  max-height: none; margin: 0; padding: 0; border: 0; overflow: hidden;
+  background: transparent; color: #5b604d; font-family: 'Gowun Batang', 'Noto Serif KR', 'Batang', serif;
   -webkit-tap-highlight-color: transparent;
 }
-.invite-opening::backdrop {
-  /* ::backdrop does not inherit the dialog's custom properties. */
-  --opening-full-duration: 3400ms;
-  --opening-reduced-duration: 1400ms;
-  background: #e9e7dd;
-}
-.invite-opening--opening[data-motion='full']::backdrop { animation: invite-opening-backdrop var(--opening-full-duration) linear both; }
-.invite-opening--opening[data-motion='reduced']::backdrop { animation: invite-opening-backdrop var(--opening-reduced-duration) linear both; }
-.invite-opening-stage { position: relative; width: min(100%, 520px); height: 100%; margin: 0 auto; perspective: 1600px; container-type: inline-size; }
-.invite-opening-scene { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: #edf0df; }
-.invite-opening-scene-art { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 65%; }
-.invite-opening-scene-light { position: absolute; inset: 0; background: radial-gradient(ellipse at 65% 17%, #fffde9a6, transparent 48%), linear-gradient(to bottom, #fbf9e914, transparent 64%, #f6f1dd7a); }
-.invite-opening-scene-names { position: absolute; top: 22%; left: 24px; right: 24px; display: flex; justify-content: center; align-items: center; gap: 13px; color: #435137; font-size: clamp(19px, 5cqw, 25px); line-height: 1.6; letter-spacing: .08em; text-shadow: 0 1px 16px #fffef3, 0 0 30px #fffef3; }
-.invite-opening-scene-names small { font-size: 10px; letter-spacing: .12em; }
-.invite-opening-scene-note { position: absolute; left: 20px; right: 20px; bottom: max(84px, calc(env(safe-area-inset-bottom) + 70px)); text-align: center; color: #536044; font: 8px/1.5 'Noto Sans KR', sans-serif; letter-spacing: .25em; }
-.invite-opening-doors { position: absolute; inset: 0; perspective: 1600px; filter: drop-shadow(0 7px 18px #33402d2b); }
-.invite-opening-door { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; background: radial-gradient(ellipse at 10% 10%, #e4e9d3 0, transparent 50%), linear-gradient(150deg, #faf8ed, var(--opening-cream) 70%, #edeadb); backface-visibility: hidden; transform: rotateY(0deg) translateX(0); will-change: transform; }
-.invite-opening-door--left { left: 0; transform-origin: left center; border-right: 2px solid #adba9b; box-shadow: inset -4px 0 12px #50614325; }
-.invite-opening-door--right { right: 0; transform-origin: right center; border-left: 2px solid #f9f7e4; box-shadow: inset 4px 0 12px #50614320; }
-.invite-opening-canopy { position: absolute; inset: 0 0 auto; height: min(38vh, 65vw, 338px); height: min(38dvh, 65cqw); overflow: hidden; -webkit-mask-image: linear-gradient(#000 0%, #000 48%, transparent 100%); mask-image: linear-gradient(#000 0%, #000 48%, transparent 100%); }
-/* Each half shows only the upper canopy of the original portrait. Keeping the
-   asset's aspect ratio avoids stretching and never brings people onto doors. */
-.invite-opening-art { position: absolute; top: 0; width: 200%; max-width: none; height: auto; aspect-ratio: 2 / 3; }
-.invite-opening-door--left .invite-opening-art { left: 0; }
-.invite-opening-door--right .invite-opening-art { right: 0; }
-.invite-opening-door-wash { position: absolute; inset: 0; background: linear-gradient(to bottom, #f9f7ed00 0, #f4f2e31a 35%, #f3f1e624 70%, #eee9dc38); }
-.invite-opening-door-frame { position: absolute; top: 24px; bottom: 24px; width: calc(100% - 23px); border: 1px solid #a9b69470; box-shadow: 0 0 0 3px #fffdf366; }
-.invite-opening-door--left .invite-opening-door-frame { left: 23px; border-radius: 160px 0 0 0; border-right: 0; }
-.invite-opening-door--right .invite-opening-door-frame { right: 23px; border-radius: 0 160px 0 0; border-left: 0; }
-.invite-opening-door-handle { position: absolute; top: 72%; width: 4px; height: 22px; border-radius: 5px; background: linear-gradient(90deg, #c2aa78, #e7d3a8, #b39864); box-shadow: 0 2px 4px #5d5b3e27; opacity: .55; }
-.invite-opening-door--left .invite-opening-door-handle { right: 10px; }
-.invite-opening-door--right .invite-opening-door-handle { left: 10px; }
-.invite-opening-intro { position: absolute; top: clamp(72px, 15dvh, 180px); left: 28px; right: 28px; display: flex; flex-direction: column; align-items: center; gap: clamp(22px, 4dvh, 36px); }
-.invite-opening-seal { position: relative; flex-shrink: 0; width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border: 1px solid #eee6c496; border-radius: 50%; color: #faf8e8; background: radial-gradient(ellipse at 32% 22%, #9cab7d, #74865d 67%, #65774f); box-shadow: 0 0 0 4px #91a375b0, 0 0 0 5px #f0e9c4a3, 0 4px 14px #3e52332e; }
-.invite-opening-seal>span { font: 5px/1.2 'Noto Sans KR', sans-serif; letter-spacing: .13em; }
-.invite-opening-copy { width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; text-shadow: 0 1px 18px #faf9f0; }
-.invite-opening-eyebrow { margin: 0; color: #566348; font: 8px/1.6 'Noto Sans KR', sans-serif; letter-spacing: .22em; }
-.invite-opening-heart { margin-top: 24px; color: #7d8b68; }
-.invite-opening-copy h2 { display: flex; flex-direction: column; align-items: center; gap: 13px; margin: 21px 0 0; font-size: clamp(27px, 8vw, 37px); line-height: 1.45; letter-spacing: .15em; font-weight: 400; word-break: keep-all; }
+.invite-opening::backdrop { background: #eae9e3; }
+/* The film is 750 x 1624, the same portrait composition as the reference.
+   Contain it on wide/short screens instead of cropping the gate or the couple. */
+.invite-opening-stage { position: relative; width: min(100%, 46.1823dvh); height: 100%; margin: 0 auto; overflow: hidden; background: #f5f4ec; container-type: inline-size; }
+.invite-opening-film, .invite-opening-still { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; object-fit: cover; }
+.invite-opening-still { object-position: center 65%; }
+.invite-opening-copy { position: absolute; top: 27%; left: 18px; right: 18px; text-align: center; opacity: 0; transition: opacity 900ms ease; pointer-events: none; text-shadow: 0 1px 15px #fffdeb9c; }
+.invite-opening[data-names-visible='true'] .invite-opening-copy { opacity: 1; }
+.invite-opening-copy h2 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin: 0; font-size: clamp(18px, 6.2cqw, 29px); line-height: 1.7; font-weight: 400; letter-spacing: .12em; }
 .invite-opening-copy h2 span { max-width: 100%; overflow-wrap: anywhere; }
-.invite-opening-copy h2 small { font-size: 12px; line-height: 1.4; letter-spacing: .2em; color: #6e7b60; }
-.invite-opening-message { margin: 22px 0 0; font-size: 11px; line-height: 2; letter-spacing: .07em; color: #526047; }
-.invite-opening-skip:focus-visible { outline: 2px solid #4f6540; outline-offset: 5px; }
-.invite-opening-skip { position: absolute; z-index: 2; bottom: max(24px, env(safe-area-inset-bottom)); right: 25px; min-height: 44px; padding: 10px 13px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #72846242; border-radius: 24px; background: #faf8efc9; color: #435637; font: 11px/1.5 'Noto Sans KR', sans-serif; cursor: pointer; backdrop-filter: blur(4px); }
-.invite-opening-progress { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.invite-opening-copy h2 small { font-size: .57em; font-weight: 400; letter-spacing: .14em; }
+.invite-opening-preview-label { margin: 0 0 15px; font: 9px/1.6 'Noto Sans KR', sans-serif; letter-spacing: .05em; }
+.invite-opening-skip { position: absolute; right: 14px; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 9px 13px; border: 0; border-radius: 24px; color: #fff; background: #626459a8; backdrop-filter: blur(4px); font: 11px/1.5 'Noto Sans KR', sans-serif; cursor: pointer; }
+.invite-opening-skip:focus-visible { outline: 2px solid #fffef1; outline-offset: 4px; }
+.invite-opening-description { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .invitation #wedding-title[tabindex='-1']:focus { outline: none; }
-.invite-opening--opening[data-motion='full'] .invite-opening-door--left { animation: invite-opening-left var(--opening-full-duration) cubic-bezier(.38,.08,.28,1) both; }
-.invite-opening--opening[data-motion='full'] .invite-opening-door--right { animation: invite-opening-right var(--opening-full-duration) cubic-bezier(.38,.08,.28,1) both; }
-.invite-opening--opening[data-motion='full'] .invite-opening-copy { animation: invite-opening-copy var(--opening-full-duration) ease both; pointer-events: none; }
-.invite-opening--opening[data-motion='full'] .invite-opening-seal { animation: invite-opening-seal var(--opening-full-duration) ease both; }
-.invite-opening--opening[data-motion='full'] .invite-opening-scene { animation: invite-opening-scene var(--opening-full-duration) ease both; }
-.invite-opening--opening[data-motion='full'] .invite-opening-scene-art { animation: invite-opening-scene-drift var(--opening-full-duration) ease-out both; }
-.invite-opening--opening[data-motion='full'] .invite-opening-scene-light { animation: invite-opening-scene-light var(--opening-full-duration) ease-out both; }
-/* Scoped timings keep the automatic entrance visible without affecting other
-   page animations. Reduced motion keeps the readable hold, then gently moves
-   the two panels apart without 3D rotation. */
-.invite-opening--opening[data-motion='full']::backdrop,
-.invite-opening--opening[data-motion='full'] .invite-opening-door,
-.invite-opening--opening[data-motion='full'] .invite-opening-copy,
-.invite-opening--opening[data-motion='full'] .invite-opening-scene,
-.invite-opening--opening[data-motion='full'] .invite-opening-scene-art,
-.invite-opening--opening[data-motion='full'] .invite-opening-scene-light,
-.invite-opening--opening[data-motion='full'] .invite-opening-seal { animation-duration: var(--opening-full-duration) !important; animation-iteration-count: 1 !important; }
-.invite-opening--opening[data-motion='reduced'] .invite-opening-door--left { animation: invite-opening-left-reduced var(--opening-reduced-duration) ease-in-out both; }
-.invite-opening--opening[data-motion='reduced'] .invite-opening-door--right { animation: invite-opening-right-reduced var(--opening-reduced-duration) ease-in-out both; }
-.invite-opening--opening[data-motion='reduced'] .invite-opening-copy,
-.invite-opening--opening[data-motion='reduced'] .invite-opening-seal { animation: invite-opening-fade var(--opening-reduced-duration) ease both; }
-.invite-opening--opening[data-motion='reduced'] .invite-opening-scene { animation: invite-opening-scene var(--opening-reduced-duration) ease both; }
-.invite-opening--opening[data-motion='reduced']::backdrop,
-.invite-opening--opening[data-motion='reduced'] .invite-opening-door,
-.invite-opening--opening[data-motion='reduced'] .invite-opening-copy,
-.invite-opening--opening[data-motion='reduced'] .invite-opening-scene,
-.invite-opening--opening[data-motion='reduced'] .invite-opening-seal { animation-duration: var(--opening-reduced-duration) !important; animation-iteration-count: 1 !important; }
-@keyframes invite-opening-left {
-  0%, 12% { transform: rotateY(0deg) translateX(0); opacity: 1; }
-  45% { transform: rotateY(-34deg) translateX(-4%); opacity: 1; }
-  78% { transform: rotateY(-68deg) translateX(-12%); opacity: 1; }
-  95% { transform: rotateY(-82deg) translateX(-18%); opacity: .8; }
-  100% { transform: rotateY(-84deg) translateX(-20%); opacity: 0; }
-}
-@keyframes invite-opening-right {
-  0%, 12% { transform: rotateY(0deg) translateX(0); opacity: 1; }
-  45% { transform: rotateY(34deg) translateX(4%); opacity: 1; }
-  78% { transform: rotateY(68deg) translateX(12%); opacity: 1; }
-  95% { transform: rotateY(82deg) translateX(18%); opacity: .8; }
-  100% { transform: rotateY(84deg) translateX(20%); opacity: 0; }
-}
-@keyframes invite-opening-copy { 0%, 6% { opacity: 1; transform: translateY(0); } 19%, 100% { opacity: 0; transform: translateY(-8px); } }
-@keyframes invite-opening-seal { 0% { opacity: 1; transform: scale(1); } 7% { opacity: 1; transform: scale(1.12); } 16%, 100% { opacity: 0; transform: scale(.75); } }
-@keyframes invite-opening-backdrop { 0% { background: #e9e7dd; } 14%, 100% { background: transparent; } }
-/* The garden is a brief scene behind the real doors, then dissolves completely
-   before the modal closes so each selected invitation theme can take over. */
-@keyframes invite-opening-scene { 0%, 68% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes invite-opening-scene-drift { from { transform: scale(1.035); } to { transform: scale(1); } }
-@keyframes invite-opening-scene-light { from { opacity: .4; } to { opacity: 1; } }
-@keyframes invite-opening-fade { from { opacity: 1; } to { opacity: 0; } }
-@keyframes invite-opening-left-reduced { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-8%); opacity: 0; } }
-@keyframes invite-opening-right-reduced { from { transform: translateX(0); opacity: 1; } to { transform: translateX(8%); opacity: 0; } }
-@media (max-height: 650px) {
-  .invite-opening-intro { top: 55px; }
-  .invite-opening-heart { margin-top: 15px; }
-  .invite-opening-copy h2 { gap: 9px; margin-top: 14px; font-size: 26px; }
-  .invite-opening-message { margin-top: 15px; }
-}
-@media (max-height: 470px) {
-  .invite-opening-scene-art { object-fit: contain; }
-  .invite-opening-scene-names { top: 10%; font-size: 18px; }
-  .invite-opening-scene-note { bottom: 24px; }
-  .invite-opening-canopy { opacity: .45; }
-  .invite-opening-intro { top: 30px; gap: 22px; }
-  .invite-opening-heart { display: none; }
-  .invite-opening-copy h2 { flex-direction: row; gap: 13px; margin-top: 18px; font-size: 26px; }
-  .invite-opening-copy h2 small { font-size: 10px; }
-  .invite-opening-message { margin-top: 15px; font-size: 10px; }
-  .invite-opening-seal { width: 48px; height: 48px; }
-  .invite-opening-skip { bottom: max(12px, env(safe-area-inset-bottom)); }
-}
+.invite-opening--leaving .invite-opening-stage { animation: invite-film-leave 800ms ease both !important; }
+.invite-opening--leaving::backdrop { animation: invite-film-backdrop 800ms ease both !important; }
+@keyframes invite-film-leave { 0%, 25% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes invite-film-backdrop { 0%, 25% { background: #eae9e3; } 100% { background: transparent; } }
 @media (prefers-reduced-motion: reduce) {
-  .invite-opening::backdrop, .invite-opening-door, .invite-opening-copy { transition: none; }
+  .invite-opening-copy { transition: none; }
+  .invite-opening--leaving .invite-opening-stage, .invite-opening--leaving::backdrop { animation-duration: 200ms !important; }
 }

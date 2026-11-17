@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Heart } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import '../styles/invitation-opening.css';
 
 interface InvitationOpeningProps {
@@ -8,18 +8,16 @@ interface InvitationOpeningProps {
   groomName: string;
   brideName: string;
   imageUrl: string;
-  /** A public invitation identity, stable across refreshes and content updates. */
   sessionKey: string;
   preview?: boolean;
-  /** Increment to replay the entrance in the editor without changing guest history. */
   previewRequest?: number;
   onOpened?: () => void;
 }
 
-type OpeningPhase = 'closed' | 'ready' | 'holding' | 'opening';
+type OpeningPhase = 'closed' | 'ready' | 'holding' | 'opening' | 'leaving';
 const completedInMemory = new Set<string>();
-const coverHoldDuration = 1400;
-const openingDuration = { full: 3700, reduced: 1600 };
+const entranceFilm = `${import.meta.env.BASE_URL}garden-entrance.mp4`;
+const entrancePoster = `${import.meta.env.BASE_URL}garden-entrance-poster.jpg`;
 
 function hasOpened(key: string) {
   if (completedInMemory.has(key)) return true;
@@ -30,41 +28,44 @@ function hasOpened(key: string) {
 function rememberOpening(key: string) {
   completedInMemory.add(key);
   try { window.sessionStorage.setItem(key, 'opened'); }
-  catch { /* The in-memory entry still prevents repeats when storage is blocked. */ }
+  catch { /* A blocked storage API must not prevent entering the invitation. */ }
 }
 
 function isSectionLink() {
-  // Preserve links directly to a section, including back/forward navigation.
   return Boolean(window.location.hash && !['#', '#/'].includes(window.location.hash));
 }
 
-/** A single, skippable entrance per invitation and browser-tab session. */
+/** A muted garden film, with a bounded still-image alternative and immediate skip. */
 export default function InvitationOpening({ enabled, groomName, brideName, imageUrl, sessionKey, preview = false, previewRequest = 0, onOpened }: InvitationOpeningProps) {
   const [phase, setPhase] = useState<OpeningPhase>('closed');
-  const [imageFailed, setImageFailed] = useState(false);
   const [motion, setMotion] = useState<'full' | 'reduced'>(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
+  const [fallback, setFallback] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
-  const artwork = useRef<HTMLImageElement>(null);
+  const film = useRef<HTMLVideoElement>(null);
   const completedKey = useRef('');
   const returnFocus = useRef<HTMLElement | null>(null);
   const onOpenedRef = useRef(onOpened);
   onOpenedRef.current = onOpened;
   const titleId = useId();
   const descriptionId = useId();
-  // Show the paper-door reveal once even when an older entrance was completed.
-  const storageKey = `wedding-opening:v5:${sessionKey}`;
+  // A new entrance must also play for visitors who completed the old paper doors.
+  const storageKey = `wedding-opening:v6:${sessionKey}`;
   const replay = previewRequest > 0;
+  const requestedFilm = !preview && new URLSearchParams(window.location.search).get('intro') === 'play';
+  const explicitPlayback = replay || requestedFilm;
   const openingIdentity = replay ? `${storageKey}:preview:${previewRequest}` : storageKey;
   const visible = phase !== 'closed';
+  const still = fallback || motion === 'reduced';
 
   const complete = useCallback(() => {
     if (completedKey.current === openingIdentity) return;
     completedKey.current = openingIdentity;
     if (!replay) rememberOpening(storageKey);
+    film.current?.pause();
     dialog.current?.close();
     setPhase('closed');
     onOpenedRef.current?.();
-    // Give keyboard and screen-reader users a useful place to continue reading.
     requestAnimationFrame(() => {
       if (replay) { if (returnFocus.current?.isConnected) returnFocus.current.focus({ preventScroll: true }); return; }
       const heading = document.getElementById('wedding-title');
@@ -77,20 +78,18 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   }, [openingIdentity, replay, storageKey]);
 
   useEffect(() => {
-    if (!replay && (!enabled || preview || isSectionLink() || hasOpened(storageKey))) { setPhase('closed'); return; }
+    if (!replay && (!enabled || preview || isSectionLink() || (!requestedFilm && hasOpened(storageKey)))) { setPhase('closed'); return; }
     returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
-    setPhase('ready');
-  }, [enabled, preview, replay, previewRequest, storageKey]);
+    setMotion(explicitPlayback ? 'full' : window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
+    setFallback(false); setElapsed(0); setPhase('ready');
+  }, [enabled, preview, replay, previewRequest, storageKey, requestedFilm, explicitPlayback]);
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const change = () => setMotion(preference.matches ? 'reduced' : 'full');
+    const change = () => { if (!explicitPlayback) setMotion(preference.matches ? 'reduced' : 'full'); };
     preference.addEventListener('change', change);
     return () => preference.removeEventListener('change', change);
-  }, []);
-
-  useEffect(() => { setImageFailed(false); }, [imageUrl]);
+  }, [explicitPlayback]);
 
   useEffect(() => {
     if (!visible || !dialog.current) return;
@@ -111,83 +110,67 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
 
   useEffect(() => {
     if (phase !== 'ready') return;
-    let cancelled = false;
-    let started = false;
-    let firstFrame = 0;
-    let secondFrame = 0;
-    // Decode before the deliberate readable hold when possible. A slow or
-    // failed image adds at most half a second before that hold begins.
-    const start = () => {
-      if (cancelled || started) return;
-      started = true;
-      clearTimeout(timeout);
-      firstFrame = requestAnimationFrame(() => {
-        secondFrame = requestAnimationFrame(() => { if (!cancelled) setPhase('holding'); });
-      });
-    };
-    const timeout = window.setTimeout(start, 500);
-    const image = artwork.current;
-    if (!image || image.complete) start();
-    else void image.decode().then(start, start);
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-      cancelAnimationFrame(firstFrame);
-      cancelAnimationFrame(secondFrame);
-    };
-  }, [phase]);
+    if (still) { setPhase('holding'); return; }
+    const video = film.current;
+    if (!video) return;
+    const ready = () => setPhase('holding');
+    const failed = () => { setFallback(true); setPhase('holding'); };
+    const timeout = window.setTimeout(failed, 2500);
+    video.addEventListener('loadeddata', ready, { once: true });
+    video.addEventListener('error', failed, { once: true });
+    if (video.readyState >= 2) ready();
+    return () => { clearTimeout(timeout); video.removeEventListener('loadeddata', ready); video.removeEventListener('error', failed); };
+  }, [phase, still]);
 
   useEffect(() => {
     if (phase !== 'holding') return;
-    const timer = window.setTimeout(() => setPhase('opening'), coverHoldDuration);
-    return () => window.clearTimeout(timer);
-  }, [phase]);
+    const timer = window.setTimeout(() => setPhase(still ? 'leaving' : 'opening'), still ? 2200 : 400);
+    return () => clearTimeout(timer);
+  }, [phase, still]);
 
   useEffect(() => {
     if (phase !== 'opening') return;
-    // Let the finished reveal breathe briefly before removing the modal.
-    const timer = window.setTimeout(complete, openingDuration[motion]);
-    return () => window.clearTimeout(timer);
-  }, [phase, complete, motion]);
+    if (still) { setPhase('holding'); return; }
+    const video = film.current;
+    if (!video) return;
+    let cancelled = false;
+    void video.play().catch(() => { if (!cancelled) { setFallback(true); setPhase('holding'); } });
+    // A stalled stream must not trap the guest behind the invitation.
+    const watchdog = window.setTimeout(() => setPhase('leaving'), 14_000);
+    return () => { cancelled = true; clearTimeout(watchdog); video.pause(); };
+  }, [phase, still]);
+
+  useEffect(() => {
+    if (phase !== 'leaving') return;
+    const timer = window.setTimeout(complete, motion === 'reduced' ? 200 : 800);
+    return () => clearTimeout(timer);
+  }, [phase, motion, complete]);
 
   if (!visible) return null;
 
   return createPortal(<dialog
     className={`invite-opening invite-opening--${phase}`}
-    data-opening-state={phase}
-    data-motion={motion}
+    data-opening-state={phase} data-motion={motion}
+    data-opening-media={still ? motion === 'reduced' ? 'reduced' : 'fallback' : 'video'}
+    data-names-visible={still || elapsed >= 7.4 || phase === 'leaving'}
     data-opening-preview={replay || undefined}
-    ref={dialog}
-    aria-labelledby={titleId}
-    aria-describedby={descriptionId}
+    ref={dialog} aria-labelledby={titleId} aria-describedby={descriptionId}
     onCancel={event => { event.preventDefault(); complete(); }}
   >
     <div className="invite-opening-stage">
-      <div className="invite-opening-scene" aria-hidden="true">
-        {!imageFailed && imageUrl && <img className="invite-opening-scene-art" src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" />}
-        <span className="invite-opening-scene-light" />
-        <div className="invite-opening-scene-names"><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></div>
-        <span className="invite-opening-scene-note">OUR FOREVER BEGINS</span>
+      {still ? <img className="invite-opening-still" src={imageUrl} alt="" aria-hidden="true" /> : <video
+        ref={film} className="invite-opening-film" src={entranceFilm} poster={entrancePoster}
+        muted playsInline preload="auto" aria-hidden="true" disablePictureInPicture disableRemotePlayback
+        onTimeUpdate={event => setElapsed(event.currentTarget.currentTime)}
+        onEnded={() => setPhase('leaving')}
+        onError={() => { setFallback(true); setPhase('holding'); }}
+      />}
+      <div className="invite-opening-copy">
+        {replay && <p className="invite-opening-preview-label">정원 입장 미리보기</p>}
+        <h2 id={titleId}><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></h2>
       </div>
-      <div className="invite-opening-doors" aria-hidden="true">
-        {(['left', 'right'] as const).map(side => <div className={`invite-opening-door invite-opening-door--${side}`} key={side}>
-          {!imageFailed && imageUrl && <span className="invite-opening-canopy"><img className="invite-opening-art" ref={side === 'left' ? artwork : undefined} src={imageUrl} alt="" onError={() => setImageFailed(true)} fetchPriority="high" /></span>}
-          <span className="invite-opening-door-wash" />
-          <span className="invite-opening-door-frame" />
-          <span className="invite-opening-door-handle" />
-        </div>)}
-      </div>
-      <div className="invite-opening-intro">
-        <div className="invite-opening-copy">
-          <p className="invite-opening-eyebrow">{replay ? '입장 효과 미리보기' : 'A NEW CHAPTER OF OUR LOVE'}</p>
-          <Heart className="invite-opening-heart" size={17} strokeWidth={1.2} aria-hidden="true" />
-          <h2 id={titleId}><span>{groomName || '신랑'}</span><small>그리고</small><span>{brideName || '신부'}</span></h2>
-          <p className="invite-opening-message" id={descriptionId}>우리의 시작에<br />소중한 당신을 초대합니다.</p>
-        </div>
-        <div className="invite-opening-seal" aria-hidden="true"><Heart size={19} strokeWidth={1.2} /><span>WITH LOVE</span></div>
-      </div>
+      <p className="invite-opening-description" id={descriptionId}>정원의 문을 지나, 두 사람의 새로운 시작에 초대합니다.</p>
       <button className="invite-opening-skip" type="button" autoFocus onClick={complete}>건너뛰기<ArrowRight size={13} strokeWidth={1.3} aria-hidden="true" /></button>
-      <span className="invite-opening-progress" role="status">{phase === 'opening' ? '초대장을 열고 있어요.' : ''}</span>
     </div>
   </dialog>, document.body);
 }
