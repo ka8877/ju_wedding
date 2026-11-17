@@ -29,7 +29,6 @@ function isSectionLink() {
 export default function InvitationOpening({ enabled, groomName, brideName, imageUrl, sessionKey, preview = false, previewRequest = 0, onOpened, font }: InvitationOpeningProps) {
   const invitationFont = useInvitationFont();
   const [phase, setPhase] = useState<OpeningPhase>('closed');
-  const [motion, setMotion] = useState<'full' | 'reduced'>(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
   const [fallback, setFallback] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -41,11 +40,11 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
   const titleId = useId();
   const descriptionId = useId();
   const replay = previewRequest > 0;
-  const requestedFilm = !preview && new URLSearchParams(window.location.search).get('intro') === 'play';
-  const explicitPlayback = replay || requestedFilm;
   const openingIdentity = replay ? `${sessionKey}:preview:${previewRequest}` : sessionKey;
   const visible = phase !== 'closed';
-  const still = fallback || motion === 'reduced';
+  // Keep the selected entrance film on ordinary visits even when the browser
+  // requests reduced motion. Skip and reduced CSS transitions remain available.
+  const still = fallback;
 
   const complete = useCallback(() => {
     if (completedKey.current === openingIdentity) return;
@@ -71,16 +70,8 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
     // reopen it, and old once-per-tab flags must not silently skip the film.
     completedKey.current = '';
     returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setMotion(explicitPlayback ? 'full' : window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
     setFallback(false); setElapsed(0); setPhase('ready');
-  }, [enabled, preview, replay, previewRequest, sessionKey, explicitPlayback]);
-
-  useEffect(() => {
-    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const change = () => { if (!explicitPlayback) setMotion(preference.matches ? 'reduced' : 'full'); };
-    preference.addEventListener('change', change);
-    return () => preference.removeEventListener('change', change);
-  }, [explicitPlayback]);
+  }, [enabled, preview, replay, previewRequest, sessionKey]);
 
   useEffect(() => {
     if (!visible || !dialog.current) return;
@@ -140,17 +131,17 @@ export default function InvitationOpening({ enabled, groomName, brideName, image
 
   useEffect(() => {
     if (phase !== 'leaving') return;
-    const timer = window.setTimeout(complete, motion === 'reduced' ? 200 : 800);
+    const timer = window.setTimeout(complete, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 200 : 800);
     return () => clearTimeout(timer);
-  }, [phase, motion, complete]);
+  }, [phase, complete]);
 
   if (!visible) return null;
 
   return createPortal(<dialog
     className={`invite-opening invite-opening--${phase}`}
     data-invitation-font={font || invitationFont}
-    data-opening-state={phase} data-motion={motion}
-    data-opening-media={still ? motion === 'reduced' ? 'reduced' : 'fallback' : 'video'}
+    data-opening-state={phase} data-motion="full"
+    data-opening-media={still ? 'fallback' : 'video'}
     data-names-visible={still || elapsed >= 7.4 || phase === 'leaving'}
     data-opening-preview={replay || undefined}
     ref={dialog} aria-labelledby={titleId} aria-describedby={descriptionId}

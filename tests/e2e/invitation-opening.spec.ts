@@ -183,19 +183,24 @@ test('Escape is available while the garden film is playing', async ({ page }) =>
   await expect(page.locator('#wedding-title')).toBeFocused();
 });
 
-test('reduced-motion visitors see a readable still without video playback', async ({ page }) => {
+test('ordinary root visits play the full garden film even when reduced motion is requested', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await observeOpening(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   const entrance = page.locator('.invite-opening');
+  const film = entrance.locator('video.invite-opening-film');
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
   await expect(entrance).toBeVisible();
-  await expect(entrance).toHaveAttribute('data-motion', 'reduced');
+  await expect(entrance).toHaveAttribute('data-motion', 'full');
+  await expect(entrance).toHaveAttribute('data-opening-media', 'video');
   await expect(entrance.getByRole('heading')).toContainText(defaultWedding.groom.name);
-  await expect(entrance).toHaveCount(0, { timeout: 6500 });
+  await expect.poll(() => film.evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 8000 }).toBeGreaterThan(.8);
+  expect(await film.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await expect(entrance).toHaveCount(0, { timeout: 16_000 });
   const evidence = await page.evaluate(() => (window as EvidenceWindow).weddingOpeningEvidence!);
-  expect(evidence.finishedAt - evidence.samples[0].time).toBeGreaterThan(1800);
-  expect(evidence.samples.some(sample => sample.copyOpacity > .8)).toBe(true);
-  expect(evidence.samples.every(sample => sample.motion === 'reduced' && sample.filmTime < .05 && sample.filmPaused && sample.buttons.length === 1 && sample.buttons[0] === '건너뛰기')).toBe(true);
+  expect(evidence.finishedAt - evidence.samples[0].time).toBeGreaterThan(10_000);
+  expect(evidence.samples.some(sample => sample.filmEnded && sample.filmTime > 10)).toBe(true);
+  expect(evidence.samples.some(sample => sample.filmReadyState >= 2 && sample.filmTime > 1 && !sample.filmPaused)).toBe(true);
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBeNull();
 });
@@ -213,7 +218,9 @@ test('an explicit replay link plays the film despite reduced motion and an exist
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
   await page.goto('/');
   await expect(entrance).toBeVisible();
-  await expect(entrance).toHaveAttribute('data-motion', 'reduced');
+  await expect(entrance).toHaveAttribute('data-motion', 'full');
+  await expect(entrance).toHaveAttribute('data-opening-media', 'video');
+  await expect.poll(() => entrance.locator('video.invite-opening-film').evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 8000 }).toBeGreaterThan(.8);
   await entrance.getByRole('button', { name: '건너뛰기', exact: true }).click();
   await expect(entrance).toHaveCount(0);
   expect(await page.evaluate(key => sessionStorage.getItem(key), openingKey)).toBe('opened');

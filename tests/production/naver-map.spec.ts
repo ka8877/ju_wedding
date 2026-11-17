@@ -55,16 +55,19 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
       };
       requestAnimationFrame(sample);
     });
-    // Use the actual shared URL and then reload the same tab. A forced replay
-    // query would conceal a regression where remembered visits skip the film.
-    for (const visit of ['initial', 'reload'] as const) {
+    // Use the actual shared URL and reload the same tab, including with the
+    // browser's reduced-motion preference. A forced replay query would conceal
+    // either automatic bypass of the requested full entrance.
+    for (const visit of ['initial', 'reload', 'reduced-motion'] as const) {
+      if (visit === 'reduced-motion') await page.emulateMedia({ reducedMotion: 'reduce' });
       if (visit === 'initial') await page.goto('/', { waitUntil: 'domcontentloaded' });
       else await page.reload({ waitUntil: 'domcontentloaded' });
+      expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(visit === 'reduced-motion');
       await expect(page.locator('#wedding-title')).toBeVisible();
       await expect(page.locator('.invite-opening')).toBeVisible();
       await expect(page.locator('.invite-opening-door, .invite-opening-seal')).toHaveCount(0);
       await expect.poll(() => page.locator('video.invite-opening-film').evaluate(element => (element as HTMLVideoElement).currentTime), { timeout: 16_000 }).toBeGreaterThanOrEqual(8.2);
-      await page.screenshot({ path: testInfo.outputPath(visit === 'initial' ? 'entrance-garden.png' : 'entrance-garden-reload.png') });
+      await page.screenshot({ path: testInfo.outputPath(visit === 'initial' ? 'entrance-garden.png' : `entrance-garden-${visit}.png`) });
       await expect(page.locator('.invite-opening')).toHaveCount(0, { timeout: 22_000 });
       await expect.poll(() => page.evaluate(() => (window as Window & { invitationOpeningProof?: { ended: number } }).invitationOpeningProof?.ended || 0)).toBeGreaterThan(0);
       const proof = await page.evaluate(() => (window as Window & { invitationOpeningProof?: { started: number; ended: number; maxVideoTime: number; duration: number; decodedFrame: boolean; filmEnded: boolean; nameRevealTime: number; media: string } }).invitationOpeningProof);
@@ -73,6 +76,7 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
       expect(proof!.media).toBe('video');
       expect(proof!.duration).toBeGreaterThan(10);
       expect(proof!.maxVideoTime).toBeGreaterThan(10);
+      expect(proof!.maxVideoTime).toBeCloseTo(proof!.duration, 1);
       expect(proof!.decodedFrame).toBe(true);
       expect(proof!.filmEnded).toBe(true);
       expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
