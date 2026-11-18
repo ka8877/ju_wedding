@@ -235,14 +235,19 @@ test('anonymous visitors see the admin login rather than private guest responses
   expect(requests.some(request => /wedding_rsvps|list_wedding_guest_photos/.test(request.path))).toBe(false);
 });
 
-test('authenticated managers can view private replies and export a safe Excel-compatible CSV', async ({ page }) => {
-  await mockServer(page);
+async function mockAdminSession(page: Page) {
   const expires = Math.floor(Date.now() / 1000) + 3600;
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const accessToken = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: adminId, aud: 'authenticated', role: 'authenticated', exp: expires })}.test-signature`;
   await page.addInitScript(({ token, expiration, id }) => {
     localStorage.setItem('sb-wedding-ui-tests-auth-token', JSON.stringify({ access_token: token, refresh_token: 'test-refresh-token', token_type: 'bearer', expires_in: 3600, expires_at: expiration, user: { id, aud: 'authenticated', role: 'authenticated', email: 'admin@example.invalid', app_metadata: {}, user_metadata: {}, identities: [], created_at: '2026-01-01T00:00:00Z' } }));
   }, { token: accessToken, expiration: expires, id: adminId });
+  return accessToken;
+}
+
+test('authenticated managers can view private replies and export a safe Excel-compatible CSV', async ({ page }) => {
+  await mockServer(page);
+  await mockAdminSession(page);
   await page.goto('/#/admin');
   await page.getByRole('button', { name: '하객 응답', exact: true }).click();
   const manager = page.locator('.guest-management');
@@ -259,4 +264,30 @@ test('authenticated managers can view private replies and export a safe Excel-co
   expect(csv).toContain('"신부측"');
   expect(csv).toContain('"010-1234-5678"');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('administrators can select a Naver venue name and address inside the editor', async ({ page }) => {
+  await mockServer(page);
+  const token = await mockAdminSession(page);
+  let configured = false;
+  await page.route('**/api/venue-search', route => {
+    expect(route.request().headers().authorization).toBe(`Bearer ${token}`);
+    expect(route.request().postDataJSON()).toEqual({ query: '정원 예식장' });
+    return configured ? route.fulfill({ json: { results: [
+      { name: '정원이 있는 예식장', address: '경기 성남시 분당구 테스트로 12', lat: 37.37, lng: 127.10 },
+    ] } }) : route.fulfill({ status: 503, json: { error: 'naver_unconfigured' } });
+  });
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: '예식 장소', exact: true }).click();
+  await page.getByLabel('예식 장소 찾기').fill('정원 예식장');
+  const search = page.getByRole('button', { name: '장소 검색', exact: true });
+  await search.click();
+  await expect(page.getByRole('alert')).toContainText('네이버 지역 검색 연결이 필요해요');
+  await expect(page.getByRole('link', { name: '네이버 지도에서 장소 이름 검색' })).toBeVisible();
+  configured = true;
+  await search.click();
+  await page.getByRole('list', { name: '네이버 장소 검색 결과' }).getByRole('button', { name: /정원이 있는 예식장/ }).click();
+  await expect(page.getByLabel('예식장 이름', { exact: true })).toHaveValue('정원이 있는 예식장');
+  await expect(page.getByLabel('주소', { exact: true })).toHaveValue('경기 성남시 분당구 테스트로 12');
+  await expect(page.getByLabel('홀 · 층', { exact: true })).toHaveValue('아산홀');
 });
