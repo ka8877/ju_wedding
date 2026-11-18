@@ -17,11 +17,42 @@ function fold(line: string): string {
   lines.push(part);
   return lines.join('\r\n');
 }
-export function makeWeddingCalendar(data: WeddingData, options: { now?: Date; url?: string } = {}): string | null {
+function getCalendarEvent(data: WeddingData) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(data.time)) return null;
   const start = new Date(`${data.date}T${data.time}:00+09:00`);
   if (!Number.isFinite(start.getTime()) || start.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) !== data.date) return null;
-  const summary = `${data.groom.name} · ${data.bride.name} 결혼식`;
+  return {
+    start,
+    summary: `${data.groom.name} · ${data.bride.name} 결혼식`,
+    location: [data.venue.name, data.venue.hall, data.venue.address].filter(Boolean).join(' '),
+  };
+}
+
+export function googleWeddingCalendarUrl(data: WeddingData, openAndroidApp = false): string | null {
+  const event = getCalendarEvent(data);
+  if (!event) return null;
+  const { start, summary, location } = event;
+  // Google requires an end time in the template. Guests can edit it before saving.
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const url = new URL('https://calendar.google.com/calendar/render');
+  url.search = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: summary,
+    dates: `${timestamp(start)}/${timestamp(end)}`,
+    stz: 'Asia/Seoul',
+    etz: 'Asia/Seoul',
+    location,
+    details: `청첩장: ${publicInvitationUrl}`,
+  }).toString();
+  return openAndroidApp
+    ? `intent://${url.host}${url.pathname}${url.search}#Intent;scheme=https;package=com.google.android.calendar;S.browser_fallback_url=${encodeURIComponent(url.href)};end`
+    : url.href;
+}
+
+export function makeWeddingCalendar(data: WeddingData, options: { now?: Date; url?: string } = {}): string | null {
+  const event = getCalendarEvent(data);
+  if (!event) return null;
+  const { start, summary, location } = event;
   let hash = 2166136261;
   for (const byte of new TextEncoder().encode(`${data.groom.name}|${data.bride.name}|${data.date}`)) hash = Math.imul(hash ^ byte, 16777619) >>> 0;
   let site = '';
@@ -29,7 +60,6 @@ export function makeWeddingCalendar(data: WeddingData, options: { now?: Date; ur
     const parsed = new URL(options.url || '');
     if (['http:', 'https:'].includes(parsed.protocol)) { parsed.hash = ''; parsed.search = ''; site = parsed.href; }
   } catch { /* A share URL is optional; it never prevents calendar export. */ }
-  const location = [data.venue.name, data.venue.hall, data.venue.address].filter(Boolean).join(' ');
   const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Jo and Joo//Wedding Invitation//KO','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
     `UID:wedding-${data.date.replaceAll('-', '')}-${hash.toString(16)}@jo-and-joo`,
     `DTSTAMP:${timestamp(options.now ?? new Date())}`, `DTSTART:${timestamp(start)}`, `SUMMARY:${escapeText(summary)}`,

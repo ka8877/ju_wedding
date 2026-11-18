@@ -18,6 +18,12 @@
 .guest-dialog button:focus-visible, .guest-dialog a:focus-visible, .guest-dialog input:focus-visible, .guest-dialog select:focus-visible, .guest-dialog textarea:focus-visible { outline: 2px solid #7c9267; outline-offset: 3px; }
 .guest-eyebrow { font-size: 8px; letter-spacing: 1.6px; color: #869574; text-align: center; margin: 0; }
 .guest-dialog h2 { margin: 14px 0 26px; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 400; line-height: 1.65; letter-spacing: -.8px; text-align: center; }
+.invite-calendar-options { display: grid; gap: 9px; }
+.guest-dialog .invite-calendar-option { display: grid; grid-template-columns: 20px minmax(0, 1fr) 16px; min-height: 60px; gap: 12px; padding: 10px 14px; align-items: center; text-align: left; text-decoration: none; }
+.invite-calendar-option strong, .invite-calendar-option small { display: block; }
+.invite-calendar-option strong { font-size: 14px; font-weight: 600; }
+.invite-calendar-option small { color: #697759; font-size: 11px; }
+.invite-calendar-hint { margin: 12px 0 0; text-align: center; }
 .guest-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .guest-form legend { font-size: 11px; color: #697a57; padding: 0; margin-bottom: 11px; }
 .guest-side-options { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
