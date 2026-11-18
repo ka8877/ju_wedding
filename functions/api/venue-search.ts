@@ -51,6 +51,16 @@ async function fetchWithTimeout(url: URL, options: RequestInit, milliseconds: nu
   finally { clearTimeout(timer); }
 }
 
+function runtimeFailure(error: unknown): string {
+  if (!(error instanceof Error)) return 'unknown';
+  if (error.name === 'AbortError' || error.name === 'TimeoutError') return 'timeout';
+  if (/url|redirect/i.test(error.message)) return 'url';
+  if (/fetch|network|connect|dns|ssl/i.test(error.message)) return 'network';
+  if (/trim|undefined|not a function/i.test(error.message)) return 'configuration';
+  if (error.name === 'SyntaxError') return 'response';
+  return 'runtime';
+}
+
 export async function onRequest({ request, env }: { request: Request; env: SearchBindings }): Promise<Response> {
   if (request.method !== 'POST') return new Response(null, { status: 405, headers: { Allow: 'POST', 'Cache-Control': 'no-store' } });
   const authorization = request.headers.get('Authorization');
@@ -66,7 +76,7 @@ export async function onRequest({ request, env }: { request: Request; env: Searc
     const projectKey = env.VITE_SUPABASE_ANON_KEY?.trim() || publicSupabaseConfig.key;
     const admin = await fetchWithTimeout(new URL('/rest/v1/rpc/is_wedding_admin', projectUrl), {
       method: 'POST', headers: { Authorization: authorization, apikey: projectKey, 'Content-Type': 'application/json' },
-      body: '{}', redirect: 'error',
+      body: '{}', redirect: 'manual',
     }, 5_000);
     if (admin.status === 401) return json(401, { error: 'login_required' });
     if (admin.status === 403) return json(403, { error: 'admin_required' });
@@ -90,7 +100,7 @@ export async function onRequest({ request, env }: { request: Request; env: Searc
     const data: { items?: NaverPlace[] } = await response.json();
     if (!Array.isArray(data?.items)) return json(502, { error: stage });
     return json(200, { results: data.items.slice(0, 5).map(placeFromResult).filter(place => place !== null) });
-  } catch {
-    return json(502, { error: stage });
+  } catch (error) {
+    return json(502, { error: stage, detail: runtimeFailure(error) });
   }
 }

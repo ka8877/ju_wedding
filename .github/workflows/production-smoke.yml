@@ -56,6 +56,7 @@ jobs:
           INVITATION_SEARCH_URL: ${{ steps.cloudflare.outputs.search_url }}
         run: |
           node --input-type=module <<'JS'
+          import { readFile } from 'node:fs/promises';
           const url = new URL('/api/venue-search', process.env.INVITATION_SEARCH_URL);
           for (const authorization of [null, 'Bearer invalid-check-token']) {
             const headers = { 'Content-Type': 'application/json' };
@@ -65,9 +66,23 @@ jobs:
             });
             const body = await response.json().catch(() => null);
             const code = typeof body?.error === 'string' && /^[a-z_]+$/.test(body.error) ? body.error : 'unknown';
+            const detail = typeof body?.detail === 'string' && /^[a-z_]+$/.test(body.detail) ? body.detail : '';
+            const upstream = Number.isInteger(body?.upstreamStatus) ? body.upstreamStatus : '';
             const caller = authorization ? 'invalid token' : 'anonymous';
-            console.log(`Venue search (${caller}): HTTP ${response.status}, ${code}`);
+            console.log(`Venue search (${caller}): HTTP ${response.status}, ${code} ${detail} ${upstream}`);
             if (![401, 403].includes(response.status) || !['login_required', 'admin_required'].includes(code)) {
+              if (authorization) {
+                const publicConfig = await readFile('src/lib/public-config.ts', 'utf8');
+                const project = publicConfig.match(/url: '([^']+)'/)?.[1];
+                const apikey = publicConfig.match(/key: '([^']+)'/)?.[1];
+                if (project && apikey) {
+                  const direct = await fetch(new URL('/rest/v1/rpc/is_wedding_admin', project), {
+                    method: 'POST', headers: { apikey, Authorization: authorization, 'Content-Type': 'application/json' },
+                    body: '{}', redirect: 'manual', signal: AbortSignal.timeout(10_000),
+                  });
+                  console.log(`Supabase directly (invalid token): HTTP ${direct.status}`);
+                }
+              }
               throw new Error(`Unexpected venue-search response for ${caller}.`);
             }
           }

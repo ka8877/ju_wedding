@@ -59,7 +59,7 @@ describe('admin venue search function', () => {
     vi.stubGlobal('fetch', fetchMock);
     const permissionFailure = await onRequest({ request: search(), env });
     expect(permissionFailure.status).toBe(502);
-    expect(await permissionFailure.json()).toEqual({ error: 'admin_check_failed' });
+    expect(await permissionFailure.json()).toEqual({ error: 'admin_check_failed', detail: 'runtime' });
     const naverFailure = await onRequest({ request: search(), env });
     expect(naverFailure.status).toBe(502);
     expect(await naverFailure.json()).toEqual({ error: 'naver_unavailable', upstreamStatus: 400 });
