@@ -27,7 +27,8 @@ describe('admin venue search function', () => {
     expect((await onRequest({ request: search('Bearer non-admin-token'), env })).status).toBe(403);
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledWith(new URL('/rest/v1/rpc/is_wedding_admin', env.VITE_SUPABASE_URL).href, expect.objectContaining({
-      method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer non-admin-token', apikey: env.VITE_SUPABASE_ANON_KEY }),
+      method: 'POST', redirect: 'manual',
+      headers: expect.objectContaining({ Authorization: 'Bearer non-admin-token', apikey: env.VITE_SUPABASE_ANON_KEY }),
     }));
   });
 
@@ -46,11 +47,24 @@ describe('admin venue search function', () => {
     const params = new URL(requestUrl).searchParams;
     expect(params.get('query')).toBe('분당 예식장');
     expect(params.get('start')).toBe('1');
+    expect(options.redirect).toBe('manual');
     expect(options.headers).toEqual({ 'X-NCP-APIGW-API-KEY-ID': env.NAVER_SEARCH_CLIENT_ID, 'X-NCP-APIGW-API-KEY': env.NAVER_SEARCH_CLIENT_SECRET });
     expect(await response.json()).toEqual({ results: [
       { name: '함께 & 정원', address: '경기 성남시 분당구 분당수서로 477', lat: 37.3768838, lng: 127.1043929 },
       { name: '다른 예식장', address: '서울 중구 태평로 1', lat: null, lng: null },
     ] });
+  });
+
+  it('keeps credentials on the configured Naver API origin when it redirects', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(Response.json(true))
+      .mockResolvedValueOnce(Response.redirect('https://other.example/search', 302));
+    vi.stubGlobal('fetch', fetchMock);
+    const response = await onRequest({ request: search(), env });
+    expect(await response.json()).toEqual({ error: 'naver_unavailable', upstreamStatus: 302 });
+    expect(response.status).toBe(502);
+    expect(fetchMock.mock.calls.map(([url]) => new URL(url).origin)).toEqual([
+      env.VITE_SUPABASE_URL, 'https://naverapihub.apigw.ntruss.com',
+    ]);
   });
 
   it('distinguishes a permission service failure from a Naver response failure', async () => {

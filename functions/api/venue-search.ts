@@ -44,10 +44,11 @@ function json(status: number, body: object) {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
-async function fetchWithTimeout(url: URL, options: RequestInit, milliseconds: number): Promise<Response> {
+async function fetchWithTimeout(url: URL, options: Omit<RequestInit, 'redirect' | 'signal'>, milliseconds: number): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), milliseconds);
-  try { return await fetch(url.href, { ...options, signal: controller.signal }); }
+  // Workers supports manual redirects, which keep credentials on the original origin.
+  try { return await fetch(url.href, { ...options, redirect: 'manual', signal: controller.signal }); }
   finally { clearTimeout(timer); }
 }
 
@@ -76,7 +77,7 @@ export async function onRequest({ request, env }: { request: Request; env: Searc
     const projectKey = env.VITE_SUPABASE_ANON_KEY?.trim() || publicSupabaseConfig.key;
     const admin = await fetchWithTimeout(new URL('/rest/v1/rpc/is_wedding_admin', projectUrl), {
       method: 'POST', headers: { Authorization: authorization, apikey: projectKey, 'Content-Type': 'application/json' },
-      body: '{}', redirect: 'manual',
+      body: '{}',
     }, 5_000);
     if (admin.status === 401) return json(401, { error: 'login_required' });
     if (admin.status === 403) return json(403, { error: 'admin_required' });
@@ -91,7 +92,6 @@ export async function onRequest({ request, env }: { request: Request; env: Searc
     const url = new URL(`https://naverapihub.apigw.ntruss.com/search/v1/local?query=${encodeURIComponent(query)}&display=5&start=1&sort=random&format=json`);
     const response = await fetchWithTimeout(url, {
       headers: { 'X-NCP-APIGW-API-KEY-ID': clientId, 'X-NCP-APIGW-API-KEY': clientSecret },
-      redirect: 'error',
     }, 7_000);
     if (response.status === 429) return json(429, { error: 'naver_limit' });
     if (response.status === 401 || response.status === 403) return json(503, { error: 'naver_auth_failed', upstreamStatus: response.status });
