@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
+import { defaultWedding } from '../../src/lib/defaults';
 import { expect, test } from './helpers';
+import { naverSdkMock } from './naver-sdk-mock';
 
 test('mobile invitation shows the confirmed couple information and has no horizontal overflow', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -19,11 +21,22 @@ test('mobile invitation shows the confirmed couple information and has no horizo
 
 test('drafts, photo upload, place selection, publication and account copy work end to end', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.route('https://nominatim.openstreetmap.org/search?**', async route => {
-    await route.fulfill({ json: [{ place_id: 1, name: '테스트 예식장', display_name: '서울특별시 중구 테스트로 1', lat: '37.5665', lon: '126.9780' }] });
-  });
+  const address = '서울특별시 중구 테스트로 1';
+  const matches = { '테스트 예식장': [], [address]: [{ roadAddress: address, x: '126.9780', y: '37.5665' }] };
+  await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
+    contentType: 'application/javascript',
+    body: `window.weddingGeocodeResults = ${JSON.stringify(matches)}; ${naverSdkMock}`,
+  }));
   await page.route(/^https:\/\/(?:maps|www)\.google\.com\//, async route => { await route.fulfill({ contentType: 'text/html', body: '<p>지도 테스트</p>' }); });
   await page.goto('/#/admin');
+  const draft = structuredClone(defaultWedding);
+  draft.venue.naverMapClientId = 'test-public-client-id';
+  await page.evaluate(async wedding => {
+    const storageModule = '/src/lib/storage.ts';
+    const { saveDraft } = await import(storageModule);
+    await saveDraft(wedding);
+  }, draft);
+  await page.reload();
   await page.getByLabel('예식 날짜', { exact: true }).fill('2027-05-22');
   await page.getByLabel(/^예식 시간/).fill('14:30');
   await page.getByRole('button', { name: '초안 저장', exact: true }).click();
@@ -44,11 +57,20 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.getByLabel('갤러리 사진 파일 선택').setInputFiles([{ name: 'moment.png', mimeType: 'image/png', buffer: png }]);
   await expect(page.getByLabel('1번 사진 설명')).toBeVisible();
   await page.getByRole('button', { name: '예식 장소', exact: true }).click();
-  await page.getByLabel('예식 장소 검색').fill('테스트 예식장');
-  await page.getByRole('button', { name: '검색', exact: true }).click();
-  await page.getByRole('button', { name: /테스트 예식장 서울특별시/ }).click();
-  await expect(page.getByLabel('주소', { exact: true })).toHaveValue('서울특별시 중구 테스트로 1');
-  await expect(page.locator('.editor-venue-map')).toHaveAttribute('data-map-provider', 'naver');
+  await page.getByLabel('예식 장소 찾기').fill('테스트 예식장');
+  await expect(page.getByRole('link', { name: '네이버 지도에서 장소 이름 검색' })).toHaveAttribute('href', `https://map.naver.com/p/search/${encodeURIComponent('테스트 예식장')}`);
+  await page.getByRole('button', { name: '주소 검색', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: '일치하는 주소가 없어요' })).toBeVisible();
+  await page.getByLabel('예식장 이름', { exact: true }).fill('테스트 예식장');
+  await page.getByLabel('예식 장소 찾기').fill(address);
+  await page.getByRole('button', { name: '주소 검색', exact: true }).click();
+  await page.getByRole('list', { name: '네이버 주소 검색 결과' }).getByRole('button', { name: address }).click();
+  await expect(page.getByLabel('예식장 이름', { exact: true })).toHaveValue('테스트 예식장');
+  await expect(page.getByLabel('홀 · 층', { exact: true })).toHaveValue('아산홀');
+  await expect(page.getByLabel('주소', { exact: true })).toHaveValue(address);
+  const venueMap = page.locator('.editor-venue-map');
+  await expect(venueMap).toHaveAttribute('data-map-provider', 'naver');
+  await expect(venueMap.locator('[data-marker-title="테스트 예식장"]')).toHaveAttribute('data-position', '37.5665,126.978');
   await expect(page.locator('.editor-venue-map iframe')).toHaveCount(0);
   await expect(page.getByRole('link', { name: '네이버 지도에서 위치 확인하기 ↗' })).toHaveAttribute('href', /map\.naver\.com/);
   await page.getByRole('button', { name: '마음 전하실 곳', exact: true }).click();
