@@ -39,7 +39,10 @@ jobs:
           script: |
             for (let attempt = 0; attempt < 30; attempt++) {
               const { data } = await github.rest.checks.listForRef({ ...context.repo, ref: context.sha });
-              const deployment = data.check_runs.find(run => run.name === 'Cloudflare Pages');
+              const deployment = data.check_runs.find(run =>
+                run.app?.slug === 'cloudflare-workers-and-pages'
+                && run.details_url?.includes('/pages/view/hyunbum-juyoung/')
+              );
               if (deployment?.status === 'completed') {
                 if (deployment.conclusion !== 'success') throw new Error('Cloudflare production deployment failed.');
                 return;

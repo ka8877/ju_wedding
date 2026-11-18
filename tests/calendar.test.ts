@@ -11,10 +11,10 @@ describe('guest calendar download', () => {
     expect(makeWeddingCalendar(event())).not.toContain('DTEND');
   });
   it('exports the Korean event time correctly in UTC, independent of the phone timezone', () => {
-    const calendar = makeWeddingCalendar(event(), { now: new Date('2026-11-11T00:00:00Z'), url: 'https://hyunbeom-juyoung.pages.dev/?tracking=x#/admin' })!;
+    const calendar = makeWeddingCalendar(event(), { now: new Date('2026-11-11T00:00:00Z'), url: 'https://hyunbum-juyoung.pages.dev/?tracking=x#/admin' })!;
     expect(calendar).toContain('DTSTART:20270522T053000Z\r\n');
     expect(calendar).toContain('DTSTAMP:20261111T000000Z\r\n');
-    expect(calendar).toContain('URL:https://hyunbeom-juyoung.pages.dev/\r\n');
+    expect(calendar).toContain('URL:https://hyunbum-juyoung.pages.dev/\r\n');
     expect(calendar).not.toContain('tracking');
     expect(calendar).not.toContain('#/admin');
   });

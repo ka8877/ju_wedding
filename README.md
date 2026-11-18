@@ -2,8 +2,8 @@
 
 주영님이 직접 사진·예식 정보·계좌·디자인을 바꾸는 모바일 청첩장입니다. 개인 GitHub 아이디가 없는 무료 Cloudflare Pages 주소를 사용하고, Supabase 무료 요금제로 사진과 공개 내용을 저장합니다. 유료 도메인은 사용하지 않습니다.
 
-- **청첩장:** https://hyunbeom-juyoung.pages.dev/
-- **관리 페이지:** https://hyunbeom-juyoung.pages.dev/#/admin
+- **청첩장:** https://hyunbum-juyoung.pages.dev/
+- **관리 페이지:** https://hyunbum-juyoung.pages.dev/#/admin
 - **개발자용 초기 연결 안내:** [SETUP.md](docs/SETUP.md)
 
 운영 사이트는 위 Cloudflare Pages 주소 하나만 사용합니다. GitHub는 소스 코드와 자동 검사를 관리하며 GitHub Pages 자동 배포는 사용하지 않습니다.
@@ -52,9 +52,9 @@
 
 관리 화면의 **소중한 분께 전해요**에서 링크를 복사하거나 **QR 코드 보기**를 누르세요. 하객 화면 맨 아래에서도 공유와 QR을 사용할 수 있습니다. QR은 기기 안에서 생성하며 외부 QR 서비스로 청첩장 주소를 보내지 않습니다. **QR 이미지 저장**은 1536px 정사각형 PNG를 저장합니다. 저장한 이미지 전체를 사용해 스캔 기준점과 여백을 유지하세요.
 
-QR과 공유 링크는 관리·연결 안내 경로와 추적 정보를 제외한 **https://hyunbeom-juyoung.pages.dev/**로 연결됩니다. 이전 GitHub Pages 주소를 담은 QR은 현재 운영 주소용으로 다시 생성해 교체하세요. 사진과 문구를 바꿔도 공개 주소가 같으면 QR을 다시 만들 필요가 없습니다. 이 기기에만 저장한 초안은 공유 링크로 전달하지 않습니다.
+QR과 공유 링크는 관리·연결 안내 경로와 추적 정보를 제외한 **https://hyunbum-juyoung.pages.dev/**로 연결됩니다. 이전 GitHub Pages 주소를 담은 QR은 현재 운영 주소용으로 다시 생성해 교체하세요. 사진과 문구를 바꿔도 공개 주소가 같으면 QR을 다시 만들 필요가 없습니다. 이 기기에만 저장한 초안은 공유 링크로 전달하지 않습니다.
 
-공유 미리보기와 로컬 QR 기본 주소는 `VITE_PUBLIC_SITE_URL`을 사용하며, 코드의 기본값도 `https://hyunbeom-juyoung.pages.dev/`입니다. [현재 무료 호스팅 설정](docs/SETUP.md#현재-cloudflare-pages-배포-설정)을 참고하세요.
+공유 미리보기와 로컬 QR 기본 주소는 `VITE_PUBLIC_SITE_URL`을 사용하며, 코드의 기본값도 `https://hyunbum-juyoung.pages.dev/`입니다. [현재 무료 호스팅 설정](docs/SETUP.md#현재-cloudflare-pages-배포-설정)을 참고하세요.
 
 ## 개발
 
@@ -86,7 +86,7 @@ npm run test:e2e:guest
 
 로컬 미리보기 모드의 수정은 다른 기기나 하객의 청첩장에 전달되지 않습니다. 실제 사진 저장과 공개 내용 변경은 준비된 Supabase 프로젝트를 사용합니다.
 
-연결 후에는 관리자가 **임시 저장 → 미리보기 → 공개** 순서로 작업합니다. 디자인 코드 변경은 `main`에 반영할 때 Cloudflare Pages가 검사·빌드 후 자동 배포합니다. GitHub Actions는 코드·데이터베이스 정책·모바일 화면을 검사하며 사이트를 배포하지 않습니다. 사진과 문구 변경은 관리 페이지에서 처리하므로 코드 배포가 필요 없습니다.
+연결 후에는 관리자가 **임시 저장 → 미리보기 → 공개** 순서로 작업합니다. 디자인 코드 변경은 `main`에 반영할 때 Cloudflare Pages가 빌드 후 자동 배포합니다. GitHub Actions는 코드·데이터베이스 정책·모바일 화면을 검사하며 사이트를 배포하지 않습니다. 사진과 문구 변경은 관리 페이지에서 처리하므로 코드 배포가 필요 없습니다.
 
 예식 날짜·시간·장소가 아직 미정이어도 디자인과 문구를 먼저 공개할 수 있습니다. 빈 정보는 준비 중으로 표시합니다. 공개 버튼은 서버 저장 뒤 익명 방문자와 같은 경로로 내용을 다시 읽어 일치해야 성공을 알리며, 오류와 결과는 항상 하단 버튼 옆에 표시합니다.
 
@@ -105,7 +105,7 @@ npm run test:e2e:guest
 
 ## 무료 주소
 
-별도 도메인 구매 없이 **https://hyunbeom-juyoung.pages.dev/** 하나를 운영합니다. Cloudflare Pages의 Git 연동으로 `main` 변경이 자동 배포되며, GitHub 저장소는 코드와 검사 이력을 보관합니다.
+별도 도메인 구매 없이 **https://hyunbum-juyoung.pages.dev/** 하나를 운영합니다. Cloudflare Pages의 Git 연동으로 `main` 변경이 자동 배포되며, GitHub 저장소는 코드와 검사 이력을 보관합니다.
 
 ## 화면 미리보기
 

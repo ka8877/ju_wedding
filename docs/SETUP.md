@@ -1,10 +1,10 @@
 # 개발자용 운영·연결 안내
 
-- 청첩장: **https://hyunbeom-juyoung.pages.dev/**
-- 관리 페이지: **https://hyunbeom-juyoung.pages.dev/#/admin**
-- 개발자용 초기 연결 화면: **https://hyunbeom-juyoung.pages.dev/#/setup**
+- 청첩장: **https://hyunbum-juyoung.pages.dev/**
+- 관리 페이지: **https://hyunbum-juyoung.pages.dev/#/admin**
+- 개발자용 초기 연결 화면: **https://hyunbum-juyoung.pages.dev/#/setup**
 
-유료 도메인은 사용하지 않으며 **Cloudflare Pages 운영 주소 하나만** 사용합니다. 코드가 `main`에 반영되면 Cloudflare Pages의 Git 연동으로 검사·빌드 후 자동 배포됩니다. GitHub 저장소와 Actions는 소스 코드와 자동 검사를 관리하며 GitHub Pages 자동 배포는 사용하지 않습니다. Supabase를 연결하면 주영님은 관리 페이지에서 사진·문구·장소·계좌를 변경하고 **공개**만 누르면 됩니다. 그때마다 GitHub를 열거나 코드를 배포할 필요가 없습니다.
+유료 도메인은 사용하지 않으며 **Cloudflare Pages 운영 주소 하나만** 사용합니다. 코드가 `main`에 반영되면 Cloudflare Pages의 Git 연동으로 빌드 후 자동 배포됩니다. GitHub 저장소와 Actions는 소스 코드와 자동 검사를 관리하며 GitHub Pages 자동 배포는 사용하지 않습니다. Supabase를 연결하면 주영님은 관리 페이지에서 사진·문구·장소·계좌를 변경하고 **공개**만 누르면 됩니다. 그때마다 GitHub를 열거나 코드를 배포할 필요가 없습니다.
 
 이 문서는 개발자·운영 담당자를 위한 안내입니다. 일반 사용자 화면에서는 초기 연결 화면, API 키, 도메인 등록, 좌표 입력을 안내하지 않습니다. 사용자는 관리 페이지에서 이름·예식 장소·사진·문구만 편집하고 공개합니다.
 
@@ -30,7 +30,7 @@ on conflict (user_id) do nothing;
 ```
 
 4. **Authentication → Sign In / Providers → Email**에서 이메일 로그인은 사용하고 공개 회원가입은 끕니다. 이 앱은 관리자 전용이며 회원가입만으로 관리 권한을 주지 않습니다.
-5. **Authentication → URL Configuration → Site URL**은 운영 주소인 `https://hyunbeom-juyoung.pages.dev/`로 맞춥니다. 현재 이메일·비밀번호 로그인은 리디렉션을 사용하지 않습니다. 운영 주소에서 기존 관리자 계정으로 로그인합니다.
+5. **Authentication → URL Configuration → Site URL**은 운영 주소인 `https://hyunbum-juyoung.pages.dev/`로 맞춥니다. 현재 이메일·비밀번호 로그인은 리디렉션을 사용하지 않습니다. 운영 주소에서 기존 관리자 계정으로 로그인합니다.
 
 이 작업은 Supabase 프로젝트 소유자 권한이 필요합니다. 공개 키만으로 계정 생성·SQL 실행을 대신할 수는 없습니다.
 
@@ -50,14 +50,14 @@ npm run check:connection
 
 현재 클라우드 환경에서 프로젝트의 `fasdkmqdgukptnuvofwp.supabase.co` 주소가 차단됐다면 먼저 환경의 네트워크 허용 설정이 적용돼야 합니다. 연결 점검을 실제로 통과하기 전에는 사진 저장이나 관리자 로그인이 검증됐다고 안내하지 않습니다.
 
-코드를 `main`에 반영하면 Cloudflare Pages가 아래의 현재 빌드 설정으로 검사·배포합니다. GitHub Actions는 단위 테스트·데이터베이스 정책·모바일 화면·프로덕션 빌드를 검사하고 Supabase의 공개 데이터 연결을 진단합니다. 사이트 배포는 Cloudflare Pages에서만 수행합니다. Supabase 연결 점검은 별도 진단이며, 통과하지 않은 상태에서 사진 저장·관리자 로그인이 준비됐다고 안내하지 않습니다. 사용자에게 GitHub 변수 등록이나 배포 버튼 클릭을 반복 요청하지 않습니다.
+코드를 `main`에 반영하면 Cloudflare Pages가 아래 설정으로 빌드·배포합니다. GitHub Actions는 단위 테스트·데이터베이스 정책·모바일 화면·프로덕션 빌드를 검사하고 Supabase의 공개 데이터 연결을 진단합니다. 사이트 배포는 Cloudflare Pages에서만 수행합니다. Supabase 연결 점검은 별도 진단이며, 통과하지 않은 상태에서 사진 저장·관리자 로그인이 준비됐다고 안내하지 않습니다. 사용자에게 GitHub 변수 등록이나 배포 버튼 클릭을 반복 요청하지 않습니다.
 
 ## 주영님이 사용하는 순서
 
-1. [관리 페이지](https://hyunbeom-juyoung.pages.dev/#/admin)에 이메일·비밀번호로 로그인합니다.
+1. [관리 페이지](https://hyunbum-juyoung.pages.dev/#/admin)에 이메일·비밀번호로 로그인합니다.
 2. 사진과 기본 정보를 입력한 뒤, 디자인 탭에서 **추천 조합** 하나를 고르거나 **랜덤 스타일 추천**을 눌러 보세요. 마음에 드는 조합이면 세부 옵션을 고를 필요가 없습니다. 더 바꾸고 싶을 때만 **직접 세부 꾸미기**를 여세요.
 3. **초안 저장** 후 미리보기로 확인하고 **공개**합니다.
-4. 다른 휴대폰이나 시크릿 창에서 [청첩장](https://hyunbeom-juyoung.pages.dev/)을 열어 확인합니다.
+4. 다른 휴대폰이나 시크릿 창에서 [청첩장](https://hyunbum-juyoung.pages.dev/)을 열어 확인합니다.
 
 사진·문구 변경에는 GitHub 작업이 필요 없습니다. 디자인 코드 변경만 `main` 반영 → 자동 검사 → 자동 배포 순서로 진행됩니다.
 
@@ -65,7 +65,7 @@ npm run check:connection
 
 관리 화면의 **소중한 분께 전해요**에서 링크를 복사하거나 **QR 코드 보기 → QR 이미지 저장**으로 1536px 정사각형 PNG를 내려받을 수 있습니다. 하객용 청첩장 하단에서도 QR과 공유 버튼을 사용할 수 있습니다. 외부 생성 서비스 없이 기기에서 만들며, 저장한 이미지 전체를 사용해 스캔 기준점과 여백을 유지하세요.
 
-QR과 공유 링크의 운영 주소는 `https://hyunbeom-juyoung.pages.dev/`입니다. 로컬 미리보기는 `VITE_PUBLIC_SITE_URL`을 사용하고, 변수를 생략해도 코드의 기본값인 같은 Cloudflare 주소를 사용합니다. 관리자 주소·로그인 정보·저장하지 않은 초안은 QR에 포함되지 않습니다. 이전 GitHub Pages 주소를 담은 QR은 현재 운영 주소용으로 다시 생성해 교체하세요. 공유하기 전에 **공개 청첩장에 반영**하고 다른 휴대폰에서 확인해 주세요.
+QR과 공유 링크의 운영 주소는 `https://hyunbum-juyoung.pages.dev/`입니다. 로컬 미리보기는 `VITE_PUBLIC_SITE_URL`을 사용하고, 변수를 생략해도 코드의 기본값인 같은 Cloudflare 주소를 사용합니다. 관리자 주소·로그인 정보·저장하지 않은 초안은 QR에 포함되지 않습니다. 이전 GitHub Pages 주소를 담은 QR은 현재 운영 주소용으로 다시 생성해 교체하세요. 공유하기 전에 **공개 청첩장에 반영**하고 다른 휴대폰에서 확인해 주세요.
 
 메시지에 링크를 붙였을 때 표시되는 미리보기 이미지는 이름을 담은 기본 이미지입니다. 관리자 화면에서 고른 사진·디자인에 따라 자동 변경되지는 않습니다.
 
@@ -77,7 +77,7 @@ QR과 공유 링크의 운영 주소는 `https://hyunbeom-juyoung.pages.dev/`입
 
 - **Application 이름:** `hbjy-wedding` — 영문자로 시작하는 이름을 사용합니다.
 - **선택 API:** Dynamic Map, Geocoding
-- **Web 서비스 URL:** `https://hyunbeom-juyoung.pages.dev` 하나만 등록
+- **Web 서비스 URL:** `https://hyunbum-juyoung.pages.dev` 하나만 등록
 - **공개용 Client ID:** `naverMapClientId` 또는 `VITE_NAVER_MAP_CLIENT_ID`에 등록
 
 운영 앱은 소유자가 대표 계정임을 확인하고 다음 사용 한도를 저장했습니다. 두 API 모두 **한도 초과 사용 → 허용안함**을 사용합니다.
@@ -91,11 +91,11 @@ QR과 공유 링크의 운영 주소는 `https://hyunbeom-juyoung.pages.dev/`입
 
 본문에는 네이버 지도만 표시하며, Google·카카오는 보조 메뉴에서 새 탭으로 엽니다. 키 미설정·인증·네트워크 오류 시에는 작은 안내와 네이버 외부 링크만 표시하며, 다른 지도로 자동 대체하지 않습니다. 실제 키와 운영 도메인의 인증을 확인해야 본문 지도 활성화가 완료됩니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다. 기존 문서의 좌표가 비어 있어도 같은 장소와 주소라면 이 위치를 사용합니다.
 
-카카오톡 직접 공유는 Kakao Developers 앱의 **JavaScript SDK 도메인**과 **제품 링크 관리 → 웹 도메인**에 `https://hyunbeom-juyoung.pages.dev`를 등록하고 기본 제품 링크도 같은 운영 주소로 설정합니다. **JavaScript 키**는 `kakaoJavascriptKey` 또는 `VITE_KAKAO_JAVASCRIPT_KEY`에 등록합니다. 하객 화면에는 공유와 QR 두 동작을 표시합니다. 카카오 키가 연결되면 기본 공유 버튼이 카카오톡으로 전환되며, 키가 없으면 기기의 기본 공유창을 사용합니다. 기기 공유를 지원하지 않으면 링크를 복사합니다. 복사만 한 상태를 전송 완료로 표시하지 않습니다.
+카카오톡 직접 공유는 Kakao Developers 앱의 **JavaScript SDK 도메인**과 **제품 링크 관리 → 웹 도메인**에 `https://hyunbum-juyoung.pages.dev`를 등록하고 기본 제품 링크도 같은 운영 주소로 설정합니다. **JavaScript 키**는 `kakaoJavascriptKey` 또는 `VITE_KAKAO_JAVASCRIPT_KEY`에 등록합니다. 하객 화면에는 공유와 QR 두 동작을 표시합니다. 카카오 키가 연결되면 기본 공유 버튼이 카카오톡으로 전환되며, 키가 없으면 기기의 기본 공유창을 사용합니다. 기기 공유를 지원하지 않으면 링크를 복사합니다. 복사만 한 상태를 전송 완료로 표시하지 않습니다.
 
 ## 참석 응답과 현장 사진 저장소 추가
 
-이미 기본 청첩장을 사용 중이라면 [연결 안내](https://hyunbeom-juyoung.pages.dev/#/setup)의 **05 참석 응답 · 현장 사진 연결하기**에서 추가 설정 SQL을 복사해 Supabase SQL Editor에서 실행합니다. 이 작업은 프로젝트 소유자 권한이 필요합니다. 공개 키로는 테이블과 권한을 생성할 수 없어, 코드 배포만으로 실제 접수가 활성화되지는 않습니다.
+이미 기본 청첩장을 사용 중이라면 [연결 안내](https://hyunbum-juyoung.pages.dev/#/setup)의 **05 참석 응답 · 현장 사진 연결하기**에서 추가 설정 SQL을 복사해 Supabase SQL Editor에서 실행합니다. 이 작업은 프로젝트 소유자 권한이 필요합니다. 공개 키로는 테이블과 권한을 생성할 수 없어, 코드 배포만으로 실제 접수가 활성화되지는 않습니다.
 
 **추가 기능 연결 확인**으로 저장 공간을 확인한 뒤, 관리 화면의 **추가 기능**에서 접수·오픈 날짜·신랑측/신부측 안내를 확인하고 공개합니다. 응답은 **하객 응답** 메뉴에서 필터링하고 Excel에서 열 수 있는 UTF-8 CSV로 내려받습니다. 연락처는 선택 사항이며, 응답은 관리자만 조회합니다. 전송 실패 시 완료 화면을 보여주지 않고 다시 시도할 수 있습니다.
 
@@ -107,22 +107,22 @@ QR과 공유 링크의 운영 주소는 `https://hyunbeom-juyoung.pages.dev/`입
 
 ## 현재 Cloudflare Pages 배포 설정
 
-현재 운영 프로젝트는 **hyunbeom-juyoung**이며, 무료 주소 **https://hyunbeom-juyoung.pages.dev/**에서 배포를 확인했습니다. 기존 Supabase 프로젝트와 공개한 청첩장 데이터는 그대로 사용합니다.
+운영 프로젝트는 **hyunbum-juyoung**이며, 무료 운영 주소는 **https://hyunbum-juyoung.pages.dev/**입니다. 기존 Supabase 프로젝트와 공개한 청첩장 데이터는 그대로 사용합니다.
 
 | 항목 | 설정값 |
 |---|---|
 | GitHub 저장소 | `ka8877/ju_wedding` |
 | 운영 브랜치 | `main` |
-| 빌드 명령(권장) | `npm test && npm run test:db && npm run build` |
+| 빌드 명령 | `npm run build` |
 | 출력 폴더 | `dist` |
 | 루트 폴더 | 저장소 루트(빈칸 기본값) |
 | `NODE_VERSION` | `24` |
 | `BASE_PATH` | `/` |
-| `VITE_PUBLIC_SITE_URL` | `https://hyunbeom-juyoung.pages.dev/` |
+| `VITE_PUBLIC_SITE_URL` | `https://hyunbum-juyoung.pages.dev/` |
 
-Cloudflare GitHub 앱은 이 저장소에만 연결돼 있습니다. `main` 수정은 Cloudflare Pages에서 검사·빌드 후 자동 배포됩니다. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요하지 않으며, 운영 빌드에 `VITE_LOCAL_PREVIEW=true`를 설정하지 않습니다.
+Cloudflare GitHub 앱은 이 저장소에만 연결돼 있습니다. `main` 수정은 Cloudflare Pages에서 빌드 후 자동 배포됩니다. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요하지 않으며, 운영 빌드에 `VITE_LOCAL_PREVIEW=true`를 설정하지 않습니다.
 
-공유 미리보기의 canonical·OG 주소와 로컬 QR 기본 주소는 `VITE_PUBLIC_SITE_URL`을 사용합니다. 코드 자체의 기본값도 `https://hyunbeom-juyoung.pages.dev/`이며, 미리보기에서 만드는 공유 링크 역시 운영 주소를 사용합니다.
+공유 미리보기의 canonical·OG 주소와 로컬 QR 기본 주소는 `VITE_PUBLIC_SITE_URL`을 사용합니다. 코드 자체의 기본값도 `https://hyunbum-juyoung.pages.dev/`이며, 미리보기에서 만드는 공유 링크 역시 운영 주소를 사용합니다.
 
 공개 내용과 관리자 로그인 화면, QR 버튼, 공유 메타데이터는 운영 주소에서 확인합니다. 실제 관리자 로그인·사진 업로드는 별도 확인 대상입니다. 사진·문구는 계속 관리 화면에서 공개하며, 배포 결과는 Cloudflare Pages의 배포 상태와 운영 주소에서 확인합니다. GitHub Actions에는 사이트 배포 단계가 없습니다.
 
@@ -177,7 +177,7 @@ npm run check:connection
 - **사진 실패:** 파일 형식·8 MiB 제한·사진 버킷·사용량을 확인합니다.
 - **다른 기기에 수정 없음:** 미리보기 모드가 아닌지 확인하고 초안 저장 다음에 **공개**했는지 확인합니다. 공개 설정을 바꾼 뒤에는 배포가 한 번 필요합니다.
 - **장소 검색 없음:** 검색 서비스의 사용량·데이터 범위 차이일 수 있습니다. 정확한 주소와 위치를 직접 지정할 수 있습니다.
-- **운영 코드가 갱신되지 않음:** Cloudflare Pages 프로젝트 `hyunbeom-juyoung`의 연결 저장소·운영 브랜치 `main`·빌드 상태를 확인합니다. GitHub Actions 검사 성공과 Cloudflare 운영 배포 완료는 각각 확인합니다.
+- **운영 코드가 갱신되지 않음:** Cloudflare Pages 프로젝트 `hyunbum-juyoung`의 연결 저장소·운영 브랜치 `main`·빌드 상태를 확인합니다. GitHub Actions 검사 성공과 Cloudflare 운영 배포 완료는 각각 확인합니다.
 
 
 ## 전체 글꼴과 세부 꾸미기

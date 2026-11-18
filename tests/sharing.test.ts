@@ -5,11 +5,11 @@ import { invitationQr, invitationUrl, publicInvitationUrl } from '../src/lib/sha
 
 describe('guest invitation links', () => {
   it('shares the canonical Cloudflare site from live, preview and retired addresses', () => {
-    expect(publicInvitationUrl).toBe('https://hyunbeom-juyoung.pages.dev/');
+    expect(publicInvitationUrl).toBe('https://hyunbum-juyoung.pages.dev/');
     for (const href of [
-      'https://hyunbeom-juyoung.pages.dev/?tracking=private#/admin',
+      'https://hyunbum-juyoung.pages.dev/?tracking=private#/admin',
       'https://ka8877.github.io/ju_wedding/?token=private#/admin',
-      'https://branch-preview.hyunbeom-juyoung.pages.dev/#/setup',
+      'https://branch-preview.hyunbum-juyoung.pages.dev/#/setup',
       'https://wedding.example/couple/?tracking=123#/setup',
     ]) expect(invitationUrl(href)).toBe(publicInvitationUrl);
   });
@@ -24,19 +24,16 @@ describe('guest invitation links', () => {
     }
   });
 
-  it.each([
-    'https://hyunbeom-juyoung.pages.dev/',
-    'https://hyunbum-juyoung.pages.dev/',
-  ])('generates an upright square QR for %s', async url => {
+  it('generates an upright square QR for the canonical invitation URL', async () => {
     const { PNG } = createRequire(import.meta.url)('pngjs') as {
       PNG: { sync: { read: (bytes: Buffer) => { width: number; height: number; data: Uint8Array } } };
     };
-    const image = await invitationQr(url);
+    const image = await invitationQr(publicInvitationUrl);
     expect(image).toMatch(/^data:image\/png;base64,/);
     const { width, height, data } = PNG.sync.read(Buffer.from(image.split(',')[1], 'base64'));
     expect({ width, height }).toEqual({ width: 1536, height: 1536 });
     const scanned = jsQR(new Uint8ClampedArray(data), width, height);
-    expect(scanned?.data).toBe(url);
+    expect(scanned?.data).toBe(publicInvitationUrl);
     const { topLeftFinderPattern, topRightFinderPattern, bottomLeftFinderPattern } = scanned!.location;
     expect(topLeftFinderPattern.y).toBeCloseTo(topRightFinderPattern.y);
     expect(topLeftFinderPattern.x).toBeCloseTo(bottomLeftFinderPattern.x);

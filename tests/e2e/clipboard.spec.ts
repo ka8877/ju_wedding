@@ -14,7 +14,7 @@ test('clipboard fallback can copy from a native QR dialog', async ({ page, conte
   });
   await dialog.getByRole('button', { name: '링크 복사', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('링크를 복사했어요');
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://hyunbeom-juyoung.pages.dev/');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://hyunbum-juyoung.pages.dev/');
   await expect(dialog.getByRole('button', { name: '링크 복사', exact: true })).toBeFocused();
 });
 
@@ -38,13 +38,13 @@ test('a denied Clipboard API falls back to selected text and restores the editin
       fallbackCalls.push({ command, selectedText: textarea.value.slice(textarea.selectionStart, textarea.selectionEnd), readOnly: textarea.readOnly });
       return true;
     };
-    await copyText('https://hyunbeom-juyoung.pages.dev/');
+    await copyText('https://hyunbum-juyoung.pages.dev/');
     return { clipboardCalls, fallbackCalls, focused: document.activeElement === field,
       selection: [field.selectionStart, field.selectionEnd, field.selectionDirection],
       extraTextareas: document.querySelectorAll('textarea').length - originalTextareaCount };
   });
   expect(result.clipboardCalls).toBe(1);
-  expect(result.fallbackCalls).toEqual([{ command: 'copy', selectedText: 'https://hyunbeom-juyoung.pages.dev/', readOnly: true }]);
+  expect(result.fallbackCalls).toEqual([{ command: 'copy', selectedText: 'https://hyunbum-juyoung.pages.dev/', readOnly: true }]);
   expect(result.focused).toBe(true);
   expect(result.selection).toEqual([2, 6, 'backward']);
   expect(result.extraTextareas).toBe(0);

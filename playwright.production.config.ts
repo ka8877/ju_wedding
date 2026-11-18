@@ -8,7 +8,7 @@ export default defineConfig({
   retries: 0,
   timeout: 60_000,
   use: {
-    baseURL: 'https://hyunbeom-juyoung.pages.dev/',
+    baseURL: 'https://hyunbum-juyoung.pages.dev/',
     ...devices['iPhone 13'],
     browserName: 'chromium',
     reducedMotion: 'no-preference',
