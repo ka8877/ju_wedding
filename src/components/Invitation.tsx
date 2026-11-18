@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { ArrowDown, ArrowUpRight, Bus, CalendarPlus, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Heart, MapPin, MessageCircle, Phone, X } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Bus, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Heart, MapPin, MessageCircle, Phone, X } from 'lucide-react';
 import type { SectionId, WeddingData } from '../lib/types';
 import { getDesign, sectionIds } from '../lib/design';
 import { copyText } from '../lib/utils';
-import { downloadWeddingCalendar } from '../lib/calendar';
+import InvitationCalendarSave from './InvitationCalendarSave';
 import InvitationSharing from './InvitationSharing';
 import MusicPlayer from './MusicPlayer';
 import GuestRsvp from './GuestRsvp';
@@ -176,7 +176,7 @@ export default function Invitation({ data, preview = false }: InvitationProps) {
           <div className="invite-calendar-grid">{Array.from({ length: firstDay }, (_, i) => <span key={`blank-${i}`} />)}{Array.from({ length: daysInMonth }, (_, i) => <span key={i + 1} className={`${i + 1 === day ? 'is-wedding-day' : ''} ${(firstDay + i) % 7 === 0 ? 'is-sunday' : ''}`} aria-label={i + 1 === day ? `${i + 1}일, 결혼식` : undefined}>{i + 1 === day && <Heart size={38} fill="currentColor" strokeWidth={0} className="invite-calendar-heart" />}<span>{i + 1}</span></span>)}</div>
         </div>
         {!hasTime ? <p className="invite-countdown-note">예식 시간은 추후 안내드릴게요.</p> : remaining > 0 ? <><div className="invite-countdown"><div><strong>{String(days).padStart(2, '0')}</strong><span>DAYS</span></div><i>:</i><div><strong>{String(hours).padStart(2, '0')}</strong><span>HOURS</span></div><i>:</i><div><strong>{String(minutes).padStart(2, '0')}</strong><span>MINUTES</span></div></div><p className="invite-countdown-note">{calendarDays > 0 ? <>두 사람이 하나 되는 날까지 <strong>{calendarDays}일</strong></> : '오늘, 두 사람이 하나 되는 소중한 날입니다.'}</p></> : <p className="invite-countdown-note">우리의 시작을 함께 축복해 주셔서 감사합니다.</p>}
-        {hasTime && <button className="invite-outline-button invite-calendar-save" onClick={() => { downloadWeddingCalendar(data); }}><CalendarPlus size={15} strokeWidth={1.4} />캘린더에 저장</button>}
+        {hasTime && <InvitationCalendarSave data={data} />}
       </section>),
     gallery: (<section data-section="gallery" id="our-moments" className="invite-section invite-gallery-section invite-reveal invite-content-section">
         <div className="invite-section-index"><span>{sectionNumber('gallery')}</span><i /><span>OUR MOMENTS</span></div>

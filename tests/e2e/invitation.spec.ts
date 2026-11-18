@@ -66,8 +66,14 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await expect(page.locator('.invitation')).toHaveAttribute('data-theme', 'rose');
   await expect(page.getByText('2027년 5월 22일 토요일 오후 2:30').first()).toBeVisible();
   await expect(page.getByText('고린도전서 13:13')).toBeVisible();
-  const calendarDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: '캘린더에 저장', exact: true }).click();
+  const calendarDialog = page.getByRole('dialog', { name: '캘린더에 저장' });
+  await expect(calendarDialog).toBeVisible();
+  const calendarLink = new URL((await calendarDialog.getByRole('link', { name: /구글 캘린더/ }).getAttribute('href'))!);
+  expect(calendarLink.searchParams.get('dates')).toBe('20270522T053000Z/20270522T063000Z');
+  expect(calendarLink.searchParams.get('location')).toContain('테스트 예식장');
+  const calendarDownload = page.waitForEvent('download');
+  await calendarDialog.getByRole('button', { name: /Apple 캘린더/ }).click();
   const calendarFile = await calendarDownload;
   const calendarPath = await calendarFile.path();
   const calendar = await readFile(calendarPath!, 'utf8');

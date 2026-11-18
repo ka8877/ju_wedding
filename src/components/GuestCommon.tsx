@@ -46,7 +46,7 @@ export function guestTimestamp(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
 }
 
-export function GuestDialog({ open, onClose, title, busy = false, children }: { open: boolean; onClose: () => void; title: string; busy?: boolean; children: ReactNode }) {
+export function GuestDialog({ open, onClose, title, busy = false, eyebrow = 'WITH YOUR WARMEST WISHES', children }: { open: boolean; onClose: () => void; title: string; busy?: boolean; eyebrow?: string; children: ReactNode }) {
   const invitationFont = useInvitationFont();
   const buttonShape = useInvitationButtonShape();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -67,7 +67,7 @@ export function GuestDialog({ open, onClose, title, busy = false, children }: { 
     onKeyDown={event => { if (event.key === 'Escape') event.stopPropagation(); }}>
     <div className="guest-dialog-body">
       <button type="button" className="guest-dialog-close" aria-label={`${title} 닫기`} disabled={busy} onClick={() => closeRef.current()} autoFocus><X size={21} /></button>
-      <p className="guest-eyebrow">WITH YOUR WARMEST WISHES</p>
+      {eyebrow && <p className="guest-eyebrow">{eyebrow}</p>}
       <h2 id={titleId}>{title}</h2>
       {children}
     </div>
