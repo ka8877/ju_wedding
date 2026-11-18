@@ -23,15 +23,6 @@ jobs:
     continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-      - run: npm ci
-      - name: Install browser
-        run: |
-          npx playwright install --with-deps chromium
-          node --input-type=module -e 'import { chromium } from "@playwright/test"; console.log(`PLAYWRIGHT_CHROMIUM_EXECUTABLE=${chromium.executablePath()}`)' >> "$GITHUB_ENV"
       - name: Wait for this main commit on Cloudflare
         if: github.event_name == 'push'
         uses: actions/github-script@v7
@@ -50,6 +41,34 @@ jobs:
               await new Promise(resolve => setTimeout(resolve, 10_000));
             }
             throw new Error('Cloudflare production deployment did not finish in five minutes.');
+      - name: Verify venue search denies unauthenticated calls
+        run: |
+          node --input-type=module <<'JS'
+          const url = 'https://hyunbum-juyoung.pages.dev/api/venue-search';
+          for (const authorization of [null, 'Bearer invalid-check-token']) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (authorization) headers.Authorization = authorization;
+            const response = await fetch(url, {
+              method: 'POST', headers, body: JSON.stringify({ query: '정자역' }), signal: AbortSignal.timeout(15_000),
+            });
+            const body = await response.json().catch(() => null);
+            const code = typeof body?.error === 'string' && /^[a-z_]+$/.test(body.error) ? body.error : 'unknown';
+            const caller = authorization ? 'invalid token' : 'anonymous';
+            console.log(`Venue search (${caller}): HTTP ${response.status}, ${code}`);
+            if (![401, 403].includes(response.status) || !['login_required', 'admin_required'].includes(code)) {
+              throw new Error(`Unexpected venue-search response for ${caller}.`);
+            }
+          }
+          JS
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Install browser
+        run: |
+          npx playwright install --with-deps chromium
+          node --input-type=module -e 'import { chromium } from "@playwright/test"; console.log(`PLAYWRIGHT_CHROMIUM_EXECUTABLE=${chromium.executablePath()}`)' >> "$GITHUB_ENV"
       - name: Verify real production Naver map
         run: npx playwright test --config playwright.production.config.ts
       - name: Save production evidence
