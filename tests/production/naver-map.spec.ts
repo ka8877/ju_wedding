@@ -103,7 +103,9 @@ test('the deployed invitation plays the garden film, loads Naver tiles and shows
       return image.complete && image.naturalWidth >= 128 && image.naturalHeight >= 128
         && /(?:naver\.com|pstatic\.net)/.test(image.src) && !/logo|marker|control/i.test(image.src);
     })), { timeout: 15_000, message: 'At least one real Naver tile must load; an empty ready container is insufficient.' }).toBe(true);
-    await expect(map.locator('.venue-map-pin--venue')).toContainText('HD현대글로벌R&D센터');
+    await expect(page.locator('[data-section="location"] .invite-venue-name')).toHaveText('HD현대글로벌R&D센터');
+    await expect(map.locator('.venue-map-pin--venue')).toBeVisible();
+    await expect(map.locator('.venue-map-pin--station')).toHaveText('정자역');
     if (selectedFont === 'handwriting' || selectedFont === 'clear-handwriting') {
       const action = page.getByRole('link', { name: '네이버 지도 열기', exact: true });
       const label = action.locator('> span:nth-child(2)');

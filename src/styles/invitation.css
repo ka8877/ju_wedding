@@ -108,9 +108,9 @@
 .invite-location-section { padding: 61px 34px; }
 .invite-venue-name { margin: 27px 0 2px !important; font-size: 17px; font-weight: 500; word-break: keep-all; }
 .invite-venue-hall { font-size: 12px; color: var(--invite-accent); }
-.invite-address { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 10px 0 18px; color: var(--invite-muted); font-size: calc(12px * var(--invite-copy-scale)); line-height: 1.8; }
-.invite-address span { overflow-wrap: anywhere; }
-.invite-address button { background: none; border: 1px solid var(--invite-line); border-radius: 6px; min-width: 44px; min-height: 44px; color: var(--invite-accent); padding: 10px; display: grid; place-items: center; flex-shrink: 0; }
+.invite-address { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px 9px; margin: 10px 0 18px; color: var(--invite-muted); font-size: calc(12px * var(--invite-copy-scale)); line-height: 1.8; }
+.invite-address span { word-break: keep-all; overflow-wrap: anywhere; }
+.invite-address button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 6px 9px; border: 1px solid var(--invite-line); border-radius: 6px; background: none; color: var(--invite-accent); font-size: inherit; cursor: pointer; }
 .invite-map { width: 100%; height: 235px; display: block; border: 1px solid var(--invite-line); border-radius: 3px; filter: saturate(.55); margin-top: 18px; }
 .invite-location-placeholder { background: var(--invite-paper); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; color: var(--invite-accent); margin-top: 22px; }
 .invite-location-placeholder span { font-size: 10px; color: var(--invite-muted); }
@@ -120,7 +120,6 @@
 .invite-map-links a.invite-map-link--primary { min-height: 50px; background: #03a94d; border-color: #03a94d; color: #fff; font-size: 12px; font-weight: 600; }
 .invite-map-link--primary .invite-map-icon--naver { background: #fff; color: #03a94d; }
 .invite-map-links a.invite-map-link--primary > svg { color: #fff; }
-.invite-map-help { margin-top: 12px !important; color: var(--invite-muted); font-size: 9px; line-height: 1.8; word-break: keep-all; }
 .invite-map-icon { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; font: bold 10px/1 Arial, sans-serif; }
 .invite-map-icon--naver { background: #e0eedb; color: #56804c; }
 .invite-map-icon--kakao { background: #f2e8b6; color: #6d633c; }

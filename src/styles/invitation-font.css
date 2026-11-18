@@ -81,10 +81,10 @@
   font-weight: 700;
   font-synthesis: weight;
 }
-:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-section-index, .invite-calendar-weekdays, .invite-countdown span, .invite-music-toggle > span, .invite-verse small, .invite-map-help, .invite-pending-info, .invite-shuttle-group > p, .invite-venue-pending > span, .venue-map-station span, .venue-map-caption, .venue-map-status p, .guest-footnote, .guest-status, .guest-side-message, .guest-form-description, .guest-field > small, .guest-field > label > small, .guest-privacy-note, .guest-preview-note, .guest-form-error, .guest-receipt > p, .guest-progress, .guest-partial-note, .guest-file-picker span, .guest-file-list > li, .wedding-share-feedback, .wedding-share-note, .wedding-share-url, .wedding-share-card-heading p, .wedding-share-dialog-content > p:not([class]), .wedding-qr-frame > p, .wedding-qr-frame > span) {
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-section-index, .invite-calendar-weekdays, .invite-countdown span, .invite-music-toggle > span, .invite-verse small, .invite-pending-info, .invite-shuttle-group > p, .invite-venue-pending > span, .venue-map-station span, .venue-map-status p, .guest-footnote, .guest-status, .guest-side-message, .guest-form-description, .guest-field > small, .guest-field > label > small, .guest-privacy-note, .guest-preview-note, .guest-form-error, .guest-receipt > p, .guest-progress, .guest-partial-note, .guest-file-picker span, .guest-file-list > li, .wedding-share-feedback, .wedding-share-note, .wedding-share-url, .wedding-share-card-heading p, .wedding-share-dialog-content > p:not([class]), .wedding-qr-frame > p, .wedding-qr-frame > span) {
   font-size: max(var(--invite-hand-hint-size), calc(var(--invite-hand-hint-size) * var(--invite-copy-scale, 1))) !important;
 }
-:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-subtitle, .invite-relation, .invite-address, .invite-countdown-note, .invite-directions p, .invite-map-help, .invite-pending-info, .invite-shuttle-group > p, .invite-venue-pending > span, .invite-account > div > span, .invite-calendar-weekdays, .invite-verse small, .venue-map-caption, .venue-map-station span, .guest-footnote, .guest-status, .guest-side-message, .guest-form-description, .guest-field > small, .guest-field > label > small, .guest-privacy-note, .guest-consent, .guest-preview-note, .guest-receipt > p, .guest-receipt-details dt, .guest-progress, .guest-partial-note, .guest-file-picker span, .guest-file-list > li, .wedding-share-feedback, .wedding-share-note, .wedding-share-url, .wedding-share-card-heading p, .wedding-share-dialog-content > p:not([class]), .wedding-qr-frame > span) {
+:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) :is(.invite-subtitle, .invite-relation, .invite-address, .invite-countdown-note, .invite-directions p, .invite-pending-info, .invite-shuttle-group > p, .invite-venue-pending > span, .invite-account > div > span, .invite-calendar-weekdays, .invite-verse small, .venue-map-station span, .guest-footnote, .guest-status, .guest-side-message, .guest-form-description, .guest-field > small, .guest-field > label > small, .guest-privacy-note, .guest-consent, .guest-preview-note, .guest-receipt > p, .guest-receipt-details dt, .guest-progress, .guest-partial-note, .guest-file-picker span, .guest-file-list > li, .wedding-share-feedback, .wedding-share-note, .wedding-share-url, .wedding-share-card-heading p, .wedding-share-dialog-content > p:not([class]), .wedding-qr-frame > span) {
   color: var(--invite-hand-helper-ink);
 }
 /* Guest and share dialogs use their own pale paper, independently of the theme. */
@@ -131,11 +131,6 @@
   font-weight: 700;
   font-synthesis: weight;
   letter-spacing: normal;
-}
-:is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .venue-map-caption {
-  flex-wrap: wrap;
-  column-gap: 12px;
-  row-gap: 2px;
 }
 :is([data-invitation-font='handwriting'], [data-invitation-font='clear-handwriting']) .invite-contact-row > span {
   min-width: 0;

@@ -8,11 +8,14 @@
 .venue-map-pin > span:first-child { max-width: 190px; padding: 7px 10px; border: 1px solid #fff; border-radius: 6px; background: #4f6843; color: #fff; box-shadow: 0 2px 6px #1e301f38; font-size: 11px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; text-align: center; }
 .venue-map-pin-dot { width: 10px; height: 10px; margin-top: -5px; border: 2px solid #fff; border-radius: 50%; background: #4f6843; box-shadow: 0 2px 4px #1e301f38; }
 .venue-map-pin--station > span:first-child, .venue-map-pin--station .venue-map-pin-dot { background: #396a9d; }
-.venue-map-station { display: flex; align-items: center; gap: 9px; padding: 12px 3px 2px; color: var(--invite-accent, #547447); }
-.venue-map-station > div { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
-.venue-map-station strong { font-size: 12px; font-weight: 600; }
-.venue-map-station span { color: var(--invite-muted, #72816b); font-size: 10px; line-height: 1.6; }
-.venue-map-station a { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-height: 36px; padding: 5px; color: inherit; font-size: 10px; text-decoration: none; }
+.venue-map-station { margin-top: 10px; padding: 6px 10px; border: 1px solid var(--invite-line, #e1e5dc); border-radius: 6px; color: var(--invite-accent, #547447); }
+.venue-map-station-heading { display: flex; align-items: center; gap: 9px; }
+.venue-map-station-heading > div { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.venue-map-station strong { font-size: 14px; font-weight: 600; }
+.venue-map-station span { color: var(--invite-muted, #566450); font-size: 12px; line-height: 1.55; word-break: keep-all; overflow-wrap: anywhere; }
+.venue-map-station a { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; min-height: 44px; padding: 4px; color: inherit; font-size: 12px; text-decoration: none; }
+.venue-map-station-transfer { display: grid; gap: 2px; margin: 0 0 3px 27px; padding-top: 7px; border-top: 1px solid var(--invite-line, #e1e5dc); }
+.venue-map-station-transfer span { color: var(--invite-ink, #394532); }
 .venue-map-status { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 15px 12px; border: 1px solid var(--invite-line, #e1e5dc); border-radius: 6px; background: #f6f7f2; color: var(--invite-accent, #547447); text-align: center; }
 .venue-map-status p { margin: 0 !important; font-size: 11px !important; line-height: 1.9 !important; color: var(--invite-muted, #72816b); }
 .venue-map-status > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
@@ -20,9 +23,5 @@
 .venue-map-loading { animation: venue-map-spin 1.2s linear infinite; }
 @keyframes venue-map-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .venue-map-loading { animation: none; } }
-.venue-map-caption { display: flex; justify-content: space-between; gap: 12px; margin: 9px 0 0 !important; color: var(--invite-muted, #7b8574); font-size: 9px !important; line-height: 1.7 !important; }
-.venue-map-caption > span:first-child { flex-shrink: 0; }
-.venue-map-caption > span:last-child { text-align: right; overflow-wrap: anywhere; }
 .editor-venue-map .venue-map-frame { height: 360px; }
-.editor-venue-map .venue-map-caption { font-size: 11px !important; }
 @media (max-width: 360px) { .venue-map-frame { height: 340px; } }
