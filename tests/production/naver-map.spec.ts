@@ -124,7 +124,7 @@ test('the deployed invitation plays the garden film, loads Naver tiles and shows
     expect(png.width).toBe(1536);
     expect(png.height).toBe(1536);
     const decoded = jsQR(new Uint8ClampedArray(png.data), png.width, png.height);
-    expect(decoded?.data).toBe('https://hyunbeom-juyoung.pages.dev/');
+    expect(decoded?.data).toBe('https://hyunbum-juyoung.pages.dev/');
     expect(decoded!.location.topLeftFinderPattern.y).toBeCloseTo(decoded!.location.topRightFinderPattern.y);
     await writeFile(testInfo.outputPath('invitation-qr.png'), pngBytes);
     await dialog.screenshot({ path: testInfo.outputPath('qr.png') });

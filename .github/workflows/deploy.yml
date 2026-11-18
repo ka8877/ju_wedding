@@ -51,6 +51,6 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           VITE_NAVER_MAP_CLIENT_ID: ${{ vars.VITE_NAVER_MAP_CLIENT_ID }}
           VITE_KAKAO_JAVASCRIPT_KEY: ${{ vars.VITE_KAKAO_JAVASCRIPT_KEY }}
-          VITE_PUBLIC_SITE_URL: https://hyunbeom-juyoung.pages.dev/
+          VITE_PUBLIC_SITE_URL: https://hyunbum-juyoung.pages.dev/
           BASE_PATH: /
         run: npm run build

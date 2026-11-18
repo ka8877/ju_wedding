@@ -3,7 +3,7 @@ import { defaultPublicSiteUrl, resolvePublicSiteUrl } from '../src/lib/site-url'
 
 describe('canonical public invitation URL', () => {
   it('uses the sole Cloudflare site when no canonical override is configured', () => {
-    expect(defaultPublicSiteUrl).toBe('https://hyunbeom-juyoung.pages.dev/');
+    expect(defaultPublicSiteUrl).toBe('https://hyunbum-juyoung.pages.dev/');
     for (const value of [undefined, '', '   ']) expect(resolvePublicSiteUrl(value)).toBe(defaultPublicSiteUrl);
   });
 

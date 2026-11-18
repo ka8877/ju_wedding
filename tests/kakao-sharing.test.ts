@@ -7,12 +7,12 @@ describe('optional native Kakao invitation sharing', () => {
   it('shares only the guest page and the correct image base path', async () => {
     const init = vi.fn(), sendDefault = vi.fn();
     vi.stubGlobal('window', { Kakao: { init, isInitialized: () => false, Share: { sendDefault } } });
-    await shareKakaoInvitation('a'.repeat(32), '조현범 · 권주영', 'https://hyunbeom-juyoung.pages.dev/');
+    await shareKakaoInvitation('a'.repeat(32), '조현범 · 권주영', 'https://hyunbum-juyoung.pages.dev/');
     expect(init).toHaveBeenCalledWith('a'.repeat(32));
     expect(sendDefault).toHaveBeenCalledWith(expect.objectContaining({
       objectType: 'feed', content: expect.objectContaining({
-        imageUrl: 'https://hyunbeom-juyoung.pages.dev/invitation-share.png',
-        link: { mobileWebUrl: 'https://hyunbeom-juyoung.pages.dev/', webUrl: 'https://hyunbeom-juyoung.pages.dev/' },
+        imageUrl: 'https://hyunbum-juyoung.pages.dev/invitation-share.png',
+        link: { mobileWebUrl: 'https://hyunbum-juyoung.pages.dev/', webUrl: 'https://hyunbum-juyoung.pages.dev/' },
       }),
     }));
     await shareKakaoInvitation('a'.repeat(32), '두 사람', 'https://wedding.example/invitation/');

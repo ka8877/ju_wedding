@@ -1,4 +1,4 @@
-export const defaultPublicSiteUrl = 'https://hyunbeom-juyoung.pages.dev/';
+export const defaultPublicSiteUrl = 'https://hyunbum-juyoung.pages.dev/';
 
 /** The public guest page is a directory URL, so sharing assets keep its base path. */
 export function resolvePublicSiteUrl(value?: string): string {

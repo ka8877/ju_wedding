@@ -4,7 +4,7 @@ import { expect, test } from './helpers';
 import type { Page } from '@playwright/test';
 import jsQR from 'jsqr';
 
-const publicUrl = 'https://hyunbeom-juyoung.pages.dev/';
+const publicUrl = 'https://hyunbum-juyoung.pages.dev/';
 // pngjs is qrcode's locked Node renderer dependency. Transfer the compressed
 // PNG instead of millions of RGBA numbers through Playwright and its trace.
 const { PNG } = createRequire(import.meta.url)('pngjs') as {
@@ -176,9 +176,9 @@ test('the square PNG scans at its actual displayed size on a 320px phone', async
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('current, corrected and longer invitation URLs remain scannable at a small size', async ({ page }) => {
+test('the canonical and longer invitation URLs remain scannable at a small size', async ({ page }) => {
   await page.goto('/#/admin');
-  for (const url of [publicUrl, 'https://hyunbum-juyoung.pages.dev/', `https://wedding.example/${'our-love-story/'.repeat(10)}`]) {
+  for (const url of [publicUrl, `https://wedding.example/${'our-love-story/'.repeat(10)}`]) {
     const raster = await page.evaluate(async value => {
       const modulePath = '/src/lib/sharing.ts';
       const { invitationQr } = await import(modulePath);
