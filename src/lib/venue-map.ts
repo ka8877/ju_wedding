@@ -2,6 +2,9 @@ import type { Venue } from './types';
 
 /** Verified in Naver Place 1156613092, at the invitation's confirmed address. */
 export const confirmedVenueCoordinates = { lat: 37.3768838, lng: 127.1043929 };
+const confirmedVenueNames = new Set(['HD현대글로벌R&D센터', 'HD현대그룹글로벌R&D센터']);
+const confirmedVenueAddress = /(?:^|\s)분당수서로\s*477(?![\d-]|\s*-\s*\d)(?=$|[\s,(])/;
+const venueSiteRadiusMeters = 150;
 
 export type VenueMapView = 'area' | 'venue';
 
@@ -11,10 +14,16 @@ export const jeongjaStation = {
   name: '정자역', lines: '신분당선 · 수인분당선',
   lat: 37.3677228, lng: 127.108455,
   url: 'https://pts.map.naver.com/end-subway/ends/web/1915/home',
+  // The building's on-site daycare lists the exit, bus and stop on Work24.
+  // https://m.work24.go.kr/wk/a/b/1500/empDetailAuthView.do?infoTypeCd=VALIDATION&infoTypeGroup=tb_workinfoworknet&wantedAuthNo=K180312610210028
+  // GBIS lists the center as the route's last stop.
+  // https://www.gbis.go.kr/service/busInfo/townBus.action?centerId=4113000000&cmd=townBus
+  bus: { from: '정자역 2번 출구', line: '마을버스 2번', stop: '현대중공업R&D센터' },
 };
 
 export function isConfirmedVenue(venue: Venue): boolean {
-  return venue.name.trim() === 'HD현대글로벌R&D센터' && venue.address.includes('분당수서로 477');
+  const name = venue.name.normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+  return confirmedVenueNames.has(name) && confirmedVenueAddress.test(venue.address.normalize('NFKC'));
 }
 
 export function getVenueCoordinates(venue: Venue): { lat: number; lng: number } | null {
@@ -35,18 +44,24 @@ export function getNaverPlaceSearchUrl(query: string): string {
 }
 
 export function getNaverVenueUrl(venue: Venue): string {
-  return isConfirmedVenue(venue)
+  return getVenueStation(venue)
     ? 'https://m.place.naver.com/place/1156613092/location'
     : getNaverPlaceSearchUrl(`${venue.name} ${venue.address}`);
 }
 
 /** Nearby station context belongs only to the verified venue and map pin. */
 export function getVenueStation(venue: Venue): typeof jeongjaStation | null {
+  if (!isConfirmedVenue(venue)) return null;
   const coordinates = getVenueCoordinates(venue);
-  return isConfirmedVenue(venue) && coordinates
-    && Math.abs(coordinates.lat - confirmedVenueCoordinates.lat) < 0.000001
-    && Math.abs(coordinates.lng - confirmedVenueCoordinates.lng) < 0.000001
-    ? jeongjaStation : null;
+  if (!coordinates) return null;
+  // Naver's address and place search can return different points on the site.
+  const metersPerDegree = 111_320;
+  const longitudeScale = Math.cos(confirmedVenueCoordinates.lat * Math.PI / 180);
+  const distance = Math.hypot(
+    (coordinates.lat - confirmedVenueCoordinates.lat) * metersPerDegree,
+    (coordinates.lng - confirmedVenueCoordinates.lng) * metersPerDegree * longitudeScale,
+  );
+  return distance <= venueSiteRadiusMeters ? jeongjaStation : null;
 }
 
 export function getVenueMapViewport(venue: Venue, view: VenueMapView, coordinates = getVenueCoordinates(venue)) {

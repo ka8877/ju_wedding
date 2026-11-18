@@ -29,11 +29,13 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
   const station = getVenueStation(venue);
   const clientId = naverMapClientId(venue.naverMapClientId);
   const address = venue.address.trim();
-  const mapTitle = title || `${venue.name || '예식장'} 위치 지도`;
-  const requestKey = `${clientId}:${lat}:${lng}:${address}:${venue.name}:${attempt}`;
+  const venueName = venue.name || '예식장';
+  const mapTitle = title || `${venueName} 위치 지도`;
+  const requestKey = `${clientId}:${lat}:${lng}:${address}:${venueName}:${attempt}`;
   const status = state.key === requestKey ? state.status : 'loading';
   const configured = Boolean(clientId);
   const naverReady = configured && status === 'ready';
+  const nearbyBus = !venue.bus.trim() && !venue.transport.trim() ? station?.bus : undefined;
 
   useEffect(() => {
     if (!clientId) return;
@@ -98,15 +100,15 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
         // map that completed initialization during its constructor.
         initListener = sdk.Event.once(map, 'init', ready);
         idleListener = sdk.Event.once(map, 'idle', ready);
-        const addMarker = (name: string, point: unknown, kind: 'venue' | 'station') => {
+        const addMarker = (name: string, label: string, point: unknown, kind: 'venue' | 'station') => {
           markers.push(new sdk.Marker({
             map, position: point, title: name, zIndex: kind === 'venue' ? 20 : 10,
-            icon: { content: markerLabel(name, kind), ...(sdk.Point ? { anchor: new sdk.Point(0, 0) } : {}) },
+            icon: { content: markerLabel(label, kind), ...(sdk.Point ? { anchor: new sdk.Point(0, 0) } : {}) },
           }));
         };
-        addMarker(venue.name || '예식장', position, 'venue');
+        addMarker(venueName, station ? '예식장' : venueName, position, 'venue');
         if (station) {
-          addMarker(station.name, new sdk.LatLng(station.lat, station.lng), 'station');
+          addMarker(station.name, station.name, new sdk.LatLng(station.lat, station.lng), 'station');
           if (sdk.LatLngBounds && map.fitBounds) {
             map.fitBounds(new sdk.LatLngBounds(
               new sdk.LatLng(Math.min(pin.lat, station.lat), Math.min(pin.lng, station.lng)),
@@ -121,7 +123,7 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
       cancelled = true; clearTimeout(debounce); clearTimeout(mapTimer);
       stopWatchingAuth(); destroy();
     };
-  }, [clientId, lat, lng, address, venue.name, attempt, requestKey, station]);
+  }, [clientId, lat, lng, address, venueName, requestKey, station]);
 
   return <div className={`venue-map ${className}`} data-map-provider="naver" data-map-state={configured ? status : 'unconfigured'}>
     {!naverReady && <div className="venue-map-status" role={configured ? status === 'error' ? 'alert' : 'status' : 'note'}>
@@ -134,7 +136,16 @@ export default function VenueMap({ venue, title, className = '' }: VenueMapProps
     {configured && <div className={`venue-map-frame${naverReady ? ' is-ready' : ' is-pending'}`} aria-hidden={!naverReady}>
       <div className={`venue-map-naver${naverReady ? ' is-ready' : ''}`} ref={canvas} role="region" aria-label={`${mapTitle} · 네이버 지도`} aria-hidden={!naverReady} />
     </div>}
-    {station && <div className="venue-map-station"><TrainFront size={17} strokeWidth={1.5} /><div><strong>{station.name}</strong><span>{station.lines}</span></div><a href={station.url} target="_blank" rel="noreferrer">역 정보<ArrowUpRight size={13} /></a></div>}
-    {naverReady && <p className="venue-map-caption"><span>네이버 지도</span><span>{venue.name || '예식장'}{venue.hall ? ` · ${venue.hall}` : ''}</span></p>}
+    {station && <div className="venue-map-station">
+      <div className="venue-map-station-heading">
+        <TrainFront size={18} strokeWidth={1.5} aria-hidden="true" />
+        <div><strong>{station.name}</strong><span>{station.lines}</span></div>
+        <a aria-label={`${station.name} 정보`} href={station.url} target="_blank" rel="noreferrer">역 정보<ArrowUpRight size={13} aria-hidden="true" /></a>
+      </div>
+      {nearbyBus && <div className="venue-map-station-transfer">
+        <span>{nearbyBus.from}에서 {nearbyBus.line} 탑승</span>
+        <span>{nearbyBus.stop} 방면 · 종점 하차</span>
+      </div>}
+    </div>}
   </div>;
 }

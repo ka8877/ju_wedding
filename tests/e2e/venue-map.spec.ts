@@ -56,6 +56,9 @@ test('an unconfigured invitation offers Naver without substituting an inline pro
   await expect(map.getByRole('link', { name: '네이버 지도에서 보기', exact: true })).toHaveAttribute('href', 'https://m.place.naver.com/place/1156613092/location');
   await expect(map.locator('.venue-map-station')).toContainText('정자역');
   await expect(map.locator('.venue-map-station a')).toHaveAttribute('href', jeongjaStation.url);
+  await expect(map.locator('.venue-map-station-transfer')).toContainText('정자역 2번 출구에서 마을버스 2번 탑승');
+  await expect(map.locator('.venue-map-station-transfer')).toContainText('현대중공업R&D센터 방면 · 종점 하차');
+  await expect(location.getByRole('button', { name: '주소 복사', exact: true })).toHaveText('주소 복사');
   expect((await map.boundingBox())!.height).toBeLessThan(260);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -95,6 +98,7 @@ test('one Naver map shows the venue and station together with native zoom and no
     northeast: { lat: confirmedVenueCoordinates.lat, lng: jeongjaStation.lng },
   });
   await expect(map.locator('[data-marker-title="HD현대글로벌R&D센터"]')).toHaveAttribute('data-position', '37.3768838,127.1043929');
+  await expect(map.locator('.venue-map-pin--venue')).toHaveText('예식장');
   await expect(map.locator('[data-marker-title="정자역"]')).toHaveAttribute('data-position', '37.3677228,127.108455');
   await expect(map).toHaveAttribute('data-zoom-control', 'true');
   await expect(location.getByRole('button', { name: /예식장 자세히|주변 교통 보기/ })).toHaveCount(0);
@@ -102,6 +106,16 @@ test('one Naver map shows the venue and station together with native zoom and no
   await expect(location.locator('iframe')).toHaveCount(0);
   expect(sdkRequests).toBe(1);
   expect(errors).toEqual([]);
+});
+
+test('saved bus instructions supersede the suggested transfer while the station stays visible', async ({ page }) => {
+  const data = structuredClone(defaultWedding);
+  data.venue.bus = '종이 청첩장의 버스 안내를 확인해 주세요.';
+  await publishFixture(page, data);
+  const location = page.locator('[data-section="location"]');
+  await expect(location.getByRole('link', { name: '정자역 정보', exact: true })).toBeVisible();
+  await expect(location.locator('.venue-map-station-transfer')).toHaveCount(0);
+  await expect(location.locator('.invite-directions')).toContainText(data.venue.bus);
 });
 
 test('a rejected Naver key shows an honest retry without switching the configured map to Google', async ({ page }) => {
