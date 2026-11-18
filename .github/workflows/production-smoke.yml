@@ -23,28 +23,40 @@ jobs:
     continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for this main commit on Cloudflare
-        if: github.event_name == 'push'
+      - name: Find this commit's Cloudflare deployment
+        id: cloudflare
         uses: actions/github-script@v7
         with:
           script: |
+            const productionUrl = 'https://hyunbum-juyoung.pages.dev';
+            if (context.eventName === 'workflow_dispatch') {
+              core.setOutput('search_url', productionUrl);
+              return;
+            }
+            const pullRequest = context.payload.pull_request;
+            const sha = pullRequest?.head.sha ?? context.sha;
             for (let attempt = 0; attempt < 30; attempt++) {
-              const { data } = await github.rest.checks.listForRef({ ...context.repo, ref: context.sha });
+              const { data } = await github.rest.checks.listForRef({ ...context.repo, ref: sha });
               const deployment = data.check_runs.find(run =>
                 run.app?.slug === 'cloudflare-workers-and-pages'
                 && run.details_url?.includes('/pages/view/hyunbum-juyoung/')
               );
               if (deployment?.status === 'completed') {
-                if (deployment.conclusion !== 'success') throw new Error('Cloudflare production deployment failed.');
+                if (deployment.conclusion !== 'success') throw new Error('Cloudflare deployment failed.');
+                const previewUrl = deployment.output.summary?.match(/https:\/\/[a-z0-9-]+\.hyunbum-juyoung\.pages\.dev\b/)?.[0];
+                if (pullRequest && !previewUrl) throw new Error('Cloudflare preview URL is missing.');
+                core.setOutput('search_url', pullRequest ? previewUrl : productionUrl);
                 return;
               }
               await new Promise(resolve => setTimeout(resolve, 10_000));
             }
-            throw new Error('Cloudflare production deployment did not finish in five minutes.');
+            throw new Error('Cloudflare deployment did not finish in five minutes.');
       - name: Verify venue search denies unauthenticated calls
+        env:
+          INVITATION_SEARCH_URL: ${{ steps.cloudflare.outputs.search_url }}
         run: |
           node --input-type=module <<'JS'
-          const url = 'https://hyunbum-juyoung.pages.dev/api/venue-search';
+          const url = new URL('/api/venue-search', process.env.INVITATION_SEARCH_URL);
           for (const authorization of [null, 'Bearer invalid-check-token']) {
             const headers = { 'Content-Type': 'application/json' };
             if (authorization) headers.Authorization = authorization;

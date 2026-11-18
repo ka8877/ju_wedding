@@ -26,15 +26,16 @@ describe('admin venue search function', () => {
 
     expect((await onRequest({ request: search('Bearer non-admin-token'), env })).status).toBe(403);
     expect(fetchMock).toHaveBeenCalledOnce();
-    expect(fetchMock).toHaveBeenCalledWith(new URL('/rest/v1/rpc/is_wedding_admin', env.VITE_SUPABASE_URL), expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith(new URL('/rest/v1/rpc/is_wedding_admin', env.VITE_SUPABASE_URL).href, expect.objectContaining({
       method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer non-admin-token', apikey: env.VITE_SUPABASE_ANON_KEY }),
     }));
   });
 
   it('passes the Korean query to Naver and normalizes selected venue data without exposing credentials', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(Response.json(true)).mockResolvedValueOnce(Response.json({ items: [
-      { title: '<b>함께</b> &amp; 정원', roadAddress: '경기 성남시 분당구 분당수서로 477', mapx: '1271043929', mapy: '373768838' },
+      { title: '<b>함께</b> &amp; 정원', roadAddress: '경기 성남시 분당구 분당수서로 477', mapx: 1271043929, mapy: 373768838 },
       { title: '다른 예식장', address: '서울 중구 태평로 1', mapx: '0', mapy: '0' },
+      null,
     ] }));
     vi.stubGlobal('fetch', fetchMock);
     const response = await onRequest({ request: search(), env });
@@ -42,12 +43,26 @@ describe('admin venue search function', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     const [requestUrl, options] = fetchMock.mock.calls[1];
     expect(String(requestUrl)).toMatch(/^https:\/\/naverapihub\.apigw\.ntruss\.com\/search\/v1\/local\?/);
-    expect(requestUrl.searchParams.get('query')).toBe('분당 예식장');
+    const params = new URL(requestUrl).searchParams;
+    expect(params.get('query')).toBe('분당 예식장');
+    expect(params.get('start')).toBe('1');
     expect(options.headers).toEqual({ 'X-NCP-APIGW-API-KEY-ID': env.NAVER_SEARCH_CLIENT_ID, 'X-NCP-APIGW-API-KEY': env.NAVER_SEARCH_CLIENT_SECRET });
     expect(await response.json()).toEqual({ results: [
       { name: '함께 & 정원', address: '경기 성남시 분당구 분당수서로 477', lat: 37.3768838, lng: 127.1043929 },
       { name: '다른 예식장', address: '서울 중구 태평로 1', lat: null, lng: null },
     ] });
+  });
+
+  it('distinguishes a permission service failure from a Naver response failure', async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(new Error('permission service unavailable'))
+      .mockResolvedValueOnce(Response.json(true)).mockResolvedValueOnce(Response.json({ details: 'private' }, { status: 400 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const permissionFailure = await onRequest({ request: search(), env });
+    expect(permissionFailure.status).toBe(502);
+    expect(await permissionFailure.json()).toEqual({ error: 'admin_check_failed' });
+    const naverFailure = await onRequest({ request: search(), env });
+    expect(naverFailure.status).toBe(502);
+    expect(await naverFailure.json()).toEqual({ error: 'naver_unavailable', upstreamStatus: 400 });
   });
 
   it('reports unconfigured credentials or a quota limit without returning the upstream error', async () => {
