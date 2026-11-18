@@ -91,6 +91,8 @@ QR과 공유 링크의 운영 주소는 `https://hyunbum-juyoung.pages.dev/`입�
 
 본문에는 네이버 지도만 표시하며, Google·카카오는 보조 메뉴에서 새 탭으로 엽니다. 키 미설정·인증·네트워크 오류 시에는 작은 안내와 네이버 외부 링크만 표시하며, 다른 지도로 자동 대체하지 않습니다. 실제 키와 운영 도메인의 인증을 확인해야 본문 지도 활성화가 완료됩니다. HD현대글로벌R&D센터의 확인된 좌표는 위도 `37.3768838`, 경도 `127.1043929`입니다. 기존 문서의 좌표가 비어 있어도 같은 장소와 주소라면 이 위치를 사용합니다.
 
+관리자 화면의 **장소 검색**에는 [NAVER API HUB 지역 검색](https://guide.ncloud-docs.com/docs/apihub-application) 연결이 필요합니다. **Application Services → NAVER API HUB → Application**에서 **NAVER 검색 → 지역**을 선택해 앱을 등록합니다. Cloudflare Pages `hyunbum-juyoung`의 **Settings → Variables and Secrets → Production**에서 발급된 Client ID와 Client Secret을 각각 `NAVER_SEARCH_CLIENT_ID`, `NAVER_SEARCH_CLIENT_SECRET`이라는 **Secret**으로 추가하고 운영 배포를 다시 실행합니다. 검색 키는 Pages Function에서 읽으며, 함수는 기존 Supabase 관리자 권한을 확인한 뒤 네이버를 호출합니다.
+
 카카오톡 직접 공유는 Kakao Developers 앱의 **JavaScript SDK 도메인**과 **제품 링크 관리 → 웹 도메인**에 `https://hyunbum-juyoung.pages.dev`를 등록하고 기본 제품 링크도 같은 운영 주소로 설정합니다. **JavaScript 키**는 `kakaoJavascriptKey` 또는 `VITE_KAKAO_JAVASCRIPT_KEY`에 등록합니다. 하객 화면에는 공유와 QR 두 동작을 표시합니다. 카카오 키가 연결되면 기본 공유 버튼이 카카오톡으로 전환되며, 키가 없으면 기기의 기본 공유창을 사용합니다. 기기 공유를 지원하지 않으면 링크를 복사합니다. 복사만 한 상태를 전송 완료로 표시하지 않습니다.
 
 ## 참석 응답과 현장 사진 저장소 추가
@@ -176,7 +178,7 @@ npm run check:connection
 - **로그인 실패:** 이메일·비밀번호, 사용자 확인 상태, 프로젝트 활성 상태를 확인합니다.
 - **사진 실패:** 파일 형식·8 MiB 제한·사진 버킷·사용량을 확인합니다.
 - **다른 기기에 수정 없음:** 미리보기 모드가 아닌지 확인하고 초안 저장 다음에 **공개**했는지 확인합니다. 공개 설정을 바꾼 뒤에는 배포가 한 번 필요합니다.
-- **예식장 이름으로 찾기:** 관리 화면에서 이름을 입력해 **네이버 지도에서 장소 이름 검색**을 열고, 찾은 곳의 도로명 주소를 **주소 검색**에 붙여넣습니다. 결과를 선택하면 주소와 지도 위치가 적용됩니다. 네이버 주소 검색에 연결되지 않을 때는 주소 칸에 직접 입력할 수 있습니다.
+- **예식장 이름으로 찾기:** 관리 화면에서 이름을 입력해 **장소 검색**을 누르고 결과를 선택합니다. 장소 검색 연결이 필요하다는 메시지가 나오면 **네이버 지도에서 장소 이름 검색**으로 찾고 도로명 주소를 복사해 **주소 검색**에 붙여넣습니다.
 - **운영 코드가 갱신되지 않음:** Cloudflare Pages 프로젝트 `hyunbum-juyoung`의 연결 저장소·운영 브랜치 `main`·빌드 상태를 확인합니다. GitHub Actions 검사 성공과 Cloudflare 운영 배포 완료는 각각 확인합니다.
 
 
