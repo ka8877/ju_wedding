@@ -275,18 +275,17 @@ test('administrators can select a Naver venue name and address inside the editor
     expect(route.request().postDataJSON()).toEqual({ query: '정원 예식장' });
     return configured ? route.fulfill({ json: { results: [
       { name: '정원이 있는 예식장', address: '경기 성남시 분당구 테스트로 12', lat: 37.37, lng: 127.10 },
-    ] } }) : route.fulfill({ status: 503, json: { error: 'naver_unconfigured' } });
+    ] } }) : route.fulfill({ status: 502, json: { error: 'naver_unavailable', upstreamStatus: 400 } });
   });
   await page.goto('/#/admin');
   await page.getByRole('button', { name: '예식 장소', exact: true }).click();
   await page.getByLabel('예식 장소 찾기').fill('정원 예식장');
   const search = page.getByRole('button', { name: '장소 검색', exact: true });
   await search.click();
-  await expect(page.getByRole('alert')).toContainText('네이버 지역 검색 연결이 필요해요');
-  await expect(page.getByRole('link', { name: '네이버 지도에서 장소 이름 검색' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('400 · naver_unavailable');
   configured = true;
   await search.click();
-  await page.getByRole('list', { name: '네이버 장소 검색 결과' }).getByRole('button', { name: /정원이 있는 예식장/ }).click();
+  await page.getByRole('list', { name: '네이버 검색 결과' }).getByRole('button', { name: /정원이 있는 예식장/ }).click();
   await expect(page.getByLabel('예식장 이름', { exact: true })).toHaveValue('정원이 있는 예식장');
   await expect(page.getByLabel('주소', { exact: true })).toHaveValue('경기 성남시 분당구 테스트로 12');
   await expect(page.getByLabel('홀 · 층', { exact: true })).toHaveValue('아산홀');

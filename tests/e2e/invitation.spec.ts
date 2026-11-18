@@ -22,7 +22,7 @@ test('mobile invitation shows the confirmed couple information and has no horizo
 test('drafts, photo upload, place selection, publication and account copy work end to end', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const address = '서울특별시 중구 테스트로 1';
-  const matches = { '테스트 예식장': [], [address]: [{ roadAddress: address, x: '126.9780', y: '37.5665' }] };
+  const matches = { [address]: [{ roadAddress: address, x: '126.9780', y: '37.5665' }] };
   await page.route('https://oapi.map.naver.com/openapi/v3/maps.js?**', route => route.fulfill({
     contentType: 'application/javascript',
     body: `window.weddingGeocodeResults = ${JSON.stringify(matches)}; ${naverSdkMock}`,
@@ -57,14 +57,13 @@ test('drafts, photo upload, place selection, publication and account copy work e
   await page.getByLabel('갤러리 사진 파일 선택').setInputFiles([{ name: 'moment.png', mimeType: 'image/png', buffer: png }]);
   await expect(page.getByLabel('1번 사진 설명')).toBeVisible();
   await page.getByRole('button', { name: '예식 장소', exact: true }).click();
-  await page.getByLabel('예식 장소 찾기').fill('테스트 예식장');
-  await expect(page.getByRole('link', { name: '네이버 지도에서 장소 이름 검색' })).toHaveAttribute('href', `https://map.naver.com/p/search/${encodeURIComponent('테스트 예식장')}`);
-  await page.getByRole('button', { name: '주소 검색', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: '일치하는 주소가 없어요' })).toBeVisible();
   await page.getByLabel('예식장 이름', { exact: true }).fill('테스트 예식장');
   await page.getByLabel('예식 장소 찾기').fill(address);
-  await page.getByRole('button', { name: '주소 검색', exact: true }).click();
-  await page.getByRole('list', { name: '네이버 주소 검색 결과' }).getByRole('button', { name: address }).click();
+  const placeSearch = page.locator('.editor-place-search');
+  await expect(placeSearch.getByRole('button')).toHaveCount(1);
+  await expect(placeSearch.getByRole('link')).toHaveCount(0);
+  await placeSearch.getByRole('button', { name: '장소 검색', exact: true }).click();
+  await page.getByRole('list', { name: '네이버 검색 결과' }).getByRole('button', { name: address }).click();
   await expect(page.getByLabel('예식장 이름', { exact: true })).toHaveValue('테스트 예식장');
   await expect(page.getByLabel('홀 · 층', { exact: true })).toHaveValue('아산홀');
   await expect(page.getByLabel('주소', { exact: true })).toHaveValue(address);

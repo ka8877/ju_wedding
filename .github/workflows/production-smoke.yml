@@ -23,6 +23,70 @@ jobs:
     continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Find this commit's Cloudflare deployment
+        id: cloudflare
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const productionUrl = 'https://hyunbum-juyoung.pages.dev';
+            if (context.eventName === 'workflow_dispatch') {
+              core.setOutput('search_url', productionUrl);
+              return;
+            }
+            const pullRequest = context.payload.pull_request;
+            const sha = pullRequest?.head.sha ?? context.sha;
+            for (let attempt = 0; attempt < 30; attempt++) {
+              const { data } = await github.rest.checks.listForRef({ ...context.repo, ref: sha });
+              const deployment = data.check_runs.find(run =>
+                run.app?.slug === 'cloudflare-workers-and-pages'
+                && run.details_url?.includes('/pages/view/hyunbum-juyoung/')
+              );
+              if (deployment?.status === 'completed') {
+                if (deployment.conclusion !== 'success') throw new Error('Cloudflare deployment failed.');
+                const previewUrl = deployment.output.summary?.match(/https:\/\/[a-z0-9-]+\.hyunbum-juyoung\.pages\.dev\b/)?.[0];
+                if (pullRequest && !previewUrl) throw new Error('Cloudflare preview URL is missing.');
+                core.setOutput('search_url', pullRequest ? previewUrl : productionUrl);
+                return;
+              }
+              await new Promise(resolve => setTimeout(resolve, 10_000));
+            }
+            throw new Error('Cloudflare deployment did not finish in five minutes.');
+      - name: Verify venue search denies unauthenticated calls
+        env:
+          INVITATION_SEARCH_URL: ${{ steps.cloudflare.outputs.search_url }}
+        run: |
+          node --input-type=module <<'JS'
+          import { readFile } from 'node:fs/promises';
+          const url = new URL('/api/venue-search', process.env.INVITATION_SEARCH_URL);
+          for (const authorization of [null, 'Bearer invalid-check-token']) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (authorization) headers.Authorization = authorization;
+            const response = await fetch(url, {
+              method: 'POST', headers, body: JSON.stringify({ query: '정자역' }), signal: AbortSignal.timeout(15_000),
+            });
+            const body = await response.json().catch(() => null);
+            const code = typeof body?.error === 'string' && /^[a-z_]+$/.test(body.error) ? body.error : 'unknown';
+            const detail = typeof body?.detail === 'string' && /^[a-z_]+$/.test(body.detail) ? body.detail : '';
+            const upstream = Number.isInteger(body?.upstreamStatus) ? body.upstreamStatus : '';
+            const caller = authorization ? 'invalid token' : 'anonymous';
+            console.log(`Venue search (${caller}): HTTP ${response.status}, ${code} ${detail} ${upstream}`);
+            if (![401, 403].includes(response.status) || !['login_required', 'admin_required'].includes(code)) {
+              if (authorization) {
+                const publicConfig = await readFile('src/lib/public-config.ts', 'utf8');
+                const project = publicConfig.match(/url: '([^']+)'/)?.[1];
+                const apikey = publicConfig.match(/key: '([^']+)'/)?.[1];
+                if (project && apikey) {
+                  const direct = await fetch(new URL('/rest/v1/rpc/is_wedding_admin', project), {
+                    method: 'POST', headers: { apikey, Authorization: authorization, 'Content-Type': 'application/json' },
+                    body: '{}', redirect: 'manual', signal: AbortSignal.timeout(10_000),
+                  });
+                  console.log(`Supabase directly (invalid token): HTTP ${direct.status}`);
+                }
+              }
+              throw new Error(`Unexpected venue-search response for ${caller}.`);
+            }
+          }
+          JS
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -32,24 +96,6 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           node --input-type=module -e 'import { chromium } from "@playwright/test"; console.log(`PLAYWRIGHT_CHROMIUM_EXECUTABLE=${chromium.executablePath()}`)' >> "$GITHUB_ENV"
-      - name: Wait for this main commit on Cloudflare
-        if: github.event_name == 'push'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            for (let attempt = 0; attempt < 30; attempt++) {
-              const { data } = await github.rest.checks.listForRef({ ...context.repo, ref: context.sha });
-              const deployment = data.check_runs.find(run =>
-                run.app?.slug === 'cloudflare-workers-and-pages'
-                && run.details_url?.includes('/pages/view/hyunbum-juyoung/')
-              );
-              if (deployment?.status === 'completed') {
-                if (deployment.conclusion !== 'success') throw new Error('Cloudflare production deployment failed.');
-                return;
-              }
-              await new Promise(resolve => setTimeout(resolve, 10_000));
-            }
-            throw new Error('Cloudflare production deployment did not finish in five minutes.');
       - name: Verify real production Naver map
         run: npx playwright test --config playwright.production.config.ts
       - name: Save production evidence
