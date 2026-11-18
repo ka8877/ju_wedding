@@ -84,6 +84,7 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
       expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
       console.log(`Production entrance proof (${visit}):`, JSON.stringify(proof));
     }
+    await expect(page.locator('.invite-footer-mark strong')).toHaveText(/^Hyunbum\s*&/);
     const fontFamilies: Record<string, string> = { serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang', myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script', 'clear-handwriting': 'Gaegu' };
     const selectedFont = (await page.locator('.invitation').getAttribute('data-font'))!;
     const expectedFamily = fontFamilies[selectedFont];

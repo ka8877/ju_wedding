@@ -70,7 +70,7 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   const downloadEvent = page.waitForEvent('download');
   await dialog.getByRole('button', { name: 'QR 이미지 저장', exact: true }).click();
   const download = await downloadEvent;
-  expect(download.suggestedFilename()).toBe('juyoung-hyunbeom-invitation-qr.png');
+  expect(download.suggestedFilename()).toBe('juyoung-hyunbum-invitation-qr.png');
   const file = await readFile((await download.path())!);
   expect(file.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
   expect(file.readUInt32BE(16)).toBe(1536);

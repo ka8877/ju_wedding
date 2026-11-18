@@ -84,7 +84,7 @@ export default function InvitationSharing({ names, variant = 'guest', localPrevi
   function download() {
     if (!qr) return;
     const link = document.createElement('a');
-    link.href = qr; link.download = 'juyoung-hyunbeom-invitation-qr.png';
+    link.href = qr; link.download = 'juyoung-hyunbum-invitation-qr.png';
     document.body.appendChild(link); link.click(); link.remove();
     notify('QR 이미지 저장을 시작했어요.');
   }
