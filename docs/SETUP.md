@@ -4,7 +4,7 @@
 - 관리 페이지: **https://hyunbum-juyoung.pages.dev/#/admin**
 - 개발자용 초기 연결 화면: **https://hyunbum-juyoung.pages.dev/#/setup**
 
-유료 도메인은 사용하지 않으며 **Cloudflare Pages 운영 주소 하나만** 사용합니다. 코드가 `main`에 반영되면 Cloudflare Pages의 Git 연동으로 검사·빌드 후 자동 배포됩니다. GitHub 저장소와 Actions는 소스 코드와 자동 검사를 관리하며 GitHub Pages 자동 배포는 사용하지 않습니다. Supabase를 연결하면 주영님은 관리 페이지에서 사진·문구·장소·계좌를 변경하고 **공개**만 누르면 됩니다. 그때마다 GitHub를 열거나 코드를 배포할 필요가 없습니다.
+유료 도메인은 사용하지 않으며 **Cloudflare Pages 운영 주소 하나만** 사용합니다. 코드가 `main`에 반영되면 Cloudflare Pages의 Git 연동으로 빌드 후 자동 배포됩니다. GitHub 저장소와 Actions는 소스 코드와 자동 검사를 관리하며 GitHub Pages 자동 배포는 사용하지 않습니다. Supabase를 연결하면 주영님은 관리 페이지에서 사진·문구·장소·계좌를 변경하고 **공개**만 누르면 됩니다. 그때마다 GitHub를 열거나 코드를 배포할 필요가 없습니다.
 
 이 문서는 개발자·운영 담당자를 위한 안내입니다. 일반 사용자 화면에서는 초기 연결 화면, API 키, 도메인 등록, 좌표 입력을 안내하지 않습니다. 사용자는 관리 페이지에서 이름·예식 장소·사진·문구만 편집하고 공개합니다.
 
@@ -50,7 +50,7 @@ npm run check:connection
 
 현재 클라우드 환경에서 프로젝트의 `fasdkmqdgukptnuvofwp.supabase.co` 주소가 차단됐다면 먼저 환경의 네트워크 허용 설정이 적용돼야 합니다. 연결 점검을 실제로 통과하기 전에는 사진 저장이나 관리자 로그인이 검증됐다고 안내하지 않습니다.
 
-코드를 `main`에 반영하면 Cloudflare Pages가 아래의 현재 빌드 설정으로 검사·배포합니다. GitHub Actions는 단위 테스트·데이터베이스 정책·모바일 화면·프로덕션 빌드를 검사하고 Supabase의 공개 데이터 연결을 진단합니다. 사이트 배포는 Cloudflare Pages에서만 수행합니다. Supabase 연결 점검은 별도 진단이며, 통과하지 않은 상태에서 사진 저장·관리자 로그인이 준비됐다고 안내하지 않습니다. 사용자에게 GitHub 변수 등록이나 배포 버튼 클릭을 반복 요청하지 않습니다.
+코드를 `main`에 반영하면 Cloudflare Pages가 아래 설정으로 빌드·배포합니다. GitHub Actions는 단위 테스트·데이터베이스 정책·모바일 화면·프로덕션 빌드를 검사하고 Supabase의 공개 데이터 연결을 진단합니다. 사이트 배포는 Cloudflare Pages에서만 수행합니다. Supabase 연결 점검은 별도 진단이며, 통과하지 않은 상태에서 사진 저장·관리자 로그인이 준비됐다고 안내하지 않습니다. 사용자에게 GitHub 변수 등록이나 배포 버튼 클릭을 반복 요청하지 않습니다.
 
 ## 주영님이 사용하는 순서
 
@@ -113,14 +113,14 @@ QR과 공유 링크의 운영 주소는 `https://hyunbum-juyoung.pages.dev/`입�
 |---|---|
 | GitHub 저장소 | `ka8877/ju_wedding` |
 | 운영 브랜치 | `main` |
-| 빌드 명령(권장) | `npm test && npm run test:db && npm run build` |
+| 빌드 명령 | `npm run build` |
 | 출력 폴더 | `dist` |
 | 루트 폴더 | 저장소 루트(빈칸 기본값) |
 | `NODE_VERSION` | `24` |
 | `BASE_PATH` | `/` |
 | `VITE_PUBLIC_SITE_URL` | `https://hyunbum-juyoung.pages.dev/` |
 
-Cloudflare GitHub 앱은 이 저장소에만 연결돼 있습니다. `main` 수정은 Cloudflare Pages에서 검사·빌드 후 자동 배포됩니다. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요하지 않으며, 운영 빌드에 `VITE_LOCAL_PREVIEW=true`를 설정하지 않습니다.
+Cloudflare GitHub 앱은 이 저장소에만 연결돼 있습니다. `main` 수정은 Cloudflare Pages에서 빌드 후 자동 배포됩니다. 기존 Supabase 공개 설정을 사용하므로 새 비밀 키는 필요하지 않으며, 운영 빌드에 `VITE_LOCAL_PREVIEW=true`를 설정하지 않습니다.
 
 공유 미리보기의 canonical·OG 주소와 로컬 QR 기본 주소는 `VITE_PUBLIC_SITE_URL`을 사용합니다. 코드 자체의 기본값도 `https://hyunbum-juyoung.pages.dev/`이며, 미리보기에서 만드는 공유 링크 역시 운영 주소를 사용합니다.
 
