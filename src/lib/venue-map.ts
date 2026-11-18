@@ -29,10 +29,15 @@ export function getVenueCoordinates(venue: Venue): { lat: number; lng: number } 
   return null;
 }
 
+export function getNaverPlaceSearchUrl(query: string): string {
+  const keyword = query.trim();
+  return keyword ? `https://map.naver.com/p/search/${encodeURIComponent(keyword)}` : 'https://map.naver.com/p/';
+}
+
 export function getNaverVenueUrl(venue: Venue): string {
   return isConfirmedVenue(venue)
     ? 'https://m.place.naver.com/place/1156613092/location'
-    : `https://map.naver.com/p/search/${encodeURIComponent(`${venue.name} ${venue.address}`.trim())}`;
+    : getNaverPlaceSearchUrl(`${venue.name} ${venue.address}`);
 }
 
 /** Nearby station context belongs only to the verified venue and map pin. */
