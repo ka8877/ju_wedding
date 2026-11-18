@@ -42,7 +42,7 @@ export function downloadWeddingCalendar(data: WeddingData): boolean {
   const contents = makeWeddingCalendar(data, { url: publicInvitationUrl });
   if (!contents) return false;
   const url = URL.createObjectURL(new Blob([contents], { type: 'text/calendar;charset=utf-8' }));
-  const link = document.createElement('a'); link.href = url; link.download = `juyoung-hyunbeom-${data.date}.ics`;
+  const link = document.createElement('a'); link.href = url; link.download = `juyoung-hyunbum-${data.date}.ics`;
   document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   return true;
 }

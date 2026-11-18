@@ -18,7 +18,7 @@ export const defaultGuestFeatures: WeddingGuestFeatures = {
 
 export const defaultWedding: WeddingData = {
   version: 1, preferencesVersion: 1,
-  groom: { name: '조현범', englishName: 'Hyunbeom', phone: '', father: '조성진', mother: '이진용', birthOrder: '장남', childName: '현범' },
+  groom: { name: '조현범', englishName: 'Hyunbum', phone: '', father: '조성진', mother: '이진용', birthOrder: '장남', childName: '현범' },
   bride: { name: '권주영', englishName: 'Juyoung', phone: '', father: '권용덕', mother: '이선애', birthOrder: '차녀', childName: '주영' },
   date: '2027-02-20', time: '12:30',
   invitation: '서로의 가장 다정한 집이 되어\n같은 곳을 바라보며 걸어가려 합니다.\n\n저희의 새로운 시작에 함께하시어\n따뜻한 축복을 더해 주세요.',

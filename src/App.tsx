@@ -38,7 +38,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
       </form>
       <small>계정 정보가 기억나지 않으면 청첩장을 준비한 가족에게 문의해 주세요.</small>
     </section>
-    <div className="login-signature">Hyunbeom & Juyoung</div>
+    <div className="login-signature">{defaultWedding.groom.englishName} &amp; {defaultWedding.bride.englishName}</div>
   </main>;
 }
 

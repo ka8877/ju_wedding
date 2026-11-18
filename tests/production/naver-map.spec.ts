@@ -12,7 +12,7 @@ function redact(value: string) {
   return value.replace(/([?&](?:auth|token|clientId|ncpKeyId|key)=)[^&\s"']+/gi, '$1[redacted]');
 }
 
-test('the deployed invitation plays the garden film, actual Naver tiles and a scannable heart QR', async ({ page }, testInfo) => {
+test('the deployed invitation plays the garden film, loads Naver tiles and shows a scannable QR', async ({ page }, testInfo) => {
   test.setTimeout(90_000);
   const events: { kind: string; message: string }[] = [];
   const isMapHost = (value: string) => {
@@ -84,6 +84,7 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
       expect(proof!.nameRevealTime).toBeGreaterThanOrEqual(7.4);
       console.log(`Production entrance proof (${visit}):`, JSON.stringify(proof));
     }
+    await expect(page.locator('.invite-footer-mark strong')).toHaveText(/^Hyunbum\s*&/);
     const fontFamilies: Record<string, string> = { serif: 'Noto Serif KR', sans: 'Noto Sans KR', romantic: 'Gowun Batang', myeongjo: 'Nanum Myeongjo', handwriting: 'Nanum Pen Script', 'clear-handwriting': 'Gaegu' };
     const selectedFont = (await page.locator('.invitation').getAttribute('data-font'))!;
     const expectedFamily = fontFamilies[selectedFont];
@@ -121,10 +122,13 @@ test('the deployed invitation plays the garden film, actual Naver tiles and a sc
     const pngBytes = Buffer.from((await image.getAttribute('src'))!.split(',')[1], 'base64');
     const png = PNG.sync.read(pngBytes);
     expect(png.width).toBe(1536);
-    expect(jsQR(new Uint8ClampedArray(png.data), png.width, png.height)?.data).toBe('https://hyunbeom-juyoung.pages.dev/');
-    await writeFile(testInfo.outputPath('invitation-heart-qr.png'), pngBytes);
-    await dialog.screenshot({ path: testInfo.outputPath('heart-qr.png') });
-    console.log('Production heart QR proof: 1536px, canonical URL decoded.');
+    expect(png.height).toBe(1536);
+    const decoded = jsQR(new Uint8ClampedArray(png.data), png.width, png.height);
+    expect(decoded?.data).toBe('https://hyunbeom-juyoung.pages.dev/');
+    expect(decoded!.location.topLeftFinderPattern.y).toBeCloseTo(decoded!.location.topRightFinderPattern.y);
+    await writeFile(testInfo.outputPath('invitation-qr.png'), pngBytes);
+    await dialog.screenshot({ path: testInfo.outputPath('qr.png') });
+    console.log('Production square QR proof: 1536px, canonical URL decoded.');
   } finally {
     const state = await page.evaluate(() => {
       const node = document.querySelector('.venue-map');

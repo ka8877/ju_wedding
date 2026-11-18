@@ -61,16 +61,16 @@ test('guests can scan, save and copy a real QR that points to the public invitat
   const source = (await image.getAttribute('src'))!;
   const pixels = readPng(source);
   expect(pixels.width).toBe(1536);
+  expect(pixels.height).toBe(1536);
   expect(scanPng(source)).toBe(publicUrl);
   expect(Array.from(pixels.data.slice(0, 4))).toEqual([255, 255, 255, 255]);
-  await expect(dialog.locator('.wedding-qr-frame')).toHaveAttribute('data-qr-shape', 'heart-pattern');
   await dialog.getByRole('button', { name: '링크 복사', exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(publicUrl);
   await expect(dialog.getByRole('status')).toContainText('링크를 복사했어요');
   const downloadEvent = page.waitForEvent('download');
   await dialog.getByRole('button', { name: 'QR 이미지 저장', exact: true }).click();
   const download = await downloadEvent;
-  expect(download.suggestedFilename()).toBe('juyoung-hyunbeom-invitation-qr.png');
+  expect(download.suggestedFilename()).toBe('juyoung-hyunbum-invitation-qr.png');
   const file = await readFile((await download.path())!);
   expect(file.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
   expect(file.readUInt32BE(16)).toBe(1536);
@@ -107,7 +107,7 @@ test('native sharing and the editor share the public page rather than a local dr
 });
 
 
-test('configured Kakao sharing offers one direct share action beside the heart QR', async ({ page }) => {
+test('configured Kakao sharing offers one direct share action beside the QR', async ({ page }) => {
   await page.addInitScript(() => {
     let initialized = false;
     Object.defineProperty(window, 'Kakao', { configurable: true, value: {
@@ -156,7 +156,7 @@ test('the primary share action copies the link when device sharing is unavailabl
 });
 
 
-test('the heart PNG scans at its actual displayed size on a 320px phone', async ({ page }) => {
+test('the square PNG scans at its actual displayed size on a 320px phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto('/#/admin');
   await page.getByRole('button', { name: 'QR 코드 보기', exact: true }).click();
@@ -176,9 +176,9 @@ test('the heart PNG scans at its actual displayed size on a 320px phone', async 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('canonical and longer invitation paths remain scannable when the heart is displayed small', async ({ page }) => {
+test('current, corrected and longer invitation URLs remain scannable at a small size', async ({ page }) => {
   await page.goto('/#/admin');
-  for (const url of ['https://hyunbeom-juyoung.pages.dev/', 'https://hyunbeom-juyoung.pages.dev/our-invitation/', `https://wedding.example/${'our-love-story/'.repeat(10)}`]) {
+  for (const url of [publicUrl, 'https://hyunbum-juyoung.pages.dev/', `https://wedding.example/${'our-love-story/'.repeat(10)}`]) {
     const raster = await page.evaluate(async value => {
       const modulePath = '/src/lib/sharing.ts';
       const { invitationQr } = await import(modulePath);

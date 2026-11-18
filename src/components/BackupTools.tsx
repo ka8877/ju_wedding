@@ -25,7 +25,7 @@ export default function BackupTools({ data, onChange, onUpload, mode, disabled =
     const file = new Blob([JSON.stringify(contents, null, 2)], { type: 'application/json' });
     if (file.size > 32 * 1024 * 1024) { setError(true); setMessage('백업이 32MB를 넘었어요. 사진 수나 크기를 줄인 뒤 다시 내려받아 주세요.'); return; }
     const url = URL.createObjectURL(file);
-    const a = document.createElement('a'); a.href = url; a.download = `juyoung-hyunbeom-${new Date().toISOString().slice(0, 10)}.json`;
+    const a = document.createElement('a'); a.href = url; a.download = `juyoung-hyunbum-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     setError(false); setMessage('백업 파일을 내려받았어요. 계좌와 연락처도 포함되니 개인 보관해 주세요.');
   }
