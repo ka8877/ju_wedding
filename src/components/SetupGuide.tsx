@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ArrowLeft, CheckCircle2, Copy, ExternalLink, Flower2, LoaderCircle } from 'lucide-react';
 import schema from '../../supabase/migrations/001_wedding.sql?raw';
 import guestSchema from '../../supabase/migrations/002_guest_features.sql?raw';
-import visibilitySchema from '../../supabase/migrations/20261126141607_guest_invitation_visibility.sql?raw';
+import visibilitySchema from '../../supabase/migrations/20261126141821_guest_invitation_visibility.sql?raw';
 import { publicSupabaseConfig } from '../lib/public-config';
 import { normalizeWedding } from '../lib/validation';
 import { copyText } from '../lib/utils';

@@ -10,7 +10,7 @@ const client2 = '44444444-4444-4444-8444-444444444444';
 const quotaClient = '55555555-5555-4555-8555-555555555555';
 const baseMigration = await readFile(new URL('../../supabase/migrations/001_wedding.sql', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../../supabase/migrations/002_guest_features.sql', import.meta.url), 'utf8');
-const visibilityMigration = await readFile(new URL('../../supabase/migrations/20261126141607_guest_invitation_visibility.sql', import.meta.url), 'utf8');
+const visibilityMigration = await readFile(new URL('../../supabase/migrations/20261126141821_guest_invitation_visibility.sql', import.meta.url), 'utf8');
 let count = 0;
 let published;
 let uploadedPath;
