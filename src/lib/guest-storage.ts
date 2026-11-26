@@ -31,6 +31,9 @@ export async function getGuestCapabilities(): Promise<GuestCapabilities> {
   try {
     const { data, error } = await guestClient.rpc('get_wedding_guest_capabilities');
     if (error) return unavailable(missingSchema(error) ? 'setup-required' : 'offline', missingSchema(error) ? guestPendingMessage : '접수 연결을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    if (data?.rsvp_enabled === false && data.snap_enabled === false && data.snap_open === false && data.snap_open_date === null) {
+      return { status: 'ready', rsvpEnabled: false, snapEnabled: false, snapOpen: false, snapOpenDate: '', message: '' };
+    }
     if (!data || typeof data.rsvp_enabled !== 'boolean' || typeof data.snap_enabled !== 'boolean' || typeof data.snap_open !== 'boolean' || !/^\d{4}-\d{2}-\d{2}$/.test(data.snap_open_date)) {
       return unavailable('setup-required', guestPendingMessage);
     }

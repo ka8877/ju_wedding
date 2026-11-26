@@ -10,6 +10,7 @@ const client2 = '44444444-4444-4444-8444-444444444444';
 const quotaClient = '55555555-5555-4555-8555-555555555555';
 const baseMigration = await readFile(new URL('../../supabase/migrations/001_wedding.sql', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../../supabase/migrations/002_guest_features.sql', import.meta.url), 'utf8');
+const visibilityMigration = await readFile(new URL('../../supabase/migrations/20261126141607_guest_invitation_visibility.sql', import.meta.url), 'utf8');
 let count = 0;
 let published;
 let uploadedPath;
@@ -57,6 +58,26 @@ try {
   await db.query("insert into public.wedding_content(id,draft,published) values('main','{}',$1::jsonb)", [JSON.stringify(published)]);
 
   await test('additive guest migration applies', () => db.exec(migration));
+  await db.exec(visibilityMigration);
+  await test('pausing keeps both copies for the admin and closes all guest entry points until reopening', async () => {
+    await as('authenticated', admin, () => db.exec("update public.wedding_content set guest_access_open=false where id='main'"));
+    await db.exec(visibilityMigration);
+    await as('anon', null, async () => {
+      await fails('select * from public.get_published_wedding()', [], 'PT423');
+      await fails("update public.wedding_content set guest_access_open=true where id='main'", [], '42501');
+      await fails('select public.submit_wedding_rsvp($1::jsonb,$2::uuid)', [JSON.stringify(payload()),client], 'P0001');
+      await fails('select public.reserve_wedding_guest_photo($1::uuid,$2,$3,$4,$5)', [client,'guest','photo.jpg','image/webp',1000], 'P0001');
+    });
+    await as('authenticated', stranger, async () => {
+      assert.equal((await db.query("update public.wedding_content set guest_access_open=true where id='main' returning id")).rows.length, 0);
+    });
+    await as('authenticated', admin, async () => {
+      const { rows } = await db.query("select draft,published,guest_access_open from public.wedding_content where id='main'");
+      assert.deepEqual(rows[0], { draft: {}, published, guest_access_open: false });
+      await db.exec("update public.wedding_content set guest_access_open=true where id='main'");
+    });
+    await as('anon', null, async () => assert.deepEqual((await db.query('select data from public.get_published_wedding()')).rows[0].data, published));
+  });
   await test('public capabilities expose flags and server-enforced future date only', () => as('anon', null, async () => {
     const row = (await db.query('select public.get_wedding_guest_capabilities() as c')).rows[0].c;
     assert.deepEqual(row, { rsvp_enabled: true, snap_enabled: true, snap_open: false, snap_open_date: future });
@@ -184,7 +205,7 @@ try {
     const rows = (await db.query("select relrowsecurity from pg_class where relname in ('wedding_rsvps','wedding_guest_photos')")).rows;
     assert.equal(rows.length, 2); assert.ok(rows.every(row => row.relrowsecurity));
   });
-  assert.equal(count, 23);
+  assert.equal(count, 24);
   console.log(`Completed ${count} guest feature policy checks against real PGlite PostgreSQL.`);
   console.log('Scope: SQL, date gate and RLS execution with mocked Supabase platform schemas. Hosted Auth, Storage API file validation, signed URLs and upload transport need separate verification.');
 } finally { await db.close(); }

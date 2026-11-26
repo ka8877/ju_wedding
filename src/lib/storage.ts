@@ -49,12 +49,16 @@ function notifyPublication() {
 function checked(data: unknown): WeddingData {
   return normalizeWedding(data);
 }
-export async function loadPublic(requirePublished = false): Promise<StoredWedding> {
+export async function loadPublic(requirePublished = false): Promise<StoredWedding & { paused?: boolean }> {
   if (!supabase) {
     const value = await localRead('published');
     return value ? { ...value, data: checked(value.data) } : initial();
   }
   const { data, error } = await publicReader!.rpc('get_published_wedding');
+  if (error?.code === 'PT423') {
+    if (requirePublished) throw new Error('현재 서비스 준비 중이에요. 관리자 화면에서 공개 상태를 확인해 주세요.');
+    return { ...initial(), paused: true };
+  }
   // A newly created project has no wedding schema yet. Keep an explicitly
   // unpublished invitation available; this never enables browser-local editing.
   if (error?.code === 'PGRST202' && !requirePublished) return initial();
@@ -74,14 +78,21 @@ export async function loadBrowserDraft(): Promise<StoredWedding | null> {
   const value = await localRead('draft');
   return value ? { ...value, data: checked(value.data) } : null;
 }
-export async function loadDraft(): Promise<StoredWedding> {
+export async function loadDraft(): Promise<StoredWedding & { guestAccessOpen: boolean }> {
   if (!supabase) {
-    return (await loadBrowserDraft()) ?? initial();
+    return { ...(await loadBrowserDraft() ?? initial()), guestAccessOpen: true };
   }
   await requireAdmin();
-  const { data, error } = await supabase.from('wedding_content').select('draft,updated_at').eq('id', 'main').maybeSingle();
+  const { data, error } = await supabase.from('wedding_content').select('draft,updated_at,guest_access_open').eq('id', 'main').maybeSingle();
   if (error) throw new Error('초안을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
-  return data ? { data: checked(data.draft), updatedAt: data.updated_at } : initial();
+  return data ? { data: checked(data.draft), updatedAt: data.updated_at, guestAccessOpen: data.guest_access_open === true } : { ...initial(), guestAccessOpen: false };
+}
+
+export async function pauseGuestAccess(): Promise<void> {
+  if (!supabase) throw new Error('하객 공개 상태는 온라인 관리 화면에서 변경할 수 있어요.');
+  const { data, error } = await supabase.from('wedding_content').update({ guest_access_open: false }).eq('id', 'main').select('guest_access_open').single();
+  if (error || data?.guest_access_open !== false) throw new Error('준비 중으로 전환하지 못했어요. 다시 시도해 주세요.');
+  notifyPublication();
 }
 export async function saveDraft(data: WeddingData): Promise<string> {
   const content = checked(data);
@@ -94,7 +105,7 @@ export async function saveDraft(data: WeddingData): Promise<string> {
   }
   return now;
 }
-export async function publishWedding(data: WeddingData): Promise<string> {
+export async function publishWedding(data: WeddingData, openGuestAccess = false): Promise<string> {
   const content = checked(data);
   const problems = publicationErrors(content);
   if (problems.length) throw new Error(problems.join('\n'));
@@ -104,7 +115,7 @@ export async function publishWedding(data: WeddingData): Promise<string> {
     await localWrite('published', { data: content, updatedAt: now });
     notifyPublication();
   } else {
-    const { data: row, error } = await supabase.from('wedding_content').upsert({ id: 'main', draft: content, published: content, updated_at: now }, { onConflict: 'id' }).select('updated_at').single();
+    const { data: row, error } = await supabase.from('wedding_content').upsert({ id: 'main', draft: content, published: content, updated_at: now, ...(openGuestAccess ? { guest_access_open: true } : {}) }, { onConflict: 'id' }).select('updated_at').single();
     if (error || !row || typeof row.updated_at !== 'string' || !Number.isFinite(Date.parse(row.updated_at))) throw new Error('공개 저장 결과를 확인하지 못했습니다. 연결을 확인하고 다시 시도해 주세요.');
     const published = await loadPublic(true);
     if (!sameWeddingContent(published.data, content)) throw new Error('저장은 요청했지만 하객용 청첩장 내용이 일치하지 않습니다. 다른 관리자가 동시에 수정했을 수 있으니 새 창의 청첩장을 확인해 주세요.');

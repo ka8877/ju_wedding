@@ -18,7 +18,7 @@
 
 ### 2. 저장소와 주영님 계정 준비
 
-1. [이 프로젝트의 SQL Editor](https://supabase.com/dashboard/project/fasdkmqdgukptnuvofwp/sql/new)에서 [001_wedding.sql](../supabase/migrations/001_wedding.sql), [002_guest_features.sql](../supabase/migrations/002_guest_features.sql)을 순서대로 실행합니다. 사이트 연결 안내의 **초기 설정 SQL 복사**는 둘을 함께 복사합니다. 재실행해도 기존 청첩장과 관리자 등록은 유지됩니다.
+1. [이 프로젝트의 SQL Editor](https://supabase.com/dashboard/project/fasdkmqdgukptnuvofwp/sql/new)에서 [001_wedding.sql](../supabase/migrations/001_wedding.sql), [002_guest_features.sql](../supabase/migrations/002_guest_features.sql), [하객 공개 설정 SQL](../supabase/migrations/20261126141607_guest_invitation_visibility.sql)을 순서대로 실행합니다. 사이트 연결 안내의 **초기 설정 SQL 복사**는 세 파일을 함께 복사합니다. 재실행해도 기존 청첩장과 관리자 등록은 유지됩니다.
 2. [이 프로젝트의 사용자 관리](https://supabase.com/dashboard/project/fasdkmqdgukptnuvofwp/auth/users)에서 **Add user → Create new user**를 선택하고 주영님이 사용할 이메일과 비밀번호로 사용자를 만듭니다. **Auto Confirm User**를 켭니다. 비밀번호는 채팅이나 저장소에 적지 않습니다.
 3. SQL Editor에서 실제 이메일을 넣어 관리자 자격을 등록합니다.
 
