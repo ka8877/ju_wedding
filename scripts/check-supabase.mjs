@@ -49,8 +49,10 @@ export async function checkConnection(config, fetcher = fetch, log = console.log
   };
 
   const rpc = await request('/rest/v1/rpc/get_published_wedding', { method: 'POST', body: '{}' });
-  const publication = await jsonResponse(rpc);
-  if (!rpc.ok) {
+  const responseBody = await jsonResponse(rpc);
+  const paused = rpc.status === 423 && responseBody?.code === 'PT423';
+  const publication = paused ? [] : responseBody;
+  if (!rpc.ok && !paused) {
     if (rpc.status === 404 && publication?.code === 'PGRST202') throw new ConnectionError('공개 조회 함수가 없습니다. Supabase SQL Editor에서 supabase/migrations/001_wedding.sql 전체를 실행해 주세요.');
     throw new ConnectionError(`공개 청첩장 조회가 실패했습니다(HTTP ${rpc.status}). 프로젝트 URL·공개 키·프로젝트 활성 상태와 네트워크 접근을 확인해 주세요.`);
   }
@@ -63,7 +65,7 @@ export async function checkConnection(config, fetcher = fetch, log = console.log
   if (!Array.isArray(publication) || publication.length > 1 || !publication.every(validRow)) {
     throw new ConnectionError('공개 조회 응답이 청첩장 형식과 맞지 않습니다. SQL을 확인하고 관리자 화면에서 올바른 내용을 다시 공개해 주세요.');
   }
-  log(publication.length ? '✓ 공개 청첩장 조회와 데이터 형식을 확인했습니다.' : '✓ 공개 조회 함수가 준비됐습니다. 아직 공개한 청첩장은 없습니다.');
+  log(paused ? '✓ 서비스 준비 중으로 하객 조회가 닫혀 있습니다.' : publication.length ? '✓ 공개 청첩장 조회와 데이터 형식을 확인했습니다.' : '✓ 공개 조회 함수가 준비됐습니다. 아직 공개한 청첩장은 없습니다.');
 
   for (const [table, column] of [['wedding_content', 'id'], ['wedding_admins', 'user_id']]) {
     const response = await request(`/rest/v1/${table}?select=${column}&limit=1`);

@@ -2,11 +2,12 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js';
 import { ArrowLeft, ArrowUpRight, Flower2, LockKeyhole, LoaderCircle } from 'lucide-react';
 import Invitation from './components/Invitation';
+import InvitationPreparing from './components/InvitationPreparing';
 const Admin = lazy(() => import('./components/Admin'));
 const SetupGuide = lazy(() => import('./components/SetupGuide'));
 import { defaultWedding } from './lib/defaults';
 import type { WeddingData } from './lib/types';
-import { cloudConfigured, loadDraft, loadPublic, publishWedding, saveDraft, supabase, uploadPhoto } from './lib/storage';
+import { cloudConfigured, loadDraft, loadPublic, pauseGuestAccess, publishWedding, saveDraft, supabase, uploadPhoto } from './lib/storage';
 import './styles/app.css';
 
 function Login({ onLogin }: { onLogin: () => void }) {
@@ -47,8 +48,9 @@ export default function App() {
   const [setupOpen, setSetupOpen] = useState(() => window.location.hash.startsWith('#/setup'));
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(!supabase);
-  const [publicData, setPublicData] = useState<WeddingData>(structuredClone(defaultWedding));
-  const [publicPublished, setPublicPublished] = useState(false);
+  const [publicData, setPublicData] = useState<WeddingData | null>(null);
+  const [publicPaused, setPublicPaused] = useState(false);
+  const [guestAccessOpen, setGuestAccessOpen] = useState(false);
   const [data, setData] = useState<WeddingData>(structuredClone(defaultWedding));
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -63,6 +65,7 @@ export default function App() {
   const dirtyRef = useRef(dirty); dirtyRef.current = dirty;
   const loadedRoute = useRef(isAdmin);
   const loadRequest = useRef(0);
+  const publicRequest = useRef(0);
 
   useEffect(() => {
     const onHash = () => {
@@ -70,7 +73,10 @@ export default function App() {
       if (loadedRoute.current && !next && dirtyRef.current && !window.confirm('저장하지 않은 수정 내용이 있어요. 청첩장으로 나갈까요?')) {
         history.replaceState(null, '', '#/admin'); return;
       }
-      if (next !== loadedRoute.current) loadRequest.current += 1;
+      if (next !== loadedRoute.current) {
+        loadRequest.current += 1; publicRequest.current += 1;
+        setLoading(true); setPublicData(null); setLoadError('');
+      }
       loadedRoute.current = next; setIsAdmin(next); setSetupOpen(window.location.hash.startsWith('#/setup'));
     };
     window.addEventListener('hashchange', onHash);
@@ -94,8 +100,11 @@ export default function App() {
   }, [dirty, isAdmin]);
 
   const refreshPublic = useCallback(async () => {
+    const request = ++publicRequest.current;
     const result = await loadPublic();
-    setPublicData(result.data); setPublicPublished(Boolean(result.updatedAt));
+    if (request !== publicRequest.current) return;
+    setPublicPaused(result.paused === true);
+    setPublicData(result.updatedAt || !cloudConfigured ? result.data : null);
   }, []);
   const load = useCallback(async () => {
     const request = ++loadRequest.current;
@@ -105,10 +114,10 @@ export default function App() {
     try {
       if (isAdmin) {
         const result = await loadDraft(); if (request !== loadRequest.current) return;
+        setGuestAccessOpen(result.guestAccessOpen);
         setData(result.data); dataRef.current = result.data; savedRef.current = result.data; setLastSaved(result.updatedAt); setDirty(false); setPast([]); setFuture([]);
       } else {
-        const result = await loadPublic(); if (request !== loadRequest.current) return;
-        setPublicData(result.data); setPublicPublished(Boolean(result.updatedAt));
+        await refreshPublic();
       }
     } catch (e) { if (request === loadRequest.current) setLoadError(e instanceof Error ? e.message : '불러오지 못했습니다.'); }
     finally { if (request === loadRequest.current) setLoading(false); }
@@ -120,8 +129,11 @@ export default function App() {
     const interval = window.setInterval(refresh, 30_000);
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
-    const channel = new BroadcastChannel('jo-and-joo'); channel.onmessage = refresh;
-    return () => { clearInterval(interval); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); channel.close(); };
+    const restore = (event: PageTransitionEvent) => { if (event.persisted) refresh(); };
+    window.addEventListener('pageshow', restore);
+    const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('jo-and-joo') : null;
+    if (channel) channel.onmessage = refresh;
+    return () => { clearInterval(interval); window.removeEventListener('focus', refresh); window.removeEventListener('pageshow', restore); document.removeEventListener('visibilitychange', refresh); channel?.close(); };
   }, [isAdmin, refreshPublic]);
 
   const logout = async () => {
@@ -130,7 +142,7 @@ export default function App() {
     if (result?.error) { setLoadError('로그아웃하지 못했습니다. 다시 시도해 주세요.'); return; }
     setDirty(false); window.location.hash = '#/';
   };
-  if (setupOpen) return <Suspense fallback={<main className="app-loading">연결 안내를 불러오고 있어요.</main>}><SetupGuide /></Suspense>;
+  if (setupOpen && (!cloudConfigured || (!loading && !loadError && !publicPaused))) return <Suspense fallback={<main className="app-loading">연결 안내를 불러오고 있어요.</main>}><SetupGuide /></Suspense>;
   if (isAdmin && cloudConfigured && authReady && !session) return <Login onLogin={() => { void load(); }} />;
   if (loading || !authReady) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><p>소중한 이야기를 불러오고 있어요.</p></main>;
   if (loadError) return <main className="app-loading"><Flower2 size={38} strokeWidth={1} /><h1>잠시만 기다려 주세요.</h1><p role="alert">{loadError}</p><button className="app-button" onClick={() => { void load(); }}>다시 불러오기</button>{isAdmin && <><button className="app-text-button" onClick={() => { void logout(); }}>청첩장으로 돌아가기 / 로그아웃</button></>}</main>;
@@ -147,17 +159,20 @@ export default function App() {
       try { setLastSaved(await saveDraft(snapshot)); savedRef.current = snapshot; if (dataRef.current === snapshot) setDirty(false); }
       finally { setSaving(false); }
     }}
-    onPublish={async () => {
+    guestAccessOpen={guestAccessOpen}
+    onPause={async () => { await pauseGuestAccess(); setGuestAccessOpen(false); }}
+    onPublish={async (openGuestAccess = false) => {
       const snapshot = dataRef.current; setPublishing(true);
-      try { setLastSaved(await publishWedding(snapshot)); savedRef.current = snapshot; if (dataRef.current === snapshot) setDirty(false); await refreshPublic(); }
+      try { setLastSaved(await publishWedding(snapshot, openGuestAccess)); savedRef.current = snapshot; if (dataRef.current === snapshot) setDirty(false); setGuestAccessOpen(true); }
       finally { setPublishing(false); }
     }}
     onUpload={uploadPhoto} saving={saving} publishing={publishing} mode={cloudConfigured ? 'cloud' : 'local'} onLogout={() => { void logout(); }} lastSaved={lastSaved}
     preview={<Invitation data={data} preview />}
   /></Suspense>;
 
+  if (!publicData) return <InvitationPreparing />;
   return <>
-    {(!cloudConfigured || !publicPublished) && <div className="app-preview-note">{cloudConfigured ? '아직 준비 중인 청첩장입니다.' : '디자인 미리보기 · 사진과 예식 정보를 채워 주세요.'}</div>}
+    {!cloudConfigured && <div className="app-preview-note">디자인 미리보기 · 사진과 예식 정보를 채워 주세요.</div>}
     <Invitation data={publicData} />
     <footer className="app-management"><a href="#/admin">우리 청첩장 관리 <ArrowUpRight size={12} /></a></footer>
   </>;

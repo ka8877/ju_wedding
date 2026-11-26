@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import { createRequire } from 'node:module';
 import { expect, test } from '@playwright/test';
 import jsQR from 'jsqr';
+import { publicSupabaseConfig } from '../../src/lib/public-config';
 
 const { PNG } = createRequire(import.meta.url)('pngjs') as {
   PNG: { sync: { read: (bytes: Buffer) => { width: number; height: number; data: Uint8Array } } };
@@ -12,8 +13,24 @@ function redact(value: string) {
   return value.replace(/([?&](?:auth|token|clientId|ncpKeyId|key)=)[^&\s"']+/gi, '$1[redacted]');
 }
 
-test('the deployed invitation plays the garden film, loads Naver tiles and shows a scannable QR', async ({ page }, testInfo) => {
+test('the deployed site respects guest access and serves the published invitation when open', async ({ page }, testInfo) => {
   test.setTimeout(90_000);
+  const visibility = await page.request.post(`${publicSupabaseConfig.url}/rest/v1/rpc/get_published_wedding?select=updated_at`, {
+    headers: { apikey: publicSupabaseConfig.key }, data: {},
+  });
+  if (visibility.status() === 423) {
+    expect(await visibility.json()).toMatchObject({ code: 'PT423', message: 'invitation_paused' });
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: '서비스 준비 중', exact: true })).toBeVisible();
+    await expect(page.locator('.invitation, .invite-opening, .venue-map, .admin-app')).toHaveCount(0);
+    await page.screenshot({ path: testInfo.outputPath('guest-preparation.png') });
+    await page.goto('/#/admin');
+    await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('비밀번호', { exact: true })).toBeVisible();
+    await expect(page.locator('.admin-app')).toHaveCount(0);
+    return;
+  }
+  expect(visibility.status()).toBe(200);
   const events: { kind: string; message: string }[] = [];
   const isMapHost = (value: string) => {
     try { return /(?:^|\.)(?:naver\.com|pstatic\.net)$/.test(new URL(value).hostname); }

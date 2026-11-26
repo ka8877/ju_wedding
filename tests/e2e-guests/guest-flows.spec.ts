@@ -245,6 +245,62 @@ async function mockAdminSession(page: Page) {
   return accessToken;
 }
 
+test('an admin can pause guest access, edit privately, and reopen the same link with the edited invitation', async ({ page: admin, browser }) => {
+  const guestContext = await browser.newContext({ viewport: { width: 320, height: 740 } });
+  try {
+    const guest = await guestContext.newPage();
+    let open = true;
+    let draft = data();
+    draft.guestFeatures.opening.enabled = false;
+    let publication = structuredClone(draft);
+    for (const page of [admin, guest]) {
+      await mockServer(page);
+      await page.route(`${project}/rest/v1/rpc/get_published_wedding`, route => open
+        ? route.fulfill({ json: [{ data: publication, updated_at: timestamp }] })
+        : route.fulfill({ status: 423, json: { code: 'PT423', message: 'invitation_paused' } }));
+      await page.route(`${project}/rest/v1/wedding_content?**`, async route => {
+        const body = route.request().postDataJSON();
+        if (body?.draft) draft = body.draft;
+        if (body?.published) publication = body.published;
+        if (typeof body?.guest_access_open === 'boolean') open = body.guest_access_open;
+        await route.fulfill({ json: { draft, guest_access_open: open, updated_at: timestamp } });
+      });
+    }
+    await mockAdminSession(admin);
+    await admin.goto('/#/admin');
+    await guest.goto('/');
+    await expect(guest.locator('.invitation')).toBeVisible();
+    await admin.getByRole('button', { name: '준비 중으로 전환', exact: true }).click();
+    await expect(admin.getByRole('region', { name: '하객 공개 설정' })).toContainText('서비스 준비 중');
+    await guest.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(guest.getByRole('heading', { name: '서비스 준비 중', exact: true })).toBeVisible();
+    await expect(guest.locator('.invitation, .invite-opening, .venue-map')).toHaveCount(0);
+    await guest.goto('/#/setup');
+    await expect(guest.getByRole('heading', { name: '서비스 준비 중', exact: true })).toBeVisible();
+    await guest.goto('/#/admin');
+    await expect(guest.getByLabel('이메일', { exact: true })).toBeVisible();
+    const name = admin.getByRole('textbox', { name: '신랑 이름', exact: true });
+    await name.fill('준비를 마친 신랑');
+    await admin.getByRole('button', { name: '초안 저장', exact: true }).click();
+    await expect(admin.getByRole('status')).toContainText('초안을 저장했어요');
+    await admin.reload();
+    await expect(name).toHaveValue('준비를 마친 신랑');
+    await guest.goto('/');
+    await expect(guest.getByRole('heading', { name: '서비스 준비 중', exact: true })).toBeVisible();
+    expect(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await guest.screenshot({ path: test.info().outputPath('preparation-mobile.png') });
+    const reopen = admin.getByRole('button', { name: '하객에게 공개', exact: true });
+    admin.once('dialog', dialog => dialog.dismiss());
+    await reopen.click();
+    expect(open).toBe(false);
+    admin.once('dialog', dialog => dialog.accept());
+    await reopen.click();
+    await expect(admin.getByRole('region', { name: '하객 공개 설정' })).toContainText('공개 중');
+    await guest.reload();
+    await expect(guest.locator('.invite-korean-names')).toContainText('준비를 마친 신랑');
+  } finally { await guestContext.close(); }
+});
+
 test('authenticated managers can view private replies and export a safe Excel-compatible CSV', async ({ page }) => {
   await mockServer(page);
   await mockAdminSession(page);

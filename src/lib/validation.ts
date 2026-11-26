@@ -1,7 +1,7 @@
 import type { Person, WeddingData, WeddingGuestFeatures } from './types';
 import { backgrounds, bodyAlignments, buttonShapes, defaultDesign, fonts, galleryGaps, getDesign, letterSpacings, lineSpacings, palettes, sectionIds, sectionSpacings, templates } from './design.ts';
 import { defaultGuestFeatures, defaultWedding } from './defaults.ts';
-import { isBuiltinMusicTrackId } from './music';
+import { isBuiltinMusicTrackId } from './music.ts';
 
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value));
 const text = (value: unknown, max = 3000): value is string => typeof value === 'string' && value.length <= max;

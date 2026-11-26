@@ -18,7 +18,9 @@ interface AdminProps {
   data: WeddingData;
   onChange: (data: WeddingData) => void;
   onSave: () => Promise<void>;
-  onPublish: () => Promise<void>;
+  onPublish: (openGuestAccess?: boolean) => Promise<void>;
+  onPause: () => Promise<void>;
+  guestAccessOpen: boolean;
   onUpload: (file: File) => Promise<string>;
   saving: boolean;
   publishing: boolean;
@@ -70,7 +72,7 @@ function PersonFields({ label, person, onChange }: { label: string; person: Pers
   </div></fieldset>;
 }
 
-export default function Admin({ data, onChange, onSave, onPublish, onUpload, saving, publishing, mode, onLogout, lastSaved, preview, onUndo, onRedo, canUndo = false, canRedo = false, isDirty = false }: AdminProps) {
+export default function Admin({ data, onChange, onSave, onPublish, onPause, guestAccessOpen, onUpload, saving, publishing, mode, onLogout, lastSaved, preview, onUndo, onRedo, canUndo = false, canRedo = false, isDirty = false }: AdminProps) {
   const [tab, setTab] = useState<Tab>('basic');
   const [showPreview, setShowPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -111,18 +113,24 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
     else previewRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
   }
 
-  async function performAction(action: 'save' | 'publish') {
+  async function performAction(action: 'save' | 'publish' | 'pause' | 'open') {
     if (busy) return;
+    if (action === 'open' && !window.confirm('지금 편집한 청첩장을 하객에게 공개할까요? 이미 공유한 QR과 링크로 바로 볼 수 있어요.')) return;
     setActionPending(true); setMessage(null);
     try {
-      await (action === 'save' ? onSave() : onPublish());
+      if (action === 'pause') {
+        await onPause();
+        setMessage({ kind: 'success', text: '공유한 QR과 링크에 서비스 준비 중 안내를 표시했어요.' });
+        return;
+      }
+      await (action === 'save' ? onSave() : onPublish(action === 'open'));
       const pending = [!data.date && '날짜', !data.time && '시간', (!data.venue.name.trim() || !data.venue.address.trim()) && '장소'].filter(Boolean);
       const pendingNote = pending.length ? `\n미정인 ${pending.join('·')} 정보는 준비 중으로 표시됩니다.` : '';
-      setMessage({ kind: 'success', action, title: action === 'save' ? '초안을 저장했어요' : mode === 'local' ? '이 기기의 미리보기에 적용했어요' : '공개 반영을 확인했어요', text: mode === 'local'
+      setMessage({ kind: 'success', action: action === 'save' ? 'save' : 'publish', title: action === 'save' ? '초안을 저장했어요' : mode === 'local' ? '이 기기의 미리보기에 적용했어요' : '공개 반영을 확인했어요', text: mode === 'local'
         ? (action === 'save' ? '이 기기에 초안을 저장했어요. 공개 URL에는 반영되지 않습니다.' : `이 기기의 미리보기에 반영했어요. 공개 URL에는 반영되지 않습니다.${pendingNote}`)
         : (action === 'save' ? '초안을 안전하게 저장했어요. 준비되면 공개 청첩장에 반영해 주세요.' : `공개 청첩장에 반영했어요. 공개 화면에서 새 내용까지 확인했어요.${pendingNote}`) });
     } catch (error) {
-      setMessage({ kind: 'error', action, title: action === 'save' ? '초안을 저장하지 못했어요' : mode === 'local' ? '미리보기에 적용하지 못했어요' : '공개 반영하지 못했어요', text: error instanceof Error ? error.message : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+      setMessage({ kind: 'error', title: action === 'save' ? '초안을 저장하지 못했어요' : action === 'pause' ? '공개 상태를 변경하지 못했어요' : mode === 'local' ? '미리보기에 적용하지 못했어요' : '공개 반영하지 못했어요', text: error instanceof Error ? error.message : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.' });
     } finally { setActionPending(false); }
   }
 
@@ -169,6 +177,11 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
   return <div className="admin-app">
     <header className="editor-topbar"><a className="editor-brand" href="#/" aria-label="공개 청첩장 보기"><Flower2 size={25} strokeWidth={1.3} /><span>our beginning<span>WEDDING STUDIO</span></span></a><div className="editor-topbar-actions"><div className="editor-history-actions"><button className="editor-text-button" aria-label="실행 취소" title="실행 취소" disabled={!canUndo || busy} onClick={onUndo}><Undo2 size={16} /><span>실행 취소</span></button><button className="editor-text-button" aria-label="다시 실행" title="다시 실행" disabled={!canRedo || busy} onClick={onRedo}><Redo2 size={16} /><span>다시 실행</span></button></div><a className="editor-text-button" aria-label="청첩장 보기" href="#/" target="_blank" rel="noreferrer"><ExternalLink size={15} /><span>청첩장 보기</span></a><button className="editor-text-button" onClick={onLogout} aria-label={mode === 'cloud' ? '로그아웃' : '나가기'}><LogOut size={15} /><span>{mode === 'cloud' ? '로그아웃' : '나가기'}</span></button></div></header>
     <div className="editor-shell">
+      {mode === 'cloud' && <section className="editor-guest-access" aria-label="하객 공개 설정">
+        <div><h2>하객 공개 설정 <strong>{guestAccessOpen ? '공개 중' : '서비스 준비 중'}</strong></h2>
+          <p>{guestAccessOpen ? '공유한 QR과 링크에서 청첩장을 볼 수 있어요.' : '하객에게는 준비 중 안내가 보여요. 편집을 마치면 현재 내용으로 공개해 주세요.'}</p></div>
+        <button className="editor-button editor-button-outline" disabled={busy} onClick={() => void performAction(guestAccessOpen ? 'pause' : 'open')}>{guestAccessOpen ? '준비 중으로 전환' : '하객에게 공개'}</button>
+      </section>}
       <div className="editor-welcome"><div><span className="editor-eyebrow">FOR YOUR BEAUTIFUL BEGINNING</span><h1>우리의 초대장을<br className="editor-mobile-break" /> 만드는 곳<span> .</span></h1><p>두 분만의 이야기를, 가장 다정한 방식으로 전해요.</p></div><span className="editor-studio-tag"><span /> {mode === 'cloud' ? '우리의 웨딩 스튜디오' : '미리보기 스튜디오'}</span></div>
       <ol className="editor-quick-guide" aria-label="청첩장 꾸미기 순서"><li><b>01</b>기본 정보</li><li><b>02</b>추천 스타일</li><li><b>03</b>미리보기</li><li><b>04</b>초안 저장 · 공개 반영</li></ol>
       {mode === 'local' && <div className="editor-local-banner"><Eye size={20} /><div><strong>편안하게 먼저 꾸며 보세요.</strong><p>이 기기에만 저장되는 미리보기입니다. 사진과 수정 내용은 다른 기기나 공개 사이트에 반영되지 않습니다.</p></div></div>}
@@ -204,7 +217,7 @@ export default function Admin({ data, onChange, onSave, onPublish, onUpload, sav
       <div className="editor-savebar-inner"><div className="editor-savebar-meta">
         {mode === 'local' && <p className="editor-local-fixednote">이 기기에만 저장 · 공개 URL에는 반영되지 않아요</p>}
         <div className="editor-save-status">{publishing ? <><LoaderCircle size={15} className="editor-spin" />{mode === 'cloud' ? '공개 청첩장의 새 내용을 확인하고 있어요…' : '이 기기의 미리보기에 적용하고 있어요…'}</> : saving ? <><LoaderCircle size={15} className="editor-spin" />초안을 안전하게 저장하고 있어요…</> : uploading ? <><LoaderCircle size={15} className="editor-spin" />사진을 담는 중이에요…</> : <><span className="editor-status-dot" /><span>{isDirty ? '저장하지 않은 변경이 있어요' : lastSaved ? `${new Date(lastSaved).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 ${mode === 'local' ? '이 기기에 ' : ''}저장됨` : '수정한 내용을 저장해 주세요'}</span></>}</div>
-      </div><div className="editor-save-actions"><button className="editor-button editor-preview-button" aria-label="미리보기" onClick={openPreview}><Eye size={17} /><span>미리보기</span></button><button className="editor-button editor-button-outline" disabled={busy} onClick={() => void performAction('save')}>{saving ? <LoaderCircle size={16} className="editor-spin" /> : <Save size={16} />}<span>{saving ? '초안 저장 중…' : '초안 저장'}</span></button><button className="editor-button editor-button-primary" disabled={busy} onClick={() => void performAction('publish')}>{publishing ? <LoaderCircle size={16} className="editor-spin" /> : <Send size={16} />}<span>{publishing ? mode === 'cloud' ? '공개 확인 중…' : '미리보기 적용 중…' : mode === 'cloud' ? '공개 청첩장에 반영' : '미리보기에 적용'}</span></button></div></div>
+      </div><div className="editor-save-actions"><button className="editor-button editor-preview-button" aria-label="미리보기" onClick={openPreview}><Eye size={17} /><span>미리보기</span></button><button className="editor-button editor-button-outline" disabled={busy} onClick={() => void performAction('save')}>{saving ? <LoaderCircle size={16} className="editor-spin" /> : <Save size={16} />}<span>{saving ? '초안 저장 중…' : '초안 저장'}</span></button>{(mode === 'local' || guestAccessOpen) && <button className="editor-button editor-button-primary" disabled={busy} onClick={() => void performAction('publish')}>{publishing ? <LoaderCircle size={16} className="editor-spin" /> : <Send size={16} />}<span>{publishing ? mode === 'cloud' ? '공개 확인 중…' : '미리보기 적용 중…' : mode === 'cloud' ? '공개 청첩장에 반영' : '미리보기에 적용'}</span></button>}</div></div>
     </footer>
   </div>;
 }
